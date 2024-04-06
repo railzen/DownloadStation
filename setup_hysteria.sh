@@ -98,10 +98,10 @@ read -r -p "Are your sure tools continue?(Y/N)" selectStart
 
 if [[ "${selectStart}" == "Y" ]]; then
     setup_hysteria
-    exit(0)
+    exit()
 elif [[ "${selectStart}" == "y" ]]; then
     setup_hysteria
-    exit(0)
+    exit()
 else
-    exit(0)
+    exit()
 fi
