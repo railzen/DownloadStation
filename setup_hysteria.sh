@@ -102,8 +102,6 @@ if [[ "${selectStart}" == "Y" ]]; then
 elif [[ "${selectStart}" == "y" ]]; then
     setup_hysteria
     exit(0)
-elif [[ "${selectStart}" == "N" ]]; then
-    exit(0)
-elif [[ "${selectStart}" == "n" ]]; then
+else
     exit(0)
 fi
