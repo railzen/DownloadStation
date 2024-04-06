@@ -43,6 +43,7 @@ echoContent() {
     esac
 }
 
+setup_hysteria() {
 #安装ifconfig命令
 apt -y install net-tools
 
@@ -91,3 +92,18 @@ systemctl enable hysteria-server.service
 
 echoContent skyBlue "您可以复制到任意客户端："
 echoContent skyBlue "hysteria2://${uuid}@${ipv4}:${port}?sni=apple.com&insecure=1#Hysteria2\n"
+}
+
+read -r -p "Are your sure tools continue?(Y/N)" selectStart
+
+if [[ "${selectStart}" == "Y" ]]; then
+    setup_hysteria
+    exit(0)
+elif [[ "${selectStart}" == "y" ]]; then
+    setup_hysteria
+    exit(0)
+elif [[ "${selectStart}" == "N" ]]; then
+    exit(0)
+elif [[ "${selectStart}" == "n" ]]; then
+    exit(0)
+fi
