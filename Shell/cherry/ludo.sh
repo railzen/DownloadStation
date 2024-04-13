@@ -91,7 +91,7 @@ closeipv6() {
 net.ipv6.conf.default.disable_ipv6 = 1
 net.ipv6.conf.lo.disable_ipv6 = 1" >>/etc/sysctl.d/99-sysctl.conf
   sysctl --system
-  echo -e "${Info}禁用IPv6结束，可能需要重启！"
+#  echo -e "${Info}禁用IPv6结束，可能需要重启！"
 }
 
 #开启IPv6
@@ -112,7 +112,7 @@ net.ipv6.conf.lo.disable_ipv6 = 0
 net.ipv6.conf.all.accept_ra = 2
 net.ipv6.conf.default.accept_ra = 2" >>/etc/sysctl.d/99-sysctl.conf
   sysctl --system
-  echo -e "${Info}开启IPv6结束，可能需要重启！"
+#  echo -e "${Info}开启IPv6结束，可能需要重启！"
 }
 
 check_port() {
