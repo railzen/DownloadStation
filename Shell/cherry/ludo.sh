@@ -71,7 +71,7 @@ break_end() {
       clear
 }
 
-kejilion() {
+back_main() {
             ludo
             exit
 }
@@ -134,7 +134,7 @@ check_port() {
             echo -e "\e[1;31m端口 $PORT 已被占用，无法安装环境，卸载以下程序后重试！\e[0m"
             echo "$result"
             break_end
-            kejilion
+            back_main
 
         fi
     else
@@ -967,7 +967,7 @@ case $choice in
               ;;
 
           0)
-              kejilion
+              back_main
 
               ;;
 
@@ -1379,7 +1379,7 @@ EOF
               esac
               ;;
           0)
-              kejilion
+              back_main
 
               ;;
           *)
@@ -1460,7 +1460,7 @@ EOF
               curl -L https://gitlab.com/spiritysdx/za/-/raw/main/ecs.sh -o ecs.sh && chmod +x ecs.sh && bash ecs.sh
               ;;
           0)
-              kejilion
+              back_main
 
               ;;
           *)
@@ -1585,7 +1585,7 @@ EOF
           esac
               ;;
           0)
-              kejilion
+              back_main
 
               ;;
           *)
@@ -2552,7 +2552,7 @@ EOF
         ;;
 
     0)
-        kejilion
+        back_main
       ;;
 
     *)
@@ -2615,7 +2615,7 @@ EOF
           1)
               clear
               read -p "请输入你的快捷按键: " kuaijiejian
-              echo "alias $kuaijiejian='~/kejilion.sh'" >> ~/.bashrc
+              echo "alias $kuaijiejian='~/ludo.sh'" >> ~/.bashrc
               source ~/.bashrc
               echo "快捷键已设置"
               ;;
@@ -3906,7 +3906,7 @@ EOF
 
                   case $host_dns in
                       1)
-                          read -p "请输入新的解析记录 格式: 110.25.5.33 kejilion.pro : " addhost
+                          read -p "请输入新的解析记录 格式: 1.1.1.1 hostname.com : " addhost
                           echo "$addhost" >> /etc/hosts
 
                           ;;
@@ -4014,7 +4014,7 @@ EOF
               reboot
               ;;
           0)
-              kejilion
+              back_main
 
               ;;
           *)
@@ -5150,7 +5150,7 @@ EOF
           curl -L https://raw.githubusercontent.com/oneclickvirt/pve/main/scripts/install_pve.sh -o install_pve.sh && chmod +x install_pve.sh && bash install_pve.sh
               ;;
           0)
-              kejilion
+              back_main
               ;;
           *)
               echo "无效的输入!"
