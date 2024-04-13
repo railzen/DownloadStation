@@ -4032,8 +4032,8 @@ EOF
       clear
       echo "▶ 面板工具"
       echo "------------------------"
-      echo "1. 宝塔面板官方版                       2. aaPanel宝塔国际版"
-      echo "3. 1Panel新一代管理面板                 4. NginxProxyManager可视化面板"
+      echo "1. 1Panel新一代管理面板                 2. aaPanel宝塔国际版"
+      echo "3. 宝塔面板官方版                       4. NginxProxyManager可视化面板"
       echo "5. AList多存储文件列表程序              6. Ubuntu远程桌面网页版"
       echo "7. 哪吒探针VPS监控面板                  8. QB离线BT磁力下载面板"
       echo "9. Poste.io邮件服务器程序               10. RocketChat多人在线聊天系统"
@@ -4057,12 +4057,12 @@ EOF
 
       case $sub_choice in
           1)
-            if [ -f "/etc/init.d/bt" ] && [ -d "/www/server/panel" ]; then
+            if command -v 1pctl &> /dev/null; then
                 clear
-                echo "宝塔面板已安装，应用操作"
+                echo "1Panel已安装，应用操作"
                 echo ""
                 echo "------------------------"
-                echo "1. 管理宝塔面板           2. 卸载宝塔面板"
+                echo "1. 查看1Panel信息           2. 卸载1Panel"
                 echo "------------------------"
                 echo "0. 返回上一级选单"
                 echo "------------------------"
@@ -4071,14 +4071,13 @@ EOF
                 case $sub_choice in
                     1)
                         clear
-                        # 更新宝塔面板操作
-                        bt
+                        1pctl user-info
+                        1pctl update password
                         ;;
                     2)
                         clear
-                        curl -o bt-uninstall.sh http://download.bt.cn/install/bt-uninstall.sh > /dev/null 2>&1
-                        chmod +x bt-uninstall.sh
-                        ./bt-uninstall.sh
+                        1pctl uninstall
+
                         ;;
                     0)
                         break  # 跳出循环，退出菜单
@@ -4088,58 +4087,60 @@ EOF
                         ;;
                 esac
             else
+
                 clear
                 echo "安装提示"
-                echo "如果您已经安装了其他面板工具或者LDNMP建站环境，建议先卸载，再安装宝塔面板！"
+                echo "如果您已经安装了其他面板工具或者LDNMP建站环境，建议先卸载，再安装1Panel！"
                 echo "会根据系统自动安装，支持Debian，Ubuntu，Centos"
-                echo "官网介绍: https://www.bt.cn/new/index.html"
+                echo "官网介绍: https://1panel.cn/"
                 echo ""
-
                 # 获取当前系统类型
                 get_system_type() {
-                    if [ -f /etc/os-release ]; then
-                        . /etc/os-release
-                        if [ "$ID" == "centos" ]; then
-                            echo "centos"
-                        elif [ "$ID" == "ubuntu" ]; then
-                            echo "ubuntu"
-                        elif [ "$ID" == "debian" ]; then
-                            echo "debian"
-                        else
-                            echo "unknown"
-                        fi
+                  if [ -f /etc/os-release ]; then
+                    . /etc/os-release
+                    if [ "$ID" == "centos" ]; then
+                      echo "centos"
+                    elif [ "$ID" == "ubuntu" ]; then
+                      echo "ubuntu"
+                    elif [ "$ID" == "debian" ]; then
+                      echo "debian"
                     else
-                        echo "unknown"
+                      echo "unknown"
                     fi
+                  else
+                    echo "unknown"
+                  fi
                 }
 
                 system_type=$(get_system_type)
 
                 if [ "$system_type" == "unknown" ]; then
-                    echo "不支持的操作系统类型"
+                  echo "不支持的操作系统类型"
                 else
-                    read -p "确定安装宝塔吗？(Y/N): " choice
-                    case "$choice" in
-                        [Yy])
-                            iptables_open
-                            install wget
-                            if [ "$system_type" == "centos" ]; then
-                                yum install -y wget && wget -O install.sh https://download.bt.cn/install/install_6.0.sh && sh install.sh ed8484bec
-                            elif [ "$system_type" == "ubuntu" ]; then
-                                wget -O install.sh https://download.bt.cn/install/install-ubuntu_6.0.sh && bash install.sh ed8484bec
-                            elif [ "$system_type" == "debian" ]; then
-                                wget -O install.sh https://download.bt.cn/install/install-ubuntu_6.0.sh && bash install.sh ed8484bec
-                            fi
-                            ;;
-                        [Nn])
-                            ;;
-                        *)
-                            ;;
-                    esac
+                  read -p "确定安装1Panel吗？(Y/N): " choice
+                  case "$choice" in
+                    [Yy])
+                      iptables_open
+                      install_docker
+                      if [ "$system_type" == "centos" ]; then
+                        curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh -o quick_start.sh && sh quick_start.sh
+                      elif [ "$system_type" == "ubuntu" ]; then
+                        curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh -o quick_start.sh && bash quick_start.sh
+                      elif [ "$system_type" == "debian" ]; then
+                        curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh -o quick_start.sh && bash quick_start.sh
+                      fi
+                      ;;
+                    [Nn])
+                      ;;
+                    *)
+                      ;;
+                  esac
                 fi
             fi
 
+
               ;;
+
           2)
             if [ -f "/etc/init.d/bt" ] && [ -d "/www/server/panel" ]; then
                 clear
@@ -4224,12 +4225,12 @@ EOF
             fi
               ;;
           3)
-            if command -v 1pctl &> /dev/null; then
+            if [ -f "/etc/init.d/bt" ] && [ -d "/www/server/panel" ]; then
                 clear
-                echo "1Panel已安装，应用操作"
+                echo "宝塔面板已安装，应用操作"
                 echo ""
                 echo "------------------------"
-                echo "1. 查看1Panel信息           2. 卸载1Panel"
+                echo "1. 管理宝塔面板           2. 卸载宝塔面板"
                 echo "------------------------"
                 echo "0. 返回上一级选单"
                 echo "------------------------"
@@ -4238,13 +4239,14 @@ EOF
                 case $sub_choice in
                     1)
                         clear
-                        1pctl user-info
-                        1pctl update password
+                        # 更新宝塔面板操作
+                        bt
                         ;;
                     2)
                         clear
-                        1pctl uninstall
-
+                        curl -o bt-uninstall.sh http://download.bt.cn/install/bt-uninstall.sh > /dev/null 2>&1
+                        chmod +x bt-uninstall.sh
+                        ./bt-uninstall.sh
                         ;;
                     0)
                         break  # 跳出循环，退出菜单
@@ -4254,57 +4256,56 @@ EOF
                         ;;
                 esac
             else
-
                 clear
                 echo "安装提示"
-                echo "如果您已经安装了其他面板工具或者LDNMP建站环境，建议先卸载，再安装1Panel！"
+                echo "如果您已经安装了其他面板工具或者LDNMP建站环境，建议先卸载，再安装宝塔面板！"
                 echo "会根据系统自动安装，支持Debian，Ubuntu，Centos"
-                echo "官网介绍: https://1panel.cn/"
+                echo "官网介绍: https://www.bt.cn/new/index.html"
                 echo ""
+
                 # 获取当前系统类型
                 get_system_type() {
-                  if [ -f /etc/os-release ]; then
-                    . /etc/os-release
-                    if [ "$ID" == "centos" ]; then
-                      echo "centos"
-                    elif [ "$ID" == "ubuntu" ]; then
-                      echo "ubuntu"
-                    elif [ "$ID" == "debian" ]; then
-                      echo "debian"
+                    if [ -f /etc/os-release ]; then
+                        . /etc/os-release
+                        if [ "$ID" == "centos" ]; then
+                            echo "centos"
+                        elif [ "$ID" == "ubuntu" ]; then
+                            echo "ubuntu"
+                        elif [ "$ID" == "debian" ]; then
+                            echo "debian"
+                        else
+                            echo "unknown"
+                        fi
                     else
-                      echo "unknown"
+                        echo "unknown"
                     fi
-                  else
-                    echo "unknown"
-                  fi
                 }
 
                 system_type=$(get_system_type)
 
                 if [ "$system_type" == "unknown" ]; then
-                  echo "不支持的操作系统类型"
+                    echo "不支持的操作系统类型"
                 else
-                  read -p "确定安装1Panel吗？(Y/N): " choice
-                  case "$choice" in
-                    [Yy])
-                      iptables_open
-                      install_docker
-                      if [ "$system_type" == "centos" ]; then
-                        curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh -o quick_start.sh && sh quick_start.sh
-                      elif [ "$system_type" == "ubuntu" ]; then
-                        curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh -o quick_start.sh && bash quick_start.sh
-                      elif [ "$system_type" == "debian" ]; then
-                        curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh -o quick_start.sh && bash quick_start.sh
-                      fi
-                      ;;
-                    [Nn])
-                      ;;
-                    *)
-                      ;;
-                  esac
+                    read -p "确定安装宝塔吗？(Y/N): " choice
+                    case "$choice" in
+                        [Yy])
+                            iptables_open
+                            install wget
+                            if [ "$system_type" == "centos" ]; then
+                                yum install -y wget && wget -O install.sh https://download.bt.cn/install/install_6.0.sh && sh install.sh ed8484bec
+                            elif [ "$system_type" == "ubuntu" ]; then
+                                wget -O install.sh https://download.bt.cn/install/install-ubuntu_6.0.sh && bash install.sh ed8484bec
+                            elif [ "$system_type" == "debian" ]; then
+                                wget -O install.sh https://download.bt.cn/install/install-ubuntu_6.0.sh && bash install.sh ed8484bec
+                            fi
+                            ;;
+                        [Nn])
+                            ;;
+                        *)
+                            ;;
+                    esac
                 fi
             fi
-
 
               ;;
           4)
