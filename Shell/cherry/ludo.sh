@@ -2527,7 +2527,7 @@ EOF
 
   11)
     clear
-    apt -y install net-tools
+    install net-tools
     bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
     ;;
 
