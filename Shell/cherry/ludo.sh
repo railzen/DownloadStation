@@ -305,7 +305,7 @@ install_certbot() {
     cd ~ || exit
 
     # 下载并使脚本可执行
-    curl -O https://raw.githubusercontent.com/railzen/DownloadStation/tree/main/Shell/cherry/auto_cert_renewal.sh
+    curl -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/auto_cert_renewal.sh
     chmod +x auto_cert_renewal.sh
 
     # 设置定时任务字符串
@@ -2177,7 +2177,7 @@ EOF
       read -p "输入远程服务器密码: " usepasswd
 
       cd ~
-      wget -O ${useip}_beifen.sh https://raw.githubusercontent.com/railzen/DownloadStation/tree/main/Shell/cherry/beifen.sh > /dev/null 2>&1
+      wget -O ${useip}_beifen.sh https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/beifen.sh > /dev/null 2>&1
       chmod +x ${useip}_beifen.sh
 
       sed -i "s/0.0.0.0/$useip/g" ${useip}_beifen.sh
@@ -2317,10 +2317,10 @@ EOF
                       wget -O /home/web/conf.d/default.conf https://raw.githubusercontent.com/kejilion/nginx/main/default11.conf
 
                       cd /etc/fail2ban/jail.d/
-                      curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/tree/main/Shell/cherry/nginx.local
+                      curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/nginx.local
 
                       cd /etc/fail2ban/action.d/
-                      curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/tree/main/Shell/cherry/cloudflare.conf
+                      curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/cloudflare.conf
 
                       sed -i "s/kejilion@outlook.com/$cfuser/g" /etc/fail2ban/action.d/cloudflare.conf
                       sed -i "s/APIKEY00000/$cftoken/g" /etc/fail2ban/action.d/cloudflare.conf
@@ -2351,7 +2351,7 @@ EOF
           else
               rm -rf /etc/fail2ban/jail.d/*
               cd /etc/fail2ban/jail.d/
-              curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/tree/main/Shell/cherry/sshd.local
+              curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/sshd.local
           fi
 
           systemctl start fail2ban
@@ -2383,14 +2383,14 @@ EOF
 
 
           cd /etc/fail2ban/filter.d/
-          curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/tree/main/Shell/cherry/fail2ban-nginx-cc.conf
+          curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/fail2ban-nginx-cc.conf
 
           cd /etc/fail2ban/jail.d/
-          curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/tree/main/Shell/cherry/nginx.local
+          curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/nginx.local
           sed -i "/cloudflare/d" /etc/fail2ban/jail.d/nginx.local
 
           cd /etc/fail2ban/action.d/
-          curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/tree/main/Shell/cherry/cloudflare.conf
+          curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/cloudflare.conf
 
           cd ~
           systemctl restart fail2ban
@@ -2420,19 +2420,19 @@ EOF
                   sed -i 's/worker_connections.*/worker_connections 1024;/' /home/web/nginx.conf
 
                   # php调优
-                  wget -O /home/optimized_php.ini https://raw.githubusercontent.com/railzen/DownloadStation/tree/main/Shell/cherry/optimized_php.ini
+                  wget -O /home/optimized_php.ini https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/optimized_php.ini
                   docker cp /home/optimized_php.ini php:/usr/local/etc/php/conf.d/optimized_php.ini
                   docker cp /home/optimized_php.ini php74:/usr/local/etc/php/conf.d/optimized_php.ini
                   rm -rf /home/optimized_php.ini
 
                   # php调优
-                  wget -O /home/www.conf https://raw.githubusercontent.com/railzen/DownloadStation/tree/main/Shell/cherry/www-1.conf
+                  wget -O /home/www.conf https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/www-1.conf
                   docker cp /home/www.conf php:/usr/local/etc/php-fpm.d/www.conf
                   docker cp /home/www.conf php74:/usr/local/etc/php-fpm.d/www.conf
                   rm -rf /home/www.conf
 
                   # mysql调优
-                  wget -O /home/custom_mysql_config.cnf https://raw.githubusercontent.com/railzen/DownloadStation/tree/main/Shell/cherry/custom_mysql_config-1.cnf
+                  wget -O /home/custom_mysql_config.cnf https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/custom_mysql_config-1.cnf
                   docker cp /home/custom_mysql_config.cnf mysql:/etc/mysql/conf.d/
                   rm -rf /home/custom_mysql_config.cnf
 
@@ -2450,13 +2450,13 @@ EOF
                   sed -i 's/worker_connections.*/worker_connections 10240;/' /home/web/nginx.conf
 
                   # php调优
-                  wget -O /home/www.conf https://raw.githubusercontent.com/railzen/DownloadStation/tree/main/Shell/cherry/www.conf
+                  wget -O /home/www.conf https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/www.conf
                   docker cp /home/www.conf php:/usr/local/etc/php-fpm.d/www.conf
                   docker cp /home/www.conf php74:/usr/local/etc/php-fpm.d/www.conf
                   rm -rf /home/www.conf
 
                   # mysql调优
-                  wget -O /home/custom_mysql_config.cnf https://raw.githubusercontent.com/railzen/DownloadStation/tree/main/Shell/cherry/custom_mysql_config.cnf
+                  wget -O /home/custom_mysql_config.cnf https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/custom_mysql_config.cnf
                   docker cp /home/custom_mysql_config.cnf mysql:/etc/mysql/conf.d/
                   rm -rf /home/custom_mysql_config.cnf
 
@@ -3293,13 +3293,13 @@ EOF
                         update-grub
 
                         # wget -qO - https://dl.xanmod.org/archive.key | gpg --dearmor -o /usr/share/keyrings/xanmod-archive-keyring.gpg --yes
-                        wget -qO - https://raw.githubusercontent.com/railzen/DownloadStation/tree/main/Shell/cherry/archive.key | gpg --dearmor -o /usr/share/keyrings/xanmod-archive-keyring.gpg --yes
+                        wget -qO - https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/archive.key | gpg --dearmor -o /usr/share/keyrings/xanmod-archive-keyring.gpg --yes
 
                         # 步骤3：添加存储库
                         echo 'deb [signed-by=/usr/share/keyrings/xanmod-archive-keyring.gpg] http://deb.xanmod.org releases main' | tee /etc/apt/sources.list.d/xanmod-release.list
 
                         # version=$(wget -q https://dl.xanmod.org/check_x86-64_psabi.sh && chmod +x check_x86-64_psabi.sh && ./check_x86-64_psabi.sh | grep -oP 'x86-64-v\K\d+|x86-64-v\d+')
-                        version=$(wget -q https://raw.githubusercontent.com/railzen/DownloadStation/tree/main/Shell/cherry/check_x86-64_psabi.sh && chmod +x check_x86-64_psabi.sh && ./check_x86-64_psabi.sh | grep -oP 'x86-64-v\K\d+|x86-64-v\d+')
+                        version=$(wget -q https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/check_x86-64_psabi.sh && chmod +x check_x86-64_psabi.sh && ./check_x86-64_psabi.sh | grep -oP 'x86-64-v\K\d+|x86-64-v\d+')
 
                         apt update -y
                         apt install -y linux-xanmod-x64v$version
@@ -3361,13 +3361,13 @@ EOF
             install wget gnupg
 
             # wget -qO - https://dl.xanmod.org/archive.key | gpg --dearmor -o /usr/share/keyrings/xanmod-archive-keyring.gpg --yes
-            wget -qO - https://raw.githubusercontent.com/railzen/DownloadStation/tree/main/Shell/cherry/archive.key | gpg --dearmor -o /usr/share/keyrings/xanmod-archive-keyring.gpg --yes
+            wget -qO - https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/archive.key | gpg --dearmor -o /usr/share/keyrings/xanmod-archive-keyring.gpg --yes
 
             # 步骤3：添加存储库
             echo 'deb [signed-by=/usr/share/keyrings/xanmod-archive-keyring.gpg] http://deb.xanmod.org releases main' | tee /etc/apt/sources.list.d/xanmod-release.list
 
             # version=$(wget -q https://dl.xanmod.org/check_x86-64_psabi.sh && chmod +x check_x86-64_psabi.sh && ./check_x86-64_psabi.sh | grep -oP 'x86-64-v\K\d+|x86-64-v\d+')
-            version=$(wget -q https://raw.githubusercontent.com/railzen/DownloadStation/tree/main/Shell/cherry/check_x86-64_psabi.sh && chmod +x check_x86-64_psabi.sh && ./check_x86-64_psabi.sh | grep -oP 'x86-64-v\K\d+|x86-64-v\d+')
+            version=$(wget -q https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/check_x86-64_psabi.sh && chmod +x check_x86-64_psabi.sh && ./check_x86-64_psabi.sh | grep -oP 'x86-64-v\K\d+|x86-64-v\d+')
 
             apt update -y
             apt install -y linux-xanmod-x64v$version
@@ -3946,7 +3946,7 @@ EOF
                   else
                       rm -rf /etc/fail2ban/jail.d/*
                       cd /etc/fail2ban/jail.d/
-                      curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/tree/main/Shell/cherry/sshd.local
+                      curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/sshd.local
                   fi
 
                   systemctl start fail2ban
