@@ -76,6 +76,45 @@ kejilion() {
             exit
 }
 
+
+#禁用IPv6
+closeipv6() {
+  clear
+  sed -i '/net.ipv6.conf.all.disable_ipv6/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i '/net.ipv6.conf.default.disable_ipv6/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i '/net.ipv6.conf.lo.disable_ipv6/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i '/net.ipv6.conf.all.disable_ipv6/d' /etc/sysctl.conf
+  sed -i '/net.ipv6.conf.default.disable_ipv6/d' /etc/sysctl.conf
+  sed -i '/net.ipv6.conf.lo.disable_ipv6/d' /etc/sysctl.conf
+
+  echo "net.ipv6.conf.all.disable_ipv6 = 1
+net.ipv6.conf.default.disable_ipv6 = 1
+net.ipv6.conf.lo.disable_ipv6 = 1" >>/etc/sysctl.d/99-sysctl.conf
+  sysctl --system
+  echo -e "${Info}禁用IPv6结束，可能需要重启！"
+}
+
+#开启IPv6
+openipv6() {
+  clear
+  sed -i '/net.ipv6.conf.all.disable_ipv6/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i '/net.ipv6.conf.default.disable_ipv6/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i '/net.ipv6.conf.lo.disable_ipv6/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i '/net.ipv6.conf.all.disable_ipv6/d' /etc/sysctl.conf
+  sed -i '/net.ipv6.conf.default.disable_ipv6/d' /etc/sysctl.conf
+  sed -i '/net.ipv6.conf.lo.disable_ipv6/d' /etc/sysctl.conf
+  sed -i '/net.ipv6.conf.all.accept_ra/d' /etc/sysctl.conf
+  sed -i '/net.ipv6.conf.default.accept_ra/d' /etc/sysctl.conf
+
+  echo "net.ipv6.conf.all.disable_ipv6 = 0
+net.ipv6.conf.default.disable_ipv6 = 0
+net.ipv6.conf.lo.disable_ipv6 = 0
+net.ipv6.conf.all.accept_ra = 2
+net.ipv6.conf.default.accept_ra = 2" >>/etc/sysctl.d/99-sysctl.conf
+  sysctl --system
+  echo -e "${Info}开启IPv6结束，可能需要重启！"
+}
+
 check_port() {
     # 定义要检测的端口
     PORT=443
@@ -3017,11 +3056,13 @@ EOF
             case $choice in
                 1)
                     sysctl -w net.ipv6.conf.all.disable_ipv6=1 > /dev/null 2>&1
-                    echo "已切换为 IPv4 优先"
+                    closeipv6 > /dev/null 2>&1
+                    echo "已切换为 IPv4 优先,可能需要重启！"
                     ;;
                 2)
                     sysctl -w net.ipv6.conf.all.disable_ipv6=0 > /dev/null 2>&1
-                    echo "已切换为 IPv6 优先"
+                    openipv6 > /dev/null 2>&1
+                    echo "已切换为 IPv6 优先,可能需要重启！"
                     ;;
                 *)
                     echo "无效的选择"
