@@ -2532,7 +2532,7 @@ EOF
 
   12)
     clear
-    curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/setup_hysteria.sh && chmod +x setup_hysteria.sh && ./setup_hysteria.sh
+    bash <(curl -Ls https://raw.githubusercontent.com/railzen/DownloadStation/main/setup_hysteria.sh)
     exit
     ;;
 
