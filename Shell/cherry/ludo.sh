@@ -4122,10 +4122,13 @@ EOF
                     [Yy])
                       if [ "$system_type" == "centos" ]; then
                         curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh -o quick_start.sh && sh quick_start.sh
+                        1pctl update password
                       elif [ "$system_type" == "ubuntu" ]; then
                         curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh -o quick_start.sh && bash quick_start.sh
+                        1pctl update password
                       elif [ "$system_type" == "debian" ]; then
                         curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh -o quick_start.sh && bash quick_start.sh
+                        1pctl update password
                       fi
                       ;;
                     [Nn])
