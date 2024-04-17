@@ -4120,8 +4120,6 @@ EOF
                   read -p "确定安装1Panel吗？(Y/N): " choice
                   case "$choice" in
                     [Yy])
-                      iptables_open
-                      install_docker
                       if [ "$system_type" == "centos" ]; then
                         curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh -o quick_start.sh && sh quick_start.sh
                       elif [ "$system_type" == "ubuntu" ]; then
