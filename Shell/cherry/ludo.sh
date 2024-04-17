@@ -563,8 +563,8 @@ echo " | |____| |  | | |____| | \ \| | \ \  | |   "
 echo "  \_____|_|  |_|______|_|  \_\_|  \_\ |_|   "
 echo "                                "
 
-echo -e "\033[96mCherry一键脚本工具 v1.0.0 Build240413（支持Ubuntu/Debian/CentOS/Alpine系统）\033[0m"
-echo -e "\033[96mFor personal use, unauthorized use prohi prohibited!\033[0m"
+echo -e "\033[96mCherry一键脚本工具 v1.0.0 Build240417（支持Ubuntu/Debian/CentOS/Alpine系统）\033[0m"
+echo -e "\033[96mFor personal use, unauthorized use prohibited!\033[0m"
 echo -e "\033[96m-- Press \033[93mludo\033[96m to start script --\033[0m"
 echo "------------------------"
 echo "1. 系统信息查询"
@@ -4135,6 +4135,7 @@ EOF
                     *)
                       ;;
                   esac
+                  exit
                 fi
             fi
 
