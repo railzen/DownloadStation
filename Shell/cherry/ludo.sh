@@ -1,7 +1,7 @@
 #!/bin/bash
 ln -sf ~/ludo.sh /usr/local/bin/ludo
 
-main_version=V1.0.3 Build240420
+main_version="V1.0.3 Build240420"
 
 ip_address() {
 ipv4_address=$(curl -s ipv4.ip.sb)
@@ -564,7 +564,7 @@ echo " | |____| |  | | |____| | \ \| | \ \  | |   "
 echo "  \_____|_|  |_|______|_|  \_\_|  \_\ |_|   "
 echo "                                "
 
-echo -e "\033[96mCherry一键脚本工具 \$main_version（支持Ubuntu/Debian/CentOS/Alpine系统）\033[0m"
+echo -e "\033[96mCherry一键脚本工具 $main_version（支持Ubuntu/Debian/CentOS/Alpine系统）\033[0m"
 echo -e "\033[96mFor personal use, unauthorized use prohibited!\033[0m"
 echo -e "\033[96m-- Press \033[93mludo\033[96m to start script --\033[0m"
 echo "------------------------"
