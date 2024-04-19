@@ -563,7 +563,7 @@ echo " | |____| |  | | |____| | \ \| | \ \  | |   "
 echo "  \_____|_|  |_|______|_|  \_\_|  \_\ |_|   "
 echo "                                "
 
-echo -e "\033[96mCherry一键脚本工具 v1.0.0 Build240417（支持Ubuntu/Debian/CentOS/Alpine系统）\033[0m"
+echo -e "\033[96mCherry一键脚本工具 v1.0.0 Build240420（支持Ubuntu/Debian/CentOS/Alpine系统）\033[0m"
 echo -e "\033[96mFor personal use, unauthorized use prohibited!\033[0m"
 echo -e "\033[96m-- Press \033[93mludo\033[96m to start script --\033[0m"
 echo "------------------------"
@@ -581,6 +581,8 @@ echo "11. 安装3X-UI"
 echo "12. Hysteria2脚本 "
 echo "13. 系统工具 ▶ "
 echo "14. 面板工具 ▶ "
+echo "------------------------"
+echo "up. 脚本更新"
 echo "------------------------"
 echo "0. 退出脚本"
 echo "------------------------"
@@ -1405,17 +1407,28 @@ EOF
     while true; do
       clear
       echo "▶ 测试脚本合集"
-      echo "------------------------"
+      echo ""
+      echo "----解锁状态检测-----------"
       echo "1. ChatGPT解锁状态检测"
       echo "2. Region流媒体解锁测试"
       echo "3. yeahwu流媒体解锁检测"
-      echo "4. besttrace三网回程延迟路由测试"
-      echo "5. mtr_trace三网回程线路测试"
-      echo "6. Superspeed三网测速"
-      echo "7. yabs性能带宽测试"
-      echo "8. bench性能测试"
-      echo "------------------------"
-      echo -e "9. spiritysdx融合怪测评 \033[33mNEW\033[0m"
+      echo ""
+      echo "----网络线路测速-----------"
+      echo "11. besttrace三网回程延迟路由测试"
+      echo "12. mtr_trace三网回程线路测试"
+      echo "13. Superspeed三网测速"
+      echo "14. nxtrace快速回程测试脚本"
+      echo "15. nxtrace指定IP回程测试脚本"
+      echo "16. ludashi2020三网线路测试"
+      echo ""
+      echo "----硬件性能测试----------"
+      echo "21. yabs性能测试"
+      echo "22. icu/gb5 CPU性能测试脚本"
+      echo ""
+      echo "----综合性测试-----------"
+      echo "31. bench性能测试"
+      echo "32. spiritysdx融合怪测评"
+      echo ""
       echo "------------------------"
       echo "0. 返回主菜单"
       echo "------------------------"
@@ -1435,34 +1448,79 @@ EOF
               install wget
               wget -qO- https://github.com/yeahwu/check/raw/main/check.sh | bash
               ;;
-          4)
+          11)
               clear
               install wget
               wget -qO- git.io/besttrace | bash
               ;;
-          5)
+          12)
               clear
               curl https://raw.githubusercontent.com/zhucaidan/mtr_trace/main/mtr_trace.sh | bash
               ;;
-          6)
+          13)
               clear
               bash <(curl -Lso- https://git.io/superspeed_uxh)
               ;;
-          7)
+          14)
               clear
+              curl nxtrace.org/nt |bash
+              nexttrace --fast-trace --tcp
+              ;;
+          15)
+              clear
+
+              echo "可参考的IP列表"
+              echo "------------------------"
+              echo "北京电信: 219.141.136.12"
+              echo "北京联通: 202.106.50.1"
+              echo "北京移动: 221.179.155.161"
+              echo "上海电信: 202.96.209.133"
+              echo "上海联通: 210.22.97.1"
+              echo "上海移动: 211.136.112.200"
+              echo "广州电信: 58.60.188.222"
+              echo "广州联通: 210.21.196.6"
+              echo "广州移动: 120.196.165.24"
+              echo "成都电信: 61.139.2.69"
+              echo "成都联通: 119.6.6.6"
+              echo "成都移动: 211.137.96.205"
+              echo "湖南电信: 36.111.200.100"
+              echo "湖南联通: 42.48.16.100"
+              echo "湖南移动: 39.134.254.6"
+              echo "------------------------"
+
+              read -p "输入一个指定IP: " testip
+              curl nxtrace.org/nt |bash
+              nexttrace $testip
+              ;;
+
+          16)
+              clear
+              curl https://raw.githubusercontent.com/ludashi2020/backtrace/main/install.sh -sSf | sh
+              ;;
+
+          21)
+              clear
+              new_swap=1024
+              add_swap
               curl -sL yabs.sh | bash -s -- -i -5
               ;;
-          8)
+          22)
+              clear
+              new_swap=1024
+              add_swap
+              bash <(curl -sL bash.icu/gb5)
+              ;;
+
+          31)
               clear
               curl -Lso- bench.sh | bash
               ;;
-          9)
+          32)
               clear
               curl -L https://gitlab.com/spiritysdx/za/-/raw/main/ecs.sh -o ecs.sh && chmod +x ecs.sh && bash ecs.sh
               ;;
           0)
               back_main
-
               ;;
           *)
               echo "无效的输入!"
@@ -5165,6 +5223,13 @@ EOF
     done
     ;;
 
+  up)
+    cd ~
+    curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/ludo.sh && chmod +x ludo.sh && ./ludo.sh
+    echo "脚本已更新到最新版本！"
+    break_end
+    back_main
+    ;;
 
   0)
     clear
