@@ -5226,6 +5226,7 @@ EOF
   up)
     cd ~
     curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/ludo.sh && chmod +x ludo.sh
+    ln -sf ~/ludo.sh /usr/local/bin/ludo
     echo ""
     echo "Current Version:V1.0.0"
     echo "脚本已更新到最新版本！"
