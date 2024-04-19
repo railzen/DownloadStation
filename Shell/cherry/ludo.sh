@@ -1,7 +1,7 @@
 #!/bin/bash
 ln -sf ~/ludo.sh /usr/local/bin/ludo
 
-main_version="V1.0.5 Build240420"
+main_version="V1.0.0 Build240420"
 
 ip_address() {
 ipv4_address=$(curl -s ipv4.ip.sb)
