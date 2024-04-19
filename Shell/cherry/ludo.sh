@@ -5229,7 +5229,7 @@ EOF
     rm update_log.sh
     curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/ludo.sh && chmod +x ludo.sh
     echo ""
-    echo "Current Version:V1.0.0"
+    echo "Current Version:V1.0.1"
     echo "脚本已更新到最新版本！"
     break_end
     back_main
