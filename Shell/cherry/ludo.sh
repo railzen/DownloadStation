@@ -5225,8 +5225,6 @@ EOF
 
   up)
     cd ~
-        curl -sS -O https://raw.githubusercontent.com/kejilion/sh/main/update_log.sh && chmod +x update_log.sh && ./update_log.sh
-    rm update_log.sh
     curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/ludo.sh && chmod +x ludo.sh
     echo ""
     echo "Current Version:V1.0.1"
