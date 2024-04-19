@@ -583,7 +583,7 @@ echo "12. Hysteria2脚本 "
 echo "13. 系统工具 ▶ "
 echo "14. 面板工具 ▶ "
 echo "------------------------"
-echo "up. 脚本更新"
+echo "99. 脚本更新"
 echo "------------------------"
 echo "0. 退出脚本"
 echo "------------------------"
@@ -5224,7 +5224,7 @@ EOF
     done
     ;;
 
-  up)
+  99)
     cd ~
     curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/ludo.sh && chmod +x ludo.sh
     rm -f /usr/local/bin/ludo
