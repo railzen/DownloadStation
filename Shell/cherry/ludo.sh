@@ -3984,6 +3984,10 @@ EOF
                 cloudflare_ipv6="2606:4700:4700::1111"
                 google_ipv6="2001:4860:4860::8888"
 
+                # 禁用systemd-resolved.service
+                systemctl stop systemd-resolved.service
+                systemctl disable systemd-resolved.service
+   
                 # 检查机器是否有IPv6地址
                 ipv6_available=0
                 if [[ $(ip -6 addr | grep -c "inet6") -gt 0 ]]; then
