@@ -1,7 +1,7 @@
 #!/bin/bash
 ln -sf ~/ludo.sh /usr/local/bin/ludo
 
-main_version="V1.0.1 Build240422"
+main_version="V1.0.2 Build240422"
 
 ip_address() {
 ipv4_address=$(curl -s ipv4.ip.sb)
@@ -3987,8 +3987,9 @@ EOF
                 google_ipv6="2001:4860:4860::8888"
 
                 # 禁用systemd-resolved.service
-                #systemctl stop systemd-resolved.service
-                #systemctl disable systemd-resolved.service
+                systemctl stop systemd-resolved.service
+                systemctl disable systemd-resolved.service
+                rm -f /etc/resolv.conf
    
                 # 检查机器是否有IPv6地址
                 ipv6_available=0
