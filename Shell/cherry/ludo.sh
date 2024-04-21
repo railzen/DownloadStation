@@ -1824,6 +1824,8 @@ case $choice in
     echo "------------------------"
     echo "系统版本: $os_info"
     echo "Linux版本: $kernel_version"
+    echo -n "Linux内核版本: "
+    cat /proc/version
     echo "------------------------"
     echo "CPU架构: $cpu_arch"
     echo "CPU型号: $cpu_info"
@@ -3985,8 +3987,8 @@ EOF
                 google_ipv6="2001:4860:4860::8888"
 
                 # 禁用systemd-resolved.service
-                systemctl stop systemd-resolved.service
-                systemctl disable systemd-resolved.service
+                #systemctl stop systemd-resolved.service
+                #systemctl disable systemd-resolved.service
    
                 # 检查机器是否有IPv6地址
                 ipv6_available=0
