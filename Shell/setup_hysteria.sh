@@ -13,6 +13,10 @@ function rand() {
  echo $(($num%$max+$min)) 
 }  
 
+ip_address() {
+ipv4=$(curl -s ipv4.ip.sb)
+ipv6_address=$(curl -s --max-time 1 ipv6.ip.sb)
+}
 
 echoContent() {
     case $1 in
@@ -48,7 +52,8 @@ setup_hysteria() {
 apt -y install net-tools
 
 #变量初始化，这里ip使用ifconfig只是因为我想顺手装上
-ipv4=`ifconfig | grep 'inet[^6]' | awk '{print $2}' | cut -d/ -f1 | grep -v "127.0.0.1"`
+#ipv4=`ifconfig | grep 'inet[^6]' | awk '{print $2}' | cut -d/ -f1 | grep -v "127.0.0.1"`
+ip_address
 port=$(rand 10000 59999) 
 uuid=$(cat /dev/urandom | od -x | head -1 | awk '{print $2$3"-"$4"-"$5"-"$6"-"$7$8$9}')
 
