@@ -185,9 +185,9 @@ curl -sS -O https://raw.githubusercontent.com/kejilion/sh/main/kejilion.sh && ch
 
 **Windows：** [v2rayN下载](https://github.com/2dust/v2rayN/releases)
 
-**安卓：** [V2RayNG](https://github.com/2dust/v2rayNG/releases)  [NekoBox下载](https://github.com/MatsuriDayo/NekoBoxForAndroid/releases/tag/1.2.9)
+**安卓：** [V2RayNG](https://github.com/2dust/v2rayNG/releases)     [NekoBox下载](https://github.com/MatsuriDayo/NekoBoxForAndroid/releases/tag/1.2.9)
 
-**苹果MAC OS**： [V2RayU下载](https://github.com/yanue/V2rayU/releases)  [NekoRay下载](https://github.com/abbasnaqdi/nekoray-macos/releases/)
+**苹果MAC OS**： [V2RayU下载](https://github.com/yanue/V2rayU/releases)     [NekoRay下载](https://github.com/abbasnaqdi/nekoray-macos/releases/)
 
 # 结尾
 
