@@ -87,7 +87,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.
 
 
 
-### 4、[可选] 证书申请（开TLS提升安全性必备）
+### 4、证书申请
 
 [ping工具（检测解析域名是否生效）](https://ping.chinaz.com/)
 
