@@ -87,7 +87,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.
 
 
 
-### 4、证书申请
+### 4、证书申请(可选)
 
 [ping工具（检测解析域名是否生效）](https://ping.chinaz.com/)
 
@@ -185,7 +185,7 @@ curl -sS -O https://raw.githubusercontent.com/kejilion/sh/main/kejilion.sh && ch
 
 **Windows：** [v2rayN下载](https://github.com/2dust/v2rayN/releases)
 
-**安卓：** [V2RayNG](https://github.com/2dust/v2rayNG/releases)     [NekoBox下载](https://github.com/MatsuriDayo/NekoBoxForAndroid/releases/tag/1.2.9)
+**安卓：** [V2RayNG](https://github.com/2dust/v2rayNG/releases)     [NekoBox下载](https://github.com/MatsuriDayo/NekoBoxForAndroid/releases/)
 
 **苹果MAC OS**： [V2RayU下载](https://github.com/yanue/V2rayU/releases)     [NekoRay下载](https://github.com/abbasnaqdi/nekoray-macos/releases/)
 
@@ -242,3 +242,92 @@ www.google-analytics.com
 # TVB
 www.mytvsuper.com
 ```
+
+
+
+#### 附录2 DNS优化有关内容
+
+##### 系统服务- systemd-resolved.service
+
+在Linux系统下关闭DNS服务有多种方法，以下是其中一种常见的方法：
+
+1. 使用Systemd管理DNS服务：
+
+   – 打开终端并以root用户身份登录。
+   – 使用以下命令停止DNS服务：`systemctl stop systemd-resolved.service`
+   – 禁用DNS服务自启动：`systemctl disable systemd-resolved.service`
+   – 修改`/etc/resolv.conf`文件，将`nameserver 127.0.0.53`改为其他DNS服务器的IP地址。例如，你可以使用谷歌的DNS服务器IP地址：`nameserver 8.8.8.8`
+
+2. 使用NetworkManager管理DNS服务：
+
+   – 打开终端并以root用户身份登录。
+   – 使用以下命令停止NetworkManager服务：`systemctl stop NetworkManager.service`
+   – 编辑`/etc/NetworkManager/NetworkManager.conf`文件，找到`[main]`部分，在其下方添加以下内容：
+     “`
+     dns=none
+     “`
+   – 保存文件并重新启动NetworkManager服务：`systemctl start NetworkManager.service`
+
+3. 临时禁用DNS服务：
+
+   – 打开终端并以root用户身份登录。
+   – 使用以下命令修改`/etc/resolv.conf`文件，将原来的DNS服务器IP地址注释掉或删除，然后保存文件。
+   – 使用以下命令禁用文件的写入权限，防止系统自动更新该文件：`chattr +i /etc/resolv.conf`
+
+请注意，在关闭DNS服务后，你将无法解析域名，因此在进行此操作前，请确保你知道如何手动配置IP地址和DNS服务器IP地址，以确保网络正常工作。
+
+
+
+##### 软件功能-resolvconf软件
+
+1、首先安装 resolvconf 如果未安装
+
+```
+apt update
+apt install resolvconf
+```
+
+2、检查已启动并启用的解析服务
+
+```
+systemctl status resolvconf.service
+```
+3、如果未启用服务，则可以通过以下方式启动和启用它： 
+```
+systemctl start resolvconf.service
+systemctl enable resolvconf.service
+```
+4、现在编辑 resolv.conf.d/head 配置文件
+```
+vim /etc/resolvconf/resolv.conf.d/head
+```
+5、将您的 DNS 地址添加到此文件中，例如我使用（223.5.5.5 和 223.6.6.6） 
+
+```
+nameserver 223.5.5.5 
+nameserver 223.6.6.6 
+```
+6、现在强制 resolvevconf 在使用 -u 调用时运行更新脚本 
+
+```
+resolvconf --enable-updates 
+```
+7、现在运行更新
+
+```
+resolvconf -u
+```
+ 8、修改 /etc/resolv.conf 文件链接
+```
+rm -rf /etc/resolv.conf
+ln -sf /run/resolvconf/resolv.conf /etc/resolv.conf
+```
+9、现在，如果您检查，则必须在此文件中查看您的DNS配置，如果不尝试这些命令并再次检查
+
+```
+cat /etc/resolv.conf 
+
+systemctl restart resolvconf.service
+systemctl restart systemd-resolved.service
+```
+
