@@ -3764,8 +3764,16 @@ EOF
 
   11)
     clear
-    install net-tools
-    bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
+    #询问用户是否要安装3XUI
+    read -p "是否要安装3X-UI最新版？(y/n): " choice
+    if [ "$choice" == "y" ]; then
+        clear
+        install net-tools
+        bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
+    else
+        back_main
+    fi
+
     ;;
 
   12)
