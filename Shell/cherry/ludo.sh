@@ -1,7 +1,7 @@
 #!/bin/bash
 ln -sf ~/ludo.sh /usr/local/bin/ludo
 
-main_version="V1.0.2 Build240422"
+main_version="V1.0.3 Build240506"
 
 ip_address() {
 ipv4_address=$(curl -s ipv4.ip.sb)
@@ -4254,6 +4254,8 @@ EOF
             echo "------------------------"
             echo "1. IPv4 优先          2. IPv6 优先"
             echo "------------------------"
+            echo "0. 返回主菜单"
+            echo "------------------------"
             read -p "选择优先的网络: " choice
 
             case $choice in
@@ -4266,6 +4268,9 @@ EOF
                     sysctl -w net.ipv6.conf.all.disable_ipv6=0 > /dev/null 2>&1
                     openipv6 > /dev/null 2>&1
                     echo "已切换为 IPv6 优先,可能需要重启！"
+                    ;;
+                0)
+                    back_main
                     ;;
                 *)
                     echo "无效的选择"
