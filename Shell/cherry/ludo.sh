@@ -5248,7 +5248,7 @@ EOF
     ;;
     
   15)
-    curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/change_ip_perfer.sh && chmod +x change_ip_perfer.sh && ./change_ip_perfer.sh
+    curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/change_ip_perfer.sh && chmod +x change_ip_perfer.sh && ./change_ip_perfer.sh
     ;;
 
   99)
