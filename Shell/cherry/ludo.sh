@@ -1,7 +1,7 @@
 #!/bin/bash
 ln -sf ~/ludo.sh /usr/local/bin/ludo
 
-main_version="V1.0.3 Build240506"
+main_version="V1.0.4 Build240507"
 
 ip_address() {
 ipv4_address=$(curl -s ipv4.ip.sb)
@@ -1718,6 +1718,7 @@ echo "11. 安装3X-UI"
 echo "12. Hysteria2脚本 "
 echo "13. 系统工具 ▶ "
 echo "14. 面板工具 ▶ "
+echo "15. 切换优先IPV4/IPV6 "
 echo "------------------------"
 echo "99. 脚本更新"
 echo "------------------------"
@@ -5244,6 +5245,10 @@ EOF
 
   14)
     panel_tools
+    ;;
+    
+  15)
+    bash <(curl -Lso- https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/change_ip_perfer.sh)
     ;;
 
   99)
