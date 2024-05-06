@@ -1,7 +1,7 @@
 #!/bin/bash
 ln -sf ~/ludo.sh /usr/local/bin/ludo
 
-main_version="V1.0.2 Build240422"
+main_version="V1.0.3 Build240506"
 
 ip_address() {
 ipv4_address=$(curl -s ipv4.ip.sb)
@@ -3764,8 +3764,16 @@ EOF
 
   11)
     clear
-    install net-tools
-    bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
+    #询问用户是否要安装3XUI
+    read -p "是否要安装3X-UI最新版？(y/n): " choice
+    if [ "$choice" == "y" ]; then
+        clear
+        install net-tools
+        bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
+    else
+        back_main
+    fi
+
     ;;
 
   12)
@@ -3981,7 +3989,7 @@ EOF
 
             if [ "$choice" == "y" ]; then
                 # 定义DNS地址
-                cloudflare_ipv4="1.1.1.1"
+                cloudflare_ipv4="1.0.0.1"
                 google_ipv4="8.8.8.8"
                 cloudflare_ipv6="2606:4700:4700::1111"
                 google_ipv6="2001:4860:4860::8888"
@@ -4254,6 +4262,8 @@ EOF
             echo "------------------------"
             echo "1. IPv4 优先          2. IPv6 优先"
             echo "------------------------"
+            echo "0. 返回主菜单"
+            echo "------------------------"
             read -p "选择优先的网络: " choice
 
             case $choice in
@@ -4266,6 +4276,9 @@ EOF
                     sysctl -w net.ipv6.conf.all.disable_ipv6=0 > /dev/null 2>&1
                     openipv6 > /dev/null 2>&1
                     echo "已切换为 IPv6 优先,可能需要重启！"
+                    ;;
+                0)
+                    back_main
                     ;;
                 *)
                     echo "无效的选择"
