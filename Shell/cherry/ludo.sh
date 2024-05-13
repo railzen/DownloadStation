@@ -4010,8 +4010,8 @@ EOF
                 echo "设置DNS为Cloudflare和Google"
 
                 # 设置IPv4地址
-                echo "nameserver $cloudflare_ipv4" > /etc/resolv.conf
-                echo "nameserver $google_ipv4" >> /etc/resolv.conf
+                echo "nameserver $google_ipv4" > /etc/resolv.conf
+                echo "nameserver $cloudflare_ipv4" >> /etc/resolv.conf
 
                 # 如果有IPv6地址，则设置IPv6地址
                 if [[ $ipv6_available -eq 1 ]]; then
