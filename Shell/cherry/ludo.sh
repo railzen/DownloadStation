@@ -1,14 +1,12 @@
 #!/bin/bash
 ln -sf ~/ludo.sh /usr/local/bin/ludo
 
-main_version="V1.0.4 Build240507"
+main_version="V1.0.5 Build240515"
 
 ip_address() {
 ipv4_address=$(curl -s ipv4.ip.sb)
 ipv6_address=$(curl -s --max-time 1 ipv6.ip.sb)
 }
-
-
 
 install() {
     if [ $# -eq 0 ]; then
@@ -1719,6 +1717,7 @@ echo "12. Hysteria2脚本 "
 echo "13. 系统工具 ▶ "
 echo "14. 面板工具 ▶ "
 echo "15. 切换优先IPV4/IPV6 "
+echo "16. 安装Snell V4 "
 echo "------------------------"
 echo "99. 脚本更新"
 echo "------------------------"
@@ -5249,6 +5248,11 @@ EOF
     
   15)
     curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/change_ip_perfer.sh && chmod +x change_ip_perfer.sh && ./change_ip_perfer.sh
+    ;;
+    
+  16)
+    bash -c "$(curl -sL https://raw.githubusercontent.com/railzen/DownloadStation/main/snell/snell.sh)"
+    exit 0
     ;;
 
   99)
