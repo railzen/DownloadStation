@@ -5,7 +5,6 @@ main_version="V1.0.5 Build240515"
 
 
 main_menu_start() {
-
 while true; do
 clear
 echo -e "\033[96m   _____ _    _ ______ _____  _______     __"
@@ -30,11 +29,10 @@ echo "7. WARP管理 ▶ "
 echo "8. 测试脚本合集 ▶ "
 echo "9. 甲骨文云脚本合集 ▶ "
 echo "10. 安装Snell V4 "
-echo "11. 安装3X-UI"
-echo "12. Hysteria2脚本 "
+echo "11. Hysteria2脚本 "
+echo "12. 安装3X-UI"
 echo "13. 系统工具 ▶ "
 echo "14. 面板工具 ▶ "
-echo "15. 切换优先IPV4/IPV6 "
 echo "------------------------"
 echo "99. 脚本更新"
 echo "------------------------"
@@ -1124,7 +1122,14 @@ EOF
     fi
 
     ;;
+
   11)
+    clear
+    curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/setup_hysteria.sh && chmod +x setup_hysteria.sh && ./setup_hysteria.sh
+    exit
+    ;;
+
+  12)
     clear
     #询问用户是否要安装3XUI
     read -p "是否要安装3X-UI最新版？(y/n): " choice
@@ -1137,19 +1142,12 @@ EOF
     fi
     ;;
 
-  12)
-    clear
-    curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/setup_hysteria.sh && chmod +x setup_hysteria.sh && ./setup_hysteria.sh
-    exit
-    ;;
-
   13)
     while true; do
       clear
       echo "▶ 系统工具"
       echo "------------------------"
       echo "1. 设置脚本启动快捷键"
-      echo "------------------------"
       echo "2. 修改ROOT密码"
       echo "3. 开启ROOT密码登录模式"
       echo "4. 安装Python最新版"
@@ -1622,6 +1620,7 @@ EOF
             echo "切换的网络优先级"
             echo "------------------------"
             echo "1. IPv4 优先          2. IPv6 优先"
+            echo "3. 高级设置"
             echo "------------------------"
             echo "0. 返回主菜单"
             echo "------------------------"
@@ -1638,6 +1637,12 @@ EOF
                     openipv6 > /dev/null 2>&1
                     echo "已切换为 IPv6 优先,可能需要重启！"
                     ;;
+                    
+                3)
+                clear
+                curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/change_ip_perfer.sh && chmod +x change_ip_perfer.sh && ./change_ip_perfer.sh
+                ;;
+
                 0)
                     back_main
                     ;;
@@ -2606,10 +2611,6 @@ EOF
   14)
     panel_tools
     ;;
-    
-  15)
-    curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/change_ip_perfer.sh && chmod +x change_ip_perfer.sh && ./change_ip_perfer.sh
-    ;;
 
 
   99)
@@ -3043,6 +3044,12 @@ nginx_status() {
 
 }
 
+open_firewall_port() {
+    ufw allow $1
+    sed -i "/COMMIT/i -A INPUT -p tcp --dport $1 -j ACCEPT" /etc/iptables/rules.v4
+    sed -i "/COMMIT/i -A INPUT -p udp --dport $1 -j ACCEPT" /etc/iptables/rules.v4
+    iptables-restore < /etc/iptables/rules.v4
+}
 
 add_yuming() {
       ip_address

@@ -1,5 +1,11 @@
 #!/bin/bash
 
+open_firewall_port() {
+    ufw allow $1
+    sed -i "/COMMIT/i -A INPUT -p tcp --dport $1 -j ACCEPT" /etc/iptables/rules.v4
+    sed -i "/COMMIT/i -A INPUT -p udp --dport $1 -j ACCEPT" /etc/iptables/rules.v4
+    iptables-restore < /etc/iptables/rules.v4
+}
 
 # Install dependencies based on the Linux distribution
 if cat /etc/*-release | grep -q -E -i "debian|ubuntu|armbian|deepin|mint"; then
@@ -49,7 +55,7 @@ echo "y" | sudo ./snell-server
 sudo systemctl start snell
 sudo systemctl enable snell
 
-ufw allow $(cat snell-server.conf | grep -i listen | cut --delimiter=':' -f2)
+open_firewall_port $(cat snell-server.conf | grep -i listen | cut --delimiter=':' -f2)
 
 # print snell server info
 echo
