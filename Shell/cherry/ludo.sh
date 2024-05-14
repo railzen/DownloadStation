@@ -1114,24 +1114,16 @@ EOF
 
 
   10)
-    clear
-    echo "即将安装Snell V4 "
-    read -p "确定继续吗？(Y/N): " choice
-    case "$choice" in
-    [Yy])
-    bash -c "$(curl -sL https://raw.githubusercontent.com/railzen/DownloadStation/main/snell/snell.sh)"
-    exit 0
-      ;;
-    [Nn])
-      echo "已取消"
-      ;;
-    *)
-    echo "无效的输入!"
-    ;;
+    #询问用户是否要安装3XUI
+    read -p "是否要安装Snell V4？(y/n): " choice
+    if [ "$choice" == "y" ]; then
+        clear
+        bash -c "$(curl -sL https://raw.githubusercontent.com/railzen/DownloadStation/main/snell/snell.sh)"
+    else
+        back_main
+    fi
 
-    back_main
     ;;
-
   11)
     clear
     #询问用户是否要安装3XUI
@@ -1143,7 +1135,6 @@ EOF
     else
         back_main
     fi
-
     ;;
 
   12)
