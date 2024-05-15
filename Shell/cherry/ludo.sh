@@ -2,6 +2,13 @@
 #cp ./ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
 ln -sf ~/ludo.sh /usr/local/bin/ludo
 
+Yellow='\033[33m'
+White='\033[0m'
+Green='\033[0;32m'
+Blue='\033[0;34m'
+Red='\033[31m'
+Gray='\e[37m'
+
 main_version="V1.0.6 Build240516"
 
 main_menu_start() {
@@ -514,7 +521,7 @@ case $choice in
                           docker stop $(docker ps -q)
                           ;;
                       8)
-                          read -p "$(echo -e "${hong}确定删除所有容器吗？(Y/N): ${bai}")" choice
+                          read -p "$(echo -e "${Red}确定删除所有容器吗？(Y/N): ${White}")" choice
                           case "$choice" in
                             [Yy])
                               docker rm -f $(docker ps -a -q)
@@ -602,7 +609,7 @@ case $choice in
                           docker rmi -f $dockername
                           ;;
                       4)
-                          read -p "$(echo -e "${hong}确定删除所有镜像吗？(Y/N): ${bai}")" choice
+                          read -p "$(echo -e "${Red}确定删除所有镜像吗？(Y/N): ${White}")" choice
                           case "$choice" in
                             [Yy])
                               docker rmi -f $(docker images -q)
@@ -735,7 +742,7 @@ case $choice in
               ;;
           7)
               clear
-              read -p "$(echo -e "${huang}确定清理无用的镜像容器网络吗？(Y/N): ${bai}")" choice
+              read -p "$(echo -e "${Yellow}确定清理无用的镜像容器网络吗？(Y/N): ${White}")" choice
               case "$choice" in
                 [Yy])
                   docker system prune -af --volumes
@@ -749,7 +756,7 @@ case $choice in
               ;;
           8)
               clear
-              read -p "$(echo -e "${hong}确定卸载docker环境吗？(Y/N): ${bai}")" choice
+              read -p "$(echo -e "${Red}确定卸载docker环境吗？(Y/N): ${White}")" choice
               case "$choice" in
                 [Yy])
                   docker rm $(docker ps -a -q) && docker rmi $(docker images -q) && docker network prune
@@ -1123,9 +1130,9 @@ case $choice in
             OS=$(cat /etc/os-release | grep -o -E "Debian|Ubuntu|CentOS" | head -n 1)
 
             if [[ $OS == "Debian" || $OS == "Ubuntu" || $OS == "CentOS" ]]; then
-                echo -e "检测到你的系统是 ${huang}${OS}${bai}"
+                echo -e "检测到你的系统是 ${Yellow}${OS}${White}"
             else
-                echo -e "${hong}很抱歉，你的系统不受支持！${bai}"
+                echo -e "${Red}很抱歉，你的系统不受支持！${White}"
                 exit 1
             fi
 
@@ -1137,7 +1144,7 @@ case $choice in
 
             # 卸载Python3旧版本
             if [[ $VERSION == "3"* ]]; then
-                echo -e "${huang}你的Python3版本是${bai}${hong}${VERSION}${bai}，${huang}最新版本是${bai}${hong}${PY_VERSION}${bai}"
+                echo -e "${Yellow}你的Python3版本是${White}${Red}${VERSION}${White}，${Yellow}最新版本是${White}${Red}${PY_VERSION}${White}"
                 read -p "是否确认升级最新版Python3？默认不升级 [y/N]: " CONFIRM
                 if [[ $CONFIRM == "y" ]]; then
                     if [[ $OS == "CentOS" ]]; then
@@ -1148,16 +1155,16 @@ case $choice in
                         rm-rf /usr/local/python3*
                     fi
                 else
-                    echo -e "${huang}已取消升级Python3${bai}"
+                    echo -e "${Yellow}已取消升级Python3${White}"
                     exit 1
                 fi
             else
-                echo -e "${hong}检测到没有安装Python3。${bai}"
+                echo -e "${Red}检测到没有安装Python3。${White}"
                 read -p "是否确认安装最新版Python3？默认安装 [Y/n]: " CONFIRM
                 if [[ $CONFIRM != "n" ]]; then
-                    echo -e "${lv}开始安装最新版Python3...${bai}"
+                    echo -e "${Green}开始安装最新版Python3...${White}"
                 else
-                    echo -e "${huang}已取消安装Python3${bai}"
+                    echo -e "${Yellow}已取消安装Python3${White}"
                     exit 1
                 fi
             fi
@@ -1186,10 +1193,10 @@ case $choice in
                 ln -sf /usr/local/python3/bin/python3 /usr/bin/python3
                 ln -sf /usr/local/python3/bin/pip3 /usr/bin/pip3
                 clear
-                echo -e "${huang}Python3安装${lv}成功，${bai}版本为: ${bai}${lv}${PY_VERSION}${bai}"
+                echo -e "${Yellow}Python3安装${Green}成功，${White}版本为: ${White}${Green}${PY_VERSION}${White}"
             else
                 clear
-                echo -e "${hong}Python3安装失败！${bai}"
+                echo -e "${Red}Python3安装失败！${White}"
                 exit 1
             fi
             cd /root/ && rm -rf Python-${PY_VERSION}.tgz && rm -rf Python-${PY_VERSION}
@@ -1245,14 +1252,14 @@ case $choice in
           8)
 
           dd_xitong_2() {
-            echo -e "任意键继续，重装后初始用户名: ${huang}root${bai}  初始密码: ${huang}LeitboGi0ro${bai}  初始端口: ${huang}22${bai}"
+            echo -e "任意键继续，重装后初始用户名: ${Yellow}root${White}  初始密码: ${Yellow}LeitboGi0ro${White}  初始端口: ${Yellow}22${White}"
             read -n 1 -s -r -p ""
             install wget
             wget --no-check-certificate -qO InstallNET.sh 'https://raw.githubusercontent.com/leitbogioro/Tools/master/Linux_reinstall/InstallNET.sh' && chmod a+x InstallNET.sh
           }
 
           dd_xitong_3() {
-            echo -e "任意键继续，重装后初始用户名: ${huang}Administrator${bai}  初始密码: ${huang}Teddysun.com${bai}  初始端口: ${huang}3389${bai}"
+            echo -e "任意键继续，重装后初始用户名: ${Yellow}Administrator${White}  初始密码: ${Yellow}Teddysun.com${White}  初始端口: ${Yellow}3389${White}"
             read -n 1 -s -r -p ""
             install wget
             wget --no-check-certificate -qO InstallNET.sh 'https://raw.githubusercontent.com/leitbogioro/Tools/master/Linux_reinstall/InstallNET.sh' && chmod a+x InstallNET.sh
@@ -1260,7 +1267,7 @@ case $choice in
 
           root_use
           echo "请备份数据，将为你重装系统，预计花费15分钟。"
-          echo -e "${hui}感谢MollyLau的脚本支持！${bai} "
+          echo -e "${Gray}感谢MollyLau的脚本支持！${White} "
           read -p "确定继续吗？(Y/N): " choice
 
           case "$choice" in
@@ -2440,9 +2447,9 @@ EOF
             if [ -f ~/Limiting_Shut_down.sh ]; then
                 # 获取 threshold_gb 的值
                 threshold_gb=$(grep -oP 'threshold_gb=\K\d+' ~/Limiting_Shut_down.sh)
-                echo -e "当前设置的限流阈值为 ${hang}${threshold_gb}${bai}GB"
+                echo -e "当前设置的限流阈值为 ${hang}${threshold_gb}${White}GB"
             else
-                echo -e "${hui}前未启用限流关机功能${bai}"
+                echo -e "${Gray}前未启用限流关机功能${White}"
             fi
 
             echo
@@ -2789,9 +2796,9 @@ EOF
                 timeout=3
 
                 if echo "quit" | timeout $timeout telnet smtp.qq.com $port | grep 'Connected'; then
-                  echo -e "${lv}端口 $port 当前可用${bai}"
+                  echo -e "${Green}端口 $port 当前可用${White}"
                 else
-                  echo -e "${hong}端口 $port 当前不可用${bai}"
+                  echo -e "${Red}端口 $port 当前不可用${White}"
                 fi
                 echo "------------------------"
                 echo ""
@@ -3668,7 +3675,7 @@ remove() {
 
 
 break_end() {
-      echo -e "${lv}操作完成${bai}"
+      echo -e "${Green}操作完成${White}"
       echo "按任意键继续..."
       read -n 1 -s -r -p ""
       echo ""
@@ -3734,7 +3741,7 @@ check_port() {
             echo ""
         else
             clear
-            echo -e "${hong}端口 ${huang}$PORT${hong} 已被占用，无法安装环境，卸载以下程序后重试！${bai}"
+            echo -e "${Red}端口 ${Yellow}$PORT${Red} 已被占用，无法安装环境，卸载以下程序后重试！${White}"
             echo "$result"
             break_end
             back_main
@@ -3818,7 +3825,7 @@ add_swap() {
         echo "/swapfile swap swap defaults 0 0" >> /etc/fstab
     fi
 
-    echo -e "虚拟内存大小已调整为${huang}${new_swap}${bai}MB"
+    echo -e "虚拟内存大小已调整为${Yellow}${new_swap}${White}MB"
 }
 
 
@@ -3866,7 +3873,7 @@ openssl req -x509 -nodes -newkey rsa:2048 -keyout /home/web/certs/default_server
 
 add_yuming() {
       ip_address
-      echo -e "先将域名解析到本机IP: ${huang}$ipv4_address  $ipv6_address${bai}"
+      echo -e "先将域名解析到本机IP: ${Yellow}$ipv4_address  $ipv6_address${White}"
       read -p "请输入你解析的域名: " yuming
 }
 
@@ -4034,7 +4041,7 @@ f2b_sshd() {
 
 server_reboot() {
 
-    read -p "$(echo -e "${huang}现在重启服务器吗？(Y/N): ${bai}")" rboot
+    read -p "$(echo -e "${Yellow}现在重启服务器吗？(Y/N): ${White}")" rboot
     case "$rboot" in
       [Yy])
         echo "已重启"
@@ -4331,7 +4338,7 @@ chmod 600 ~/.ssh/authorized_keys
 
 
 ip_address
-echo -e "私钥信息已生成，务必复制保存，可保存成 ${huang}${ipv4_address}_ssh.key${bai} 文件，用于以后的SSH登录"
+echo -e "私钥信息已生成，务必复制保存，可保存成 ${Yellow}${ipv4_address}_ssh.key${White} 文件，用于以后的SSH登录"
 echo "--------------------------------"
 cat ~/.ssh/sshkey
 echo "--------------------------------"
@@ -4341,7 +4348,7 @@ sed -i -e 's/^\s*#\?\s*PermitRootLogin .*/PermitRootLogin prohibit-password/' \
        -e 's/^\s*#\?\s*PubkeyAuthentication .*/PubkeyAuthentication yes/' \
        -e 's/^\s*#\?\s*ChallengeResponseAuthentication .*/ChallengeResponseAuthentication no/' /etc/ssh/sshd_config
 rm -rf /etc/ssh/sshd_config.d/* /etc/ssh/ssh_config.d/*
-echo -e "${lv}ROOT私钥登录已开启，已关闭ROOT密码登录，重连将会生效${bai}"
+echo -e "${Green}ROOT私钥登录已开启，已关闭ROOT密码登录，重连将会生效${White}"
 
 }
 
@@ -4354,7 +4361,7 @@ sed -i 's/^\s*#\?\s*PermitRootLogin.*/PermitRootLogin yes/g' /etc/ssh/sshd_confi
 sed -i 's/^\s*#\?\s*PasswordAuthentication.*/PasswordAuthentication yes/g' /etc/ssh/sshd_config;
 rm -rf /etc/ssh/sshd_config.d/* /etc/ssh/ssh_config.d/*
 restart_ssh
-echo -e "${lv}ROOT登录设置完毕！${bai}"
+echo -e "${Green}ROOT登录设置完毕！${White}"
 server_reboot
 
 
@@ -4363,7 +4370,7 @@ server_reboot
 
 root_use() {
 clear
-[ "$EUID" -ne 0 ] && echo -e "${huang}请注意，该功能需要root用户才能运行！${bai}" && break_end && back_main
+[ "$EUID" -ne 0 ] && echo -e "${Yellow}请注意，该功能需要root用户才能运行！${White}" && break_end && back_main
 }
 
 
