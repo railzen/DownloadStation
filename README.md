@@ -46,15 +46,7 @@ yum install -y wget
 
 目前常用的有宝塔面板和1Panel  [宝塔面板官网](https://www.bt.cn/new/download.html)  [1Panel官网](https://1panel.cn/docs/installation/online_installation)
 
-##### 一键安装宝塔：
 
-```
-if [ -f /usr/bin/curl ];then curl -sSO https://download.bt.cn/install/install_panel.sh;else wget -O install_panel.sh https://download.bt.cn/install/install_panel.sh;fi;bash install_panel.sh ed8484bec
-```
-面板降级
-```
-curl -L https://github.com/weiwang3056/baota_release/blob/main/LinuxPanel/LinuxPanel-7.9.10.zip\?raw\=true > LinuxPanel-7.9.10.zip && unzip LinuxPanel-7.9.10.zip && chmod 700 ./panel/update.sh && ./panel/update.sh
-```
 ##### 一键安装1Panel：
 Centos：
 
@@ -70,7 +62,11 @@ curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh -o quick_
 ```
 1pctl update password
 ```
+##### 一键安装宝塔：
 
+```
+if [ -f /usr/bin/curl ];then curl -sSO https://download.bt.cn/install/install_panel.sh;else wget -O install_panel.sh https://download.bt.cn/install/install_panel.sh;fi;bash install_panel.sh ed8484bec
+```
 
 
 ### 3、安装x-ui
@@ -89,7 +85,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.
 
 ### 4、证书申请(可选)
 
-[ping工具（检测解析域名是否生效）](https://ping.chinaz.com/)
+[Ping工具](https://ping.chinaz.com/)   [ITDOG](https://www.itdog.cn/ping/)
 
 安装Acme
 
@@ -160,20 +156,14 @@ curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell
 
 # BBR加速
 
-个人备份的魔改bbr脚本地址：
+个人备份的四合一 BBR Plus / 原版BBR一键脚本（Centos 7, Debian 10, Ubuntu 20/22 测试通过）
 
 ```
-https://github.com/railzen/Download-Station/tree/main/BBR/tcp.sh
-```
-
-四合一 BBR Plus / 原版BBR / 魔改BBR一键脚本（Centos 7, Debian 8/9, Ubuntu 16/18 测试通过）
-
-```
-wget -N --no-check-certificate "https://raw.githubusercontent.com/railzen/Download-Station/main/BBR/tcp.sh" && chmod +x tcp.sh && ./tcp.sh
+wget -N --no-check-certificate "https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/BBR/tcp.sh" && chmod +x tcp.sh && ./tcp.sh
 ```
 多内核BBR一键脚本
 ```
-wget -N --no-check-certificate "https://raw.githubusercontent.com/railzen/DownloadStation/main/BBR/tcpx.sh" && chmod +x tcpx.sh && ./tcpx.sh
+wget -N --no-check-certificate "https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/BBR/tcpx.sh" && chmod +x tcpx.sh && ./tcpx.sh
 ```
 **Kejilion 脚本（不建议）**
 
