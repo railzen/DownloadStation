@@ -1,10 +1,11 @@
 #!/bin/bash
 
 open_firewall_port() {
-    ufw allow $1
-    sed -i "/COMMIT/i -A INPUT -p tcp --dport $1 -j ACCEPT" /etc/iptables/rules.v4
-    sed -i "/COMMIT/i -A INPUT -p udp --dport $1 -j ACCEPT" /etc/iptables/rules.v4
-    iptables-restore < /etc/iptables/rules.v4
+    ufw allow $1 > /dev/null 2>&1
+    sudo firewall-cmd --permanent --add-port=$1 > /dev/null 2>&1
+    sed -i "/COMMIT/i -A INPUT -p tcp --dport $1 -j ACCEPT" /etc/iptables/rules.v4 > /dev/null 2>&1
+    sed -i "/COMMIT/i -A INPUT -p udp --dport $1 -j ACCEPT" /etc/iptables/rules.v4 > /dev/null 2>&1
+    iptables-restore < /etc/iptables/rules.v4 > /dev/null 2>&1
 }
 
 # Install dependencies based on the Linux distribution
@@ -60,4 +61,5 @@ open_firewall_port $(cat snell-server.conf | grep -i listen | cut --delimiter=':
 # print snell server info
 echo
 echo "Copy the following line to Surge, under the [Proxy] section:" 
-echo "$(curl -s ipinfo.io/city) = snell, $(curl -s ipinfo.io/ip), $(cat snell-server.conf | grep -i listen | cut --delimiter=':' -f2), psk=$(grep 'psk' snell-server.conf | cut -d= -f2 | tr -d ' '), version=4, tfo=true"
+echo "SnellV4 = snell, $(curl -s ipinfo.io/ip), $(cat snell-server.conf | grep -i listen | cut --delimiter=':' -f2), psk=$(grep 'psk' snell-server.conf | cut -d= -f2 | tr -d ' '), version=4, tfo=true"
+echo "SnellV4 = snell, $(curl -s ipinfo.io/ip), $(cat snell-server.conf | grep -i listen | cut --delimiter=':' -f2), psk=$(grep 'psk' snell-server.conf | cut -d= -f2 | tr -d ' '), version=4, tfo=true" >> ~/Proxy.txt

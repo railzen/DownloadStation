@@ -18,6 +18,14 @@ ipv4=$(curl -s ipv4.ip.sb)
 ipv6_address=$(curl -s --max-time 1 ipv6.ip.sb)
 }
 
+open_firewall_port() {
+    ufw allow $1 > /dev/null 2>&1
+    sudo firewall-cmd --permanent --add-port=$1 > /dev/null 2>&1
+    sed -i "/COMMIT/i -A INPUT -p tcp --dport $1 -j ACCEPT" /etc/iptables/rules.v4 > /dev/null 2>&1
+    sed -i "/COMMIT/i -A INPUT -p udp --dport $1 -j ACCEPT" /etc/iptables/rules.v4 > /dev/null 2>&1
+    iptables-restore < /etc/iptables/rules.v4 > /dev/null 2>&1
+}
+
 echoContent() {
     case $1 in
     # 红色
@@ -95,8 +103,11 @@ EOF
 systemctl restart hysteria-server.service
 systemctl enable hysteria-server.service
 
+open_firewall_port $port
+
 echoContent skyBlue "您可以复制到任意客户端："
 echoContent skyBlue "hysteria2://${uuid}@${ipv4}:${port}?sni=apple.com&insecure=1#Hysteria2\n"
+echo "hysteria2://${uuid}@${ipv4}:${port}?sni=apple.com&insecure=1#Hysteria2\n" >> ~/Proxy.txt
 }
 
 read -r -p "Are your sure to continue?(Y/N)" selectStart
