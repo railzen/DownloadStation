@@ -1470,17 +1470,31 @@ case $choice in
             echo "切换的网络优先级"
             echo "------------------------"
             echo "1. IPv4 优先          2. IPv6 优先"
+            echo "3. 高级设置"
+            echo "------------------------"
+            echo "0. 返回主菜单"
             echo "------------------------"
             read -p "选择优先的网络: " choice
 
             case $choice in
                 1)
                     sysctl -w net.ipv6.conf.all.disable_ipv6=1 > /dev/null 2>&1
-                    echo "已切换为 IPv4 优先"
+                    closeipv6 > /dev/null 2>&1
+                    echo "已切换为 IPv4 优先,可能需要重启！"
                     ;;
                 2)
                     sysctl -w net.ipv6.conf.all.disable_ipv6=0 > /dev/null 2>&1
-                    echo "已切换为 IPv6 优先"
+                    openipv6 > /dev/null 2>&1
+                    echo "已切换为 IPv6 优先,可能需要重启！"
+                    ;;
+                    
+                3)
+                clear
+                curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/change_ip_perfer.sh && chmod +x change_ip_perfer.sh && ./change_ip_perfer.sh
+                ;;
+
+                0)
+                    back_main
                     ;;
                 *)
                     echo "无效的选择"
@@ -2026,7 +2040,7 @@ EOF
           current_hostname=$(hostname)
           echo "当前主机名: $current_hostname"
           read -p "是否要更改主机名？(y/n): " answer
-          if [[ "${answer,,}" == "y" ]]; then
+          if [[ "${answer}" == "y" ]]; then
               # 获取新的主机名
               read -p "请输入新的主机名: " new_hostname
               if [ -n "$new_hostname" ]; then
