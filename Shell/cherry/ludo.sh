@@ -14,8 +14,6 @@ main_version="V1.0.6 Build240516"
 main_menu_start() {
 while true; do
 clear
-
-clear
 echo -e "\033[96m   _____ _    _ ______ _____  _______     __"
 echo "  / ____| |  | |  ____|  __ \|  __ \ \   / /"
 echo " | |    | |__| | |__  | |__) | |__) \ \_/ / "
@@ -760,7 +758,7 @@ case $choice in
               case "$choice" in
                 [Yy])
                   docker rm $(docker ps -a -q) && docker rmi $(docker images -q) && docker network prune
-                  remove docker > /dev/null 2>&1
+                  remove docker docker-ce docker-compose > /dev/null 2>&1
                   ;;
                 [Nn])
                   ;;
@@ -799,8 +797,8 @@ case $choice in
       echo "----IP及解锁状态检测-----------"
       echo "1. ChatGPT解锁状态检测"
       echo "2. Region流媒体解锁测试"
-      echo "3. yeahwu流媒体解锁检测"
-      echo "4. xykt_IP质量体检脚本"
+      echo "3. Yeahwu流媒体解锁检测"
+      echo "4. XYkt_IP质量体检脚本"
       echo ""
       echo "----网络线路测速-----------"
       echo "11. besttrace三网回程延迟路由测试"
@@ -912,11 +910,8 @@ case $choice in
               clear
               curl -L https://gitlab.com/spiritysdx/za/-/raw/main/ecs.sh -o ecs.sh && chmod +x ecs.sh && bash ecs.sh
               ;;
-
-
           0)
               back_main
-
               ;;
           *)
               echo "无效的输入!"
@@ -2338,7 +2333,7 @@ EOF
 
                   case $host_dns in
                       1)
-                          read -p "请输入新的解析记录 格式: 110.25.5.33 yourdomain.com : " addhost
+                          read -p "请输入新的解析记录 格式: 1.1.1.1 hostname.com : " addhost
                           echo "$addhost" >> /etc/hosts
 
                           ;;
@@ -3076,7 +3071,7 @@ EOF
                     clear
                     install_docker
                     cd /home/ && mkdir -p docker/cloud && cd docker/cloud && mkdir temp_data && mkdir -vp cloudreve/{uploads,avatar} && touch cloudreve/conf.ini && touch cloudreve/cloudreve.db && mkdir -p aria2/config && mkdir -p data/aria2 && chmod -R 777 data/aria2
-                    curl -o /home/docker/cloud/docker-compose.yml hhttps://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/config/cloudreve-docker-compose.yml
+                    curl -o /home/docker/cloud/docker-compose.yml https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/config/cloudreve-docker-compose.yml
                     cd /home/docker/cloud/ && docker-compose up -d
 
 
