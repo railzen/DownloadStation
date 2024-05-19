@@ -41,9 +41,9 @@ check_sys(){
 
 Installation_dependency(){
 	if [[ ${release} == "centos" ]]; then
-		yum update && yum install gzip wget curl unzip jq -y
+		yum update && yum install gzip wget curl unzip -y
 	else
-		apt-get update && apt-get install gzip wget curl unzip jq -y
+		apt-get update && apt-get install gzip wget curl unzip -y
 	fi
 	sysctl -w net.core.rmem_max=26214400
 	sysctl -w net.core.rmem_default=26214400
@@ -183,18 +183,26 @@ Read_config(){
 	tfo=$(cat ${CONF}|grep 'tfo = '|awk -F 'tfo = ' '{print $NF}')
 	ver=$(cat ${CONF}|grep 'version = '|awk -F 'version = ' '{print $NF}')
 }
+
+rand() { 
+ min=$1 
+ max=$(($2-$min+1)) 
+ num=$(($RANDOM+$RANDOM+$RANDOM+1000000000)) #增加一个10位的数再求余 
+ echo $(($num%$max+$min)) 
+} 
+
 Set_port(){
 	while true
 		do
 		echo -e "${Tip} 本步骤不涉及系统防火墙端口操作，请手动放行相应端口！"
 		echo -e "请输入 Snell Server 端口${Yellow_font_prefix}[1-65535]${Font_color_suffix}"
-		read -e -p "(默认: 2345):" port
-		[[ -z "${port}" ]] && port="2345"
+		read -e -p "(默认随机):" port
+		[[ -z "${port}" ]] && port=$(rand 10000 59999) 
 		echo $((${port}+0)) &>/dev/null
 		if [[ $? -eq 0 ]]; then
 			if [[ ${port} -ge 1 ]] && [[ ${port} -le 65535 ]]; then
 				echo && echo "=============================="
-				echo -e "端口 : ${Red_background_prefix} ${port} ${Font_color_suffix}"
+				echo -e "端口 : ${port} "
 				echo "==============================" && echo
 				break
 			else
@@ -393,9 +401,14 @@ Install_v4(){
 	echo -e "${Info} 开始写入 配置文件..."
 	Write_config
 	echo -e "${Info} 所有步骤 安装完毕，开始启动..."
-	Start
-    sleep 3s
-    Echo_link
+	check_installed_status
+	check_status
+	[[ "$status" == "running" ]] && echo -e "${Info} Snell Server 已在运行 !" && exit 1
+	systemctl start snell-server
+	sleep 1s
+	check_status
+	[[ "$status" == "running" ]] && echo -e "${Info} Snell Server 启动成功 !"
+    Get_subscribe_link
     echo "安装完成，以下是您的订阅链接"
     echo ${finish_link}
     echo ${finish_link} >> ~/Proxy.txt
@@ -493,7 +506,7 @@ View(){
 	before_start_menu
 }
 
-Echo_link(){
+Get_subscribe_link(){
 	check_installed_status
 	Read_config
 	getipv4
