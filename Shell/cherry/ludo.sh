@@ -329,7 +329,7 @@ User=root
 Restart=on-failure
 RestartSec=5s
 ExecStartPre=/bin/sh -c 'ulimit -n 51200'
-ExecStart=/opt/cherry_script/frps -c /opt/cherry_script/frps.toml
+ExecStart=/opt/cherry_script/frps/frps -c /opt/cherry_script/frps/frps.toml
 [Install]
 WantedBy=multi-user.target' > /etc/systemd/system/User-frps.service
                         systemctl enable --now User-frps
