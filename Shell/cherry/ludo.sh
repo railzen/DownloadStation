@@ -1037,11 +1037,11 @@ case $choice in
     read -p "是否要安装Snell V4？(y/n): " choice
     if [ "$choice" == "y" ]; then
         clear
-        bash -c "$(curl -sL https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/snell/snell.sh)"
+        bash -c "$(curl -sL https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/snell/Snell_v2.sh)"
     else
         back_main
     fi
-
+    exit 0
     ;;
   11)
     clear

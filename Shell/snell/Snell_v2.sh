@@ -2,14 +2,8 @@
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
 export PATH
 
-#=================================================
-#	System Required: CentOS/Debian/Ubuntu
-#	Description: Snell Server 管理脚本
-#	Author: 翠花
-#	WebSite: https://about.nange.cn
-#=================================================
 
-sh_ver="1.5.0"
+sh_ver="1.0.0"
 filepath=$(cd "$(dirname "$0")"; pwd)
 file_1=$(echo -e "${filepath}"|awk -F "$0" '{print $1}')
 FOLDER="/etc/snell/"
@@ -109,53 +103,6 @@ check_status(){
 	status=`systemctl status snell-server | grep Active | awk '{print $3}' | cut -d "(" -f2 | cut -d ")" -f1`
 }
 
-# v2 备用源
-v2_Download() {
-	echo -e "${Info} 默认开始下载${Yellow_font_prefix}v2 备用源版${Font_color_suffix}Snell Server ……"
-	wget --no-check-certificate -N "https://raw.githubusercontent.com/xOS/Others/master/snell/v2.0.6/snell-server-v2.0.6-linux-${arch}.zip"
-	if [[ ! -e "snell-server-v2.0.6-linux-${arch}.zip" ]]; then
-		echo -e "${Error} Snell Server${Yellow_font_prefix}v2 备用源版${Font_color_suffix}下载失败！"
-		return 1 && exit 1
-	else
-		unzip -o "snell-server-v2.0.6-linux-${arch}.zip"
-	fi
-	if [[ ! -e "snell-server" ]]; then
-		echo -e "${Error} Snell Server${Yellow_font_prefix}v2 备用源版${Font_color_suffix}解压失败 !"
-		echo -e "${Error} Snell Server${Yellow_font_prefix}v2 备用源版${Font_color_suffix}安装失败 !"
-		return 1 && exit 1
-	else
-		rm -rf "snell-server-v2.0.6-linux-${arch}.zip"
-		chmod +x snell-server
-		mv -f snell-server "${FILE}"
-		echo "v2.0.6" > ${Now_ver_File}
-		echo -e "${Info} Snell Server 主程序下载安装完毕！"
-		return 0
-	fi
-}
-
-# v3 备用源
-v3_Download() {
-	echo -e "${Info} 试图请求${Yellow_font_prefix}v3 备用源版${Font_color_suffix}Snell Server ……"
-	wget --no-check-certificate -N "https://raw.githubusercontent.com/xOS/Others/master/snell/v3.0.1/snell-server-v3.0.1-linux-${arch}.zip"
-	if [[ ! -e "snell-server-v3.0.1-linux-${arch}.zip" ]]; then
-		echo -e "${Error} Snell Server${Yellow_font_prefix}v3 备用源版${Font_color_suffix}下载失败！"
-		return 1 && exit 1
-	else
-		unzip -o "snell-server-v3.0.1-linux-${arch}.zip"
-	fi
-	if [[ ! -e "snell-server" ]]; then
-		echo -e "${Error} Snell Server${Yellow_font_prefix}v3 备用源版${Font_color_suffix}解压失败 !"
-		echo -e "${Error} Snell Server${Yellow_font_prefix}v3 备用源版${Font_color_suffix}安装失败 !"
-		return 1 && exit 1
-	else
-		rm -rf "snell-server-v3.0.1-linux-${arch}.zip"
-		chmod +x snell-server
-		mv -f snell-server "${FILE}"
-		echo "v3.0.1" > ${Now_ver_File}
-		echo -e "${Info} Snell Server 主程序下载安装完毕！"
-		return 0
-	fi
-}
 
 # v4 官方源
 v4_Download(){
@@ -188,21 +135,10 @@ Install() {
 	else
 		[[ -e "${FILE}" ]] && rm -rf "${FILE}"
 	fi
-		echo -e "选择安装版本${Yellow_font_prefix}[2-4]${Font_color_suffix} 
-==================================
-${Green_font_prefix} 2.${Font_color_suffix} v2  ${Green_font_prefix} 3.${Font_color_suffix} v3  ${Green_font_prefix} 4.${Font_color_suffix} v4
-=================================="
-	read -e -p "(默认：4.v4)：" ver
-	[[ -z "${ver}" ]] && ver="4"
-	if [[ ${ver} == "2" ]]; then
-		Install_v2
-	elif [[ ${ver} == "3" ]]; then
-		Install_v3
-	elif [[ ${ver} == "4" ]]; then
-		Install_v4
-	else
-		Install_v4
-	fi
+		echo -e "正在安装Snell v4..."
+
+	Install_v4
+
 }
 
 Service(){
@@ -270,6 +206,10 @@ Set_port(){
 		done
 }
 
+Set_ipv6_init(){
+	ipv6=true
+}
+
 Set_ipv6(){
 	echo -e "是否开启 IPv6 解析 ？
 ==================================
@@ -287,6 +227,10 @@ ${Green_font_prefix} 1.${Font_color_suffix} 开启  ${Green_font_prefix} 2.${Fon
 	echo "==================================" && echo
 }
 
+Set_psk_init(){
+	psk=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16)
+}
+
 Set_psk(){
 	echo "请输入 Snell Server 密钥${Yellow_font_prefix}[0-9][a-z][A-Z]${Font_color_suffix}"
 	read -e -p "(默认: 随机生成):" psk
@@ -296,17 +240,21 @@ Set_psk(){
 	echo "==============================" && echo
 }
 
+Set_obfs_init(){
+	obfs=http
+}
+
 Set_obfs(){
 	echo -e "配置 OBFS
 ==================================
-${Green_font_prefix} 1.${Font_color_suffix} TLS  ${Green_font_prefix} 2.${Font_color_suffix} HTTP ${Green_font_prefix} 3.${Font_color_suffix} 关闭
+${Green_font_prefix} 1.${Font_color_suffix} HTTP ${Green_font_prefix} 2.${Font_color_suffix} 关闭
 =================================="
 	read -e -p "(默认：2.HTTP)：" obfs
 	[[ -z "${obfs}" ]] && obfs="2"
 	if [[ ${obfs} == "1" ]]; then
-		obfs=tls
-	elif [[ ${obfs} == "2" ]]; then
 		obfs=http
+	elif [[ ${obfs} == "2" ]]; then
+		obfs=off
 	elif [[ ${obfs} == "3" ]]; then
 		obfs=off
 	else
@@ -318,24 +266,11 @@ ${Green_font_prefix} 1.${Font_color_suffix} TLS  ${Green_font_prefix} 2.${Font_c
 }
 
 Set_ver(){
-	echo -e "配置 Snell Server 协议版本${Yellow_font_prefix}[2-4]${Font_color_suffix} 
-==================================
-${Green_font_prefix} 2.${Font_color_suffix} v2 ${Green_font_prefix} 3.${Font_color_suffix} v3 ${Green_font_prefix} 4.${Font_color_suffix} v4 
-=================================="
-	read -e -p "(默认：4.v4)：" ver
-	[[ -z "${ver}" ]] && ver="4"
-	if [[ ${ver} == "2" ]]; then
-		ver=2
-	elif [[ ${ver} == "3" ]]; then
-		ver=3
-	elif [[ ${ver} == "4" ]]; then
-		ver=4
-	else
-		ver=4
-	fi
-	echo && echo "=================================="
-	echo -e "Snell Server 协议版本：${Red_background_prefix} ${ver} ${Font_color_suffix}"
-	echo "==================================" && echo
+	ver=4
+}
+
+Set_host_init(){
+	host=icloud.com
 }
 
 Set_host(){
@@ -348,21 +283,7 @@ Set_host(){
 }
 
 Set_tfo(){
-	echo -e "是否开启 TCP Fast Open ？
-==================================
-${Green_font_prefix} 1.${Font_color_suffix} 开启  ${Green_font_prefix} 2.${Font_color_suffix} 关闭
-=================================="
-	read -e -p "(默认：1.开启)：" tfo
-	[[ -z "${tfo}" ]] && tfo="1"
-	if [[ ${tfo} == "1" ]]; then
-		tfo=true
-		enable_systfo
-	else
-		tfo=false
-	fi
-	echo && echo "=================================="
-	echo -e "TCP Fast Open 开启状态：${Red_background_prefix} ${tfo} ${Font_color_suffix}"
-	echo "==================================" && echo
+	tfo=true
 }
 
 Set(){
@@ -374,10 +295,8 @@ Set(){
  ${Green_font_prefix}3.${Font_color_suffix}  配置 OBFS
  ${Green_font_prefix}4.${Font_color_suffix}  配置 OBFS 域名
  ${Green_font_prefix}5.${Font_color_suffix}  开关 IPv6 解析
- ${Green_font_prefix}6.${Font_color_suffix}  开关 TCP Fast Open
- ${Green_font_prefix}7.${Font_color_suffix}  配置 Snell Server 协议版本
 ==============================
- ${Green_font_prefix}8.${Font_color_suffix}  修改 全部配置" && echo
+ ${Green_font_prefix}6.${Font_color_suffix}  修改 全部配置" && echo
 	read -e -p "(默认: 取消):" modify
 	[[ -z "${modify}" ]] && echo "已取消..." && exit 1
 	if [[ "${modify}" == "1" ]]; then
@@ -437,28 +356,6 @@ Set(){
 		Restart
 	elif [[ "${modify}" == "6" ]]; then
 		Read_config
-		Set_port=${port}
-		Set_psk=${psk}
-		Set_obfs=${obfs}
-		Set_host=${host}
-		Set_ipv6=${ipv6}
-		Set_tfo
-		Set_ver=${ver}
-		Write_config
-		Restart
-	elif [[ "${modify}" == "7" ]]; then
-		Read_config
-		Set_port=${port}
-		Set_psk=${psk}
-		Set_obfs=${obfs}
-		Set_host=${host}
-		Set_ipv6=${ipv6}
-		Set_tfo=${tfo}
-		Set_ver
-		Write_config
-		Restart
-	elif [[ "${modify}" == "8" ]]; then
-		Read_config
 		Set_port
 		Set_psk
 		Set_obfs
@@ -475,67 +372,18 @@ Set(){
     start_menu
 }
 
-# 安装 v2
-Install_v2(){
-	check_root
-	[[ -e ${FILE} ]] && echo -e "${Error} 检测到 Snell Server 已安装 !" && exit 1
-	echo -e "${Info} 开始设置 配置..."
-	Set_port
-	Set_psk
-	Set_obfs
-	Set_host
-	Set_ipv6
-	Set_tfo
-	echo -e "${Info} 开始安装/配置 依赖..."
-	Installation_dependency
-	echo -e "${Info} 开始下载/安装..."
-	v2_Download
-	echo -e "${Info} 开始安装 服务脚本..."
-	Service
-	echo -e "${Info} 开始写入 配置文件..."
-	Write_config
-	echo -e "${Info} 所有步骤 安装完毕，开始启动..."
-	Start
-    sleep 3s
-    start_menu
-}
-
-# 安装 v3
-Install_v3(){
-	check_root
-	[[ -e ${FILE} ]] && echo -e "${Error} 检测到 Snell Server 已安装 !" && exit 1
-	echo -e "${Info} 开始设置 配置..."
-	Set_port
-	Set_psk
-	Set_obfs
-	Set_host
-	Set_ipv6
-	Set_tfo
-	echo -e "${Info} 开始安装/配置 依赖..."
-	Installation_dependency
-	echo -e "${Info} 开始下载/安装..."
-	v3_Download
-	echo -e "${Info} 开始安装 服务脚本..."
-	Service
-	echo -e "${Info} 开始写入 配置文件..."
-	Write_config
-	echo -e "${Info} 所有步骤 安装完毕，开始启动..."
-	Start
-    sleep 3s
-    start_menu
-}
-
 # 安装 v4
 Install_v4(){
 	check_root
 	[[ -e ${FILE} ]] && echo -e "${Error} 检测到 Snell Server 已安装 ,请先卸载旧版再安装新版!" && exit 1
 	echo -e "${Info} 开始设置 配置..."
 	Set_port
-	Set_psk
-	Set_obfs
-	Set_host
-	Set_ipv6
+	Set_psk_init
+	Set_obfs_init
+	Set_host_init
+	Set_ipv6_init
 	Set_tfo
+	Set_vers
 	echo -e "${Info} 开始安装/配置 依赖..."
 	Installation_dependency
 	echo -e "${Info} 开始下载/安装..."
@@ -547,7 +395,11 @@ Install_v4(){
 	echo -e "${Info} 所有步骤 安装完毕，开始启动..."
 	Start
     sleep 3s
-    start_menu
+    Echo_link
+    echo "安装完成，以下是您的订阅链接"
+    echo ${finish_link}
+    echo ${finish_link} >> ~/Proxy.txt
+    before_start_menu
 }
 
 Start(){
@@ -625,7 +477,7 @@ View(){
 	getipv4
 	getipv6
 	clear && echo
-	echo -e "Snell Server 配置信息："
+	echo -e "Snell Server V4 配置信息："
 	echo -e "—————————————————————————"
 	[[ "${ipv4}" != "IPv4_Error" ]] && echo -e " 地址\t: ${Green_font_prefix}${ipv4}${Font_color_suffix}"
 	[[ "${ip6}" != "IPv6_Error" ]] && echo -e " 地址\t: ${Green_font_prefix}${ip6}${Font_color_suffix}"
@@ -641,6 +493,14 @@ View(){
 	before_start_menu
 }
 
+Echo_link(){
+	check_installed_status
+	Read_config
+	getipv4
+	getipv6
+	finish_link="SnellV4 = snell, ${ipv4}, ${port}, psk=${psk}, obfs=${obfs}, version=${ver}, tfo=${tfo}, ip-version=prefer-v4"
+}
+
 Status(){
 	echo -e "${Info} 获取 Snell Server 活动日志 ……"
 	echo -e "${Tip} 返回主菜单请按 q ！"
@@ -650,14 +510,14 @@ Status(){
 
 Update_Shell(){
 	echo -e "当前版本为 [ ${sh_ver} ]，开始检测最新版本..."
-	sh_new_ver=$(wget --no-check-certificate -qO- "https://raw.githubusercontent.com/xOS/Snell/master/Snell.sh"|grep 'sh_ver="'|awk -F "=" '{print $NF}'|sed 's/\"//g'|head -1)
+	sh_new_ver=$(wget --no-check-certificate -qO- "https://raw.githubusercontent.com/railzen/Snell/main/Shell/snell/Snell_v2.sh"|grep 'sh_ver="'|awk -F "=" '{print $NF}'|sed 's/\"//g'|head -1)
 	[[ -z ${sh_new_ver} ]] && echo -e "${Error} 检测最新版本失败 !" && start_menu
 	if [[ ${sh_new_ver} != ${sh_ver} ]]; then
 		echo -e "发现新版本[ ${sh_new_ver} ]，是否更新？[Y/n]"
 		read -p "(默认: y):" yn
 		[[ -z "${yn}" ]] && yn="y"
 		if [[ ${yn} == [Yy] ]]; then
-			wget -O snell.sh --no-check-certificate https://raw.githubusercontent.com/xOS/Snell/master/Snell.sh && chmod +x snell.sh
+			wget -O snell.sh --no-check-certificate https://raw.githubusercontent.com/railzen/Snell/main/Shell/snell/Snell_v2.sh && chmod +x snell.sh
 			echo -e "脚本已更新为最新版本[ ${sh_new_ver} ] !"
 			echo -e "3s后执行新脚本"
             sleep 3s
