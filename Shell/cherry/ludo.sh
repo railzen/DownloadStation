@@ -1034,7 +1034,7 @@ case $choice in
 
   10)
     #询问用户是否要安装Snell
-    read -p "是否要安装Snell V4？(y/n): " choice
+    read -p "是否要进入Snell V4安装脚本？(y/n): " choice
     if [ "$choice" == "y" ]; then
         clear
         bash -c "$(curl -sL https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/snell/Snell_v2.sh)"
