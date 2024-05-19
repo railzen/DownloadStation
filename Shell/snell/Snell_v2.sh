@@ -3,7 +3,7 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
 export PATH
 
 
-sh_ver="1.0.0 build240521"
+sh_ver="1.0.0 build240519"
 filepath=$(cd "$(dirname "$0")"; pwd)
 file_1=$(echo -e "${filepath}"|awk -F "$0" '{print $1}')
 FOLDER="/etc/snell/"
@@ -504,7 +504,7 @@ View(){
 	echo -e " 密钥\t: ${Green_font_prefix}${psk}${Font_color_suffix}"
 	echo -e " OBFS\t: ${Green_font_prefix}${obfs}${Font_color_suffix}"
 	echo -e " 域名\t: ${Green_font_prefix}${host}${Font_color_suffix}"
-	echo -e " IPv6\t: ${Green_font_prefix}${ipv6}${Font_color_suffix}"
+	echo -e " IPv6\t: ${Green_font_prefix}${ip6}${Font_color_suffix}"
 	echo -e " TFO\t: ${Green_font_prefix}${tfo}${Font_color_suffix}"
 	echo -e " VER\t: ${Green_font_prefix}${ver}${Font_color_suffix}"
 	echo -e "—————————————————————————"
@@ -554,7 +554,7 @@ Update_Shell(){
     	bash snell.sh
 }
 before_start_menu() {
-    echo && echo -n -e "${yellow}* 按回车返回主菜单 *${plain}" && read temp
+    echo && echo -n -e "${yellow}按回车返回主菜单...${plain}" && read temp
     start_menu
 }
 
