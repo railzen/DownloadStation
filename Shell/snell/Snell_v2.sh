@@ -41,7 +41,7 @@ check_sys(){
 
 open_firewall_port() {
     ufw allow $1 > /dev/null 2>&1
-    sudo firewall-cmd --permanent --add-port=$1 > /dev/null 2>&1
+    firewall-cmd --permanent --add-port=$1 > /dev/null 2>&1
     sed -i "/COMMIT/i -A INPUT -p tcp --dport $1 -j ACCEPT" /etc/iptables/rules.v4 > /dev/null 2>&1
     sed -i "/COMMIT/i -A INPUT -p udp --dport $1 -j ACCEPT" /etc/iptables/rules.v4 > /dev/null 2>&1
     iptables-restore < /etc/iptables/rules.v4 > /dev/null 2>&1
