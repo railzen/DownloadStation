@@ -3,7 +3,7 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
 export PATH
 
 
-sh_ver="1.0.0"
+sh_ver="1.0.0 build240519"
 filepath=$(cd "$(dirname "$0")"; pwd)
 file_1=$(echo -e "${filepath}"|awk -F "$0" '{print $1}')
 FOLDER="/etc/snell/"
@@ -570,7 +570,7 @@ sysArch
 action=$1
 	echo && echo -e "  
 ==============================
-Snell Server 管理脚本
+Snell Server 管理脚本 $sh_ver 
 ==============================
  ${Green_font_prefix} 0.${Font_color_suffix} 更新脚本
 ——————————————————————————————
