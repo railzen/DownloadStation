@@ -3,7 +3,7 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
 export PATH
 
 
-sh_ver="1.0.0 build240520"
+sh_ver="1.0.0 build240519"
 filepath=$(cd "$(dirname "$0")"; pwd)
 file_1=$(echo -e "${filepath}"|awk -F "$0" '{print $1}')
 FOLDER="/etc/snell/"
@@ -569,8 +569,6 @@ action=$1
 ==============================
 Snell Server 管理脚本 $sh_ver 
 ==============================
- ${Green_font_prefix} 0.${Font_color_suffix} 更新脚本
-——————————————————————————————
  ${Green_font_prefix} 1.${Font_color_suffix} 安装 Snell Server
  ${Green_font_prefix} 2.${Font_color_suffix} 卸载 Snell Server
 ——————————————————————————————
@@ -581,6 +579,8 @@ Snell Server 管理脚本 $sh_ver
  ${Green_font_prefix} 6.${Font_color_suffix} 设置 配置信息
  ${Green_font_prefix} 7.${Font_color_suffix} 查看 配置信息
  ${Green_font_prefix} 8.${Font_color_suffix} 查看 运行状态
+ ——————————————————————————————
+ ${Green_font_prefix} 9.${Font_color_suffix} 更新脚本
 ——————————————————————————————
  ${Green_font_prefix} 0.${Font_color_suffix} 退出脚本
 ==============================" && echo
@@ -597,9 +597,6 @@ Snell Server 管理脚本 $sh_ver
 	echo
 	read -e -p " 请输入数字[0-9]:" num
 	case "$num" in
-		0)
-		Update_Shell
-		;;
 		1)
 		Install
 		;;
@@ -623,6 +620,9 @@ Snell Server 管理脚本 $sh_ver
 		;;
 		8)
 		Status
+		;;
+		9)
+		Update_Shell
 		;;
 		0)
 		exit 1
