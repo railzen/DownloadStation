@@ -106,7 +106,7 @@ systemctl enable hysteria-server.service
 open_firewall_port $port
 
 echoContent skyBlue "您可以复制到任意客户端："
-echoContent skyBlue "hysteria2://${uuid}@${ipv4}:${port}?sni=apple.com&insecure=1#Hysteria2\n"
+echoContent skyBlue "hysteria2://${uuid}@${ipv4}:${port}?sni=apple.com&insecure=1&tfo=1#Hysteria2\n"
 echo "hysteria2://${uuid}@${ipv4}:${port}?sni=apple.com&insecure=1#Hysteria2\n" >> ~/Proxy.txt
 }
 
