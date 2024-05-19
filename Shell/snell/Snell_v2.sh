@@ -202,7 +202,7 @@ rand() {
 Set_port(){
 	while true
 		do
-		echo -e "${Tip} 本步骤不涉及系统防火墙端口操作，请手动放行相应端口！"
+		echo -e "${Info} 本步骤会对系统防火墙(ufw/firewalld)进行端口放行操作，请注意安全性！"
 		echo -e "请输入 Snell Server 端口${Yellow_font_prefix}[1-65535]${Font_color_suffix}"
 		read -e -p "(默认随机):" port
 		[[ -z "${port}" ]] && port=$(rand 10000 59999) 
