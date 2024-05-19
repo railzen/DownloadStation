@@ -3,7 +3,7 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
 export PATH
 
 
-sh_ver="1.0.0 build240519"
+sh_ver="1.0.0 build240520"
 filepath=$(cd "$(dirname "$0")"; pwd)
 file_1=$(echo -e "${filepath}"|awk -F "$0" '{print $1}')
 FOLDER="/etc/snell/"
@@ -412,10 +412,7 @@ Install_v4(){
 	echo -e "${Info} 所有步骤 安装完毕，开始启动..."
 	check_installed_status
 	check_status
-	[[ "$status" == "running" ]] && echo -e "${Info} Snell Server 已在运行 !" && exit 1
 	systemctl start snell-server
-	sleep 1s
-	check_status
 	[[ "$status" == "running" ]] && echo -e "${Info} Snell Server 启动成功 !"
     Get_subscribe_link
     echo "安装完成，以下是您的订阅链接"
