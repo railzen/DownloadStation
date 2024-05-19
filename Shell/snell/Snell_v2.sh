@@ -400,7 +400,7 @@ Install_v4(){
 	Set_host_init
 	Set_ipv6_init
 	Set_tfo
-	Set_vers
+	Set_ver
 	echo -e "${Info} 开始安装/配置 依赖..."
 	Installation_dependency
 	echo -e "${Info} 开始下载/安装..."
