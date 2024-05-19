@@ -39,6 +39,14 @@ check_sys(){
     fi
 }
 
+open_firewall_port() {
+    ufw allow $1 > /dev/null 2>&1
+    sudo firewall-cmd --permanent --add-port=$1 > /dev/null 2>&1
+    sed -i "/COMMIT/i -A INPUT -p tcp --dport $1 -j ACCEPT" /etc/iptables/rules.v4 > /dev/null 2>&1
+    sed -i "/COMMIT/i -A INPUT -p udp --dport $1 -j ACCEPT" /etc/iptables/rules.v4 > /dev/null 2>&1
+    iptables-restore < /etc/iptables/rules.v4 > /dev/null 2>&1
+}
+
 Installation_dependency(){
 	if [[ ${release} == "centos" ]]; then
 		yum update && yum install gzip wget curl unzip -y
@@ -201,6 +209,7 @@ Set_port(){
 		echo $((${port}+0)) &>/dev/null
 		if [[ $? -eq 0 ]]; then
 			if [[ ${port} -ge 1 ]] && [[ ${port} -le 65535 ]]; then
+				open_firewall_port ${port}
 				echo && echo "=============================="
 				echo -e "端口 : ${port} "
 				echo "==============================" && echo
