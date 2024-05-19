@@ -585,7 +585,7 @@ Snell Server 管理脚本 $sh_ver
  ${Green_font_prefix} 7.${Font_color_suffix} 查看 配置信息
  ${Green_font_prefix} 8.${Font_color_suffix} 查看 运行状态
 ——————————————————————————————
- ${Green_font_prefix} 9.${Font_color_suffix} 退出脚本
+ ${Green_font_prefix} 0.${Font_color_suffix} 退出脚本
 ==============================" && echo
 	if [[ -e ${FILE} ]]; then
 		check_status
@@ -627,7 +627,7 @@ Snell Server 管理脚本 $sh_ver
 		8)
 		Status
 		;;
-		9)
+		0)
 		exit 1
 		;;
 		*)
