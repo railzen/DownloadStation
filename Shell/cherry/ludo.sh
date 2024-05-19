@@ -9,7 +9,7 @@ Blue='\033[0;34m'
 Red='\033[31m'
 Gray='\e[37m'
 
-main_version="V1.0.7 Build240516"
+main_version="V1.0.7 Build240520"
 
 main_menu_start() {
 while true; do
@@ -3578,28 +3578,7 @@ EOF
 
 
  99)
-    cd ~
-    clear
-    read -p "确定更新脚本吗？(Y/N): " choice
-    case "$choice" in
-        [Yy])
-            clear
-            cd ~
-            curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/ludo.sh && chmod +x ludo.sh
-            rm -f /usr/local/bin/ludo
-            ln -sf ~/ludo.sh /usr/local/bin/ludo
-            echo ""
-            echo "脚本已更新到最新版本！"
-            break_end
-            back_main
-            ;;
-        [Nn])
-            echo "已取消"
-            ;;
-        *)
-            ;;
-    esac
-
+    Update_Shell
     ;;
 
   0)
@@ -3615,7 +3594,42 @@ esac
 done
 }
 
+Update_Shell(){
+	echo -e "当前版本为 [ ${main_version} ]，开始检测最新版本..."
+	sh_new_ver=$(wget --no-check-certificate -qO- "https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/ludo.sh"|grep 'main_version="'|awk -F "=" '{print $NF}'|sed 's/\"//g'|head -1)
+	[[ -z ${sh_new_ver} ]] && echo -e "${Error} 检测最新版本失败 !" && before_start_menu
+	if [[ ${sh_new_ver} != ${main_version} ]]; then
+		echo -e "发现新版本[ ${sh_new_ver} ]，是否更新？[Y/n]"
+		read -p "(默认: y):" yn
+		[[ -z "${yn}" ]] && yn="y"
+		if [[ ${yn} == [Yy] ]]; then
+		    clear
+            cd ~
+            curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/ludo.sh && chmod +x ludo.sh
+            rm -f /usr/local/bin/ludo
+            ln -sf ~/ludo.sh /usr/local/bin/ludo
+            echo ""
+			echo -e "脚本已更新为最新版本[ ${sh_new_ver} ] ! "
+            break_end
+            back_main
+		else
+			echo && echo "	已取消..." && echo
+            break_end
+            back_main
+		fi
+	else
+		echo -e "当前已是最新版本[ ${sh_new_ver} ] !"
+            break_end
+            back_main
+	fi
+	break_end
+    back_main
+}
 
+before_start_menu() {
+    echo && echo -n -e "$${Yellow_font_prefix}按回车返回主菜单...${Font_color_suffix}" && read temp
+    start_menu
+}
 
 ip_address() {
 ipv4_address=$(curl -s ipv4.ip.sb)
