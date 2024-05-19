@@ -1,6 +1,6 @@
 #!/bin/bash
-#cp ./ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
-ln -sf ~/ludo.sh /usr/local/bin/ludo
+cp -f ./ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
+#ln -sf ~/ludo.sh /usr/local/bin/ludo
 
 Yellow='\033[33m'
 White='\033[0m'
@@ -3597,23 +3597,22 @@ done
 Update_Shell(){
 	echo -e "当前版本为 [ ${main_version} ]，开始检测最新版本..."
 	sh_new_ver=$(wget --no-check-certificate -qO- "https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/ludo.sh"|grep 'main_version="'|awk -F "=" '{print $NF}'|sed 's/\"//g'|head -1)
-	[[ -z ${sh_new_ver} ]] && echo -e "${Error} 检测最新版本失败 !" && before_start_menu
+	[[ -z ${sh_new_ver} ]] && echo -e "${Error} 检测最新版本失败 !" && break_end
 	if [[ ${sh_new_ver} != ${main_version} ]]; then
 		echo -e "发现新版本[ ${sh_new_ver} ]，是否更新？[Y/n]"
-		read -p "(默认: y):" yn
+		read -p "(默认: Y):" yn
 		[[ -z "${yn}" ]] && yn="y"
 		if [[ ${yn} == [Yy] ]]; then
-		    clear
             cd ~
             curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/ludo.sh && chmod +x ludo.sh
             rm -f /usr/local/bin/ludo
-            ln -sf ~/ludo.sh /usr/local/bin/ludo
+            cp -f ./ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
             echo ""
 			echo -e "脚本已更新为最新版本[ ${sh_new_ver} ] ! "
             break_end
             back_main
 		else
-			echo && echo "	已取消..." && echo
+			echo && echo "更新取消" && echo
             break_end
             back_main
 		fi
@@ -3626,17 +3625,10 @@ Update_Shell(){
     back_main
 }
 
-before_start_menu() {
-    echo && echo -n -e "$${Yellow_font_prefix}按回车返回主菜单...${Font_color_suffix}" && read temp
-    start_menu
-}
-
 ip_address() {
 ipv4_address=$(curl -s ipv4.ip.sb)
 ipv6_address=$(curl -s --max-time 1 ipv6.ip.sb)
 }
-
-
 
 install() {
     if [ $# -eq 0 ]; then
