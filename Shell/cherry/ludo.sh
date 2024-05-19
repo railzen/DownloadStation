@@ -1,5 +1,7 @@
 #!/bin/bash
-cp -f ./ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
+mkdir /opt/cherry_script > /dev/null 2>&1
+cp -f ./ludo.sh /opt/cherry_script/ludo.sh > /dev/null 2>&1
+cp -f /opt/cherry_script/ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
 #ln -sf ~/ludo.sh /usr/local/bin/ludo
 
 Yellow='\033[33m'
@@ -9,7 +11,7 @@ Blue='\033[0;34m'
 Red='\033[31m'
 Gray='\e[37m'
 
-main_version="V1.0.7.2047 Build240520"
+main_version="V1.0.7.2048 Build240520"
 
 main_menu_start() {
 while true; do
@@ -188,6 +190,7 @@ case $choice in
       echo "12. ranger 文件管理工具"
       echo "13. gdu 磁盘占用查看工具"
       echo "14. fzf 全局搜索工具"
+      echo "15. frps 内网穿透工具"
       echo "------------------------"
       echo "21. cmatrix 黑客帝国屏保"
       echo "22. sl 跑火车屏保"
@@ -305,6 +308,46 @@ case $choice in
               clear
               fzf
               cd ~
+              ;;
+            15)
+                clear
+                if [ ! -f "/etc/systemd/system/User-frps.service" ];then
+                    read -p "尚未安装FRPS服务，是否安装？[Y/n]" yn
+                    if [[ ${yn} == [Yy] ]]; then
+                        mkdir /opt/cherry_script/frps && cd /opt/cherry_script/frps
+                        wget --no-check-certificate https://raw.githubusercontent.com/railzen/DownloadStation/main/Software/frps && chmod +x frps
+                        wget --no-check-certificate https://raw.githubusercontent.com/railzen/DownloadStation/main/Software/frps.toml
+                        echo '
+[Unit]
+Description= User-frps
+After=network-online.target
+Wants=network-online.target systemd-networkd-wait-online.service
+[Service]
+LimitNOFILE=32767 
+Type=simple
+User=root
+Restart=on-failure
+RestartSec=5s
+ExecStartPre=/bin/sh -c 'ulimit -n 51200'
+ExecStart=/opt/cherry_script/frps -c /opt/cherry_script/frps.toml
+[Install]
+WantedBy=multi-user.target' > /etc/systemd/system/User-frps.service
+                        systemctl enable --now User-frps
+                        echo "服务已安装，可前往编辑[/opt/cherry_script/frps.toml]文件进行配置"
+                    else
+                        echo && echo "操作取消" && echo
+                    fi	
+                   
+                else
+                    read -p "当前已经安装FRPS服务，是否停止？[Y/n]" yn
+                    if [[ ${yn} == [Yy] ]]; then
+                        systemctl stop User-frps
+                        systemctl disable User-frps
+                        rm -f /etc/systemd/system/User-frps.service
+                    else
+                        echo && echo "操作取消" && echo
+                    fi
+                fi
               ;;
 
             21)
@@ -3603,10 +3646,11 @@ Update_Shell(){
 		read -p "(默认: Y):" yn
 		[[ -z "${yn}" ]] && yn="y"
 		if [[ ${yn} == [Yy] ]]; then
-            cd ~
+            cd /opt/cherry_script
             curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/ludo.sh && chmod +x ludo.sh
             rm -f /usr/local/bin/ludo
-            cp -f ./ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
+            cp -f ./ludo.sh /opt/cherry_script/ludo.sh > /dev/null 2>&1
+            cp -f /opt/cherry_script/ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
             echo ""
 			echo -e "脚本已更新为最新版本 ${sh_new_ver} ! "
             break_end
