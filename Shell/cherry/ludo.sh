@@ -9,7 +9,7 @@ Blue='\033[0;34m'
 Red='\033[31m'
 Gray='\e[37m'
 
-main_version="V1.0.7 Build240520"
+main_version="V1.0.7 Build240519"
 
 main_menu_start() {
 while true; do
