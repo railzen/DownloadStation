@@ -554,7 +554,7 @@ Update_Shell(){
     	bash snell.sh
 }
 before_start_menu() {
-    echo && echo -n -e "${yellow}按回车返回主菜单...${plain}" && read temp
+    echo && echo -n -e "$${Yellow_font_prefix}按回车返回主菜单...${Font_color_suffix}" && read temp
     start_menu
 }
 
@@ -586,9 +586,9 @@ Snell Server 管理脚本 $sh_ver
 	if [[ -e ${FILE} ]]; then
 		check_status
 		if [[ "$status" == "running" ]]; then
-			echo -e " 当前状态: ${Green_font_prefix}已安装${Yellow_font_prefix}[v$(cat ${CONF}|grep 'version = '|awk -F 'version = ' '{print $NF}')]${Font_color_suffix}并${Green_font_prefix}已启动${Font_color_suffix}"
+			echo -e " 当前状态:  ${Green_font_prefix}已安装${Font_color_suffix} 并 ${Green_font_prefix}已启动${Font_color_suffix}"
 		else
-			echo -e " 当前状态: ${Green_font_prefix}已安装${Yellow_font_prefix}[v$(cat ${CONF}|grep 'version = '|awk -F 'version = ' '{print $NF}')]${Font_color_suffix}但${Red_font_prefix}未启动${Font_color_suffix}"
+			echo -e " 当前状态:  ${Green_font_prefix}已安装${Font_color_suffix} 但 ${Red_font_prefix}未启动${Font_color_suffix}"
 		fi
 	else
 		echo -e " 当前状态: ${Red_font_prefix}未安装${Font_color_suffix}"
