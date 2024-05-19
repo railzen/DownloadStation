@@ -3599,7 +3599,7 @@ Update_Shell(){
 	sh_new_ver=$(wget --no-check-certificate -qO- "https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/ludo.sh"|grep 'main_version="'|awk -F "=" '{print $NF}'|sed 's/\"//g'|head -1)
 	[[ -z ${sh_new_ver} ]] && echo -e "${Error} 检测最新版本失败 !" && break_end
 	if [[ ${sh_new_ver} != ${main_version} ]]; then
-		echo -e "发现新版本[ ${sh_new_ver} ]，是否更新？[Y/n]"
+		echo -e "发现新版本 ${sh_new_ver} ，是否更新？[Y/n]"
 		read -p "(默认: Y):" yn
 		[[ -z "${yn}" ]] && yn="y"
 		if [[ ${yn} == [Yy] ]]; then
@@ -3608,7 +3608,7 @@ Update_Shell(){
             rm -f /usr/local/bin/ludo
             cp -f ./ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
             echo ""
-			echo -e "脚本已更新为最新版本[ ${sh_new_ver} ] ! "
+			echo -e "脚本已更新为最新版本 ${sh_new_ver} ! "
             break_end
             back_main
 		else
@@ -3617,7 +3617,7 @@ Update_Shell(){
             back_main
 		fi
 	else
-		echo -e "当前已是最新版本[ ${sh_new_ver} ] !"
+		echo -e "当前已是最新版本 ${sh_new_ver} !"
             break_end
             back_main
 	fi
