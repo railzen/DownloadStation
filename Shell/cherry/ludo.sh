@@ -11,7 +11,7 @@ Blue='\033[0;34m'
 Red='\033[31m'
 Gray='\e[37m'
 
-main_version="V1.0.7.2048 Build240520"
+main_version="V1.0.7.2051 Build240520"
 
 main_menu_start() {
 while true; do
@@ -315,8 +315,8 @@ case $choice in
                     read -p "尚未安装FRPS服务，是否安装？[Y/n]" yn
                     if [[ ${yn} == [Yy] ]]; then
                         mkdir /opt/cherry_script/frps && cd /opt/cherry_script/frps
-                        wget --no-check-certificate https://raw.githubusercontent.com/railzen/DownloadStation/main/Software/frps && chmod +x frps
-                        wget --no-check-certificate https://raw.githubusercontent.com/railzen/DownloadStation/main/Software/frps.toml
+                        wget -q -nc --no-check-certificate https://raw.githubusercontent.com/railzen/DownloadStation/main/Software/frps && chmod +x frps
+                        wget -q -nc --no-check-certificate https://raw.githubusercontent.com/railzen/DownloadStation/main/Software/frps.toml
                         echo '
 [Unit]
 Description= User-frps
