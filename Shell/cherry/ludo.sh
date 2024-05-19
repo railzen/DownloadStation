@@ -11,7 +11,7 @@ Blue='\033[0;34m'
 Red='\033[31m'
 Gray='\e[37m'
 
-main_version="V1.0.7.2052 Build240520"
+main_version="V1.0.7.2053 Build240520"
 
 main_menu_start() {
 while true; do
@@ -3642,8 +3642,7 @@ Update_Shell(){
 	sh_new_ver=$(wget --no-check-certificate -qO- "https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/ludo.sh"|grep 'main_version="'|awk -F "=" '{print $NF}'|sed 's/\"//g'|head -1)
 	[[ -z ${sh_new_ver} ]] && echo -e "${Error} 检测最新版本失败 !" && break_end
 	if [[ ${sh_new_ver} != ${main_version} ]]; then
-		echo -e "发现新版本 ${sh_new_ver} ，是否更新？[Y/n]"
-		read -p "(默认: Y):" yn
+		read -p "发现新版本 ${sh_new_ver} ，是否更新？[Y/n]" yn
 		[[ -z "${yn}" ]] && yn="y"
 		if [[ ${yn} == [Yy] ]]; then
             cd /opt/cherry_script
