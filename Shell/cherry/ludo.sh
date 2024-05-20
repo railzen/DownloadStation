@@ -11,7 +11,7 @@ Blue='\033[0;34m'
 Red='\033[31m'
 Gray='\e[37m'
 
-main_version="V1.0.7.2055 Build240520"
+main_version="V1.0.7.2056 Build240521"
 
 main_menu_start() {
 while true; do
@@ -1276,17 +1276,31 @@ WantedBy=multi-user.target' > /etc/systemd/system/User-frps.service
             echo "------------------------"
             cat /etc/resolv.conf
             echo "------------------------"
+            echo "1. 优化DNS地址 "
+            echo "2. 恢复初始设置 "
+            echo "------------------------"
+            echo "0. 返回上一层 "
+            echo "------------------------"
             echo ""
             # 询问用户是否要优化DNS设置
-            read -p "是否要设置为Cloudflare和Google的DNS地址？(y/n): " choice
-
-            if [ "$choice" == "y" ]; then
-                set_dns
-            else
-                echo "DNS设置未更改"
-            fi
-
-              ;;
+            read -p "" choice
+            case "$choice" in
+                1)
+                    set_dns
+                    ;;
+                2)
+                    # 重新启用systemd-resolved.service
+                    rm -f /etc/resolv.conf
+                    systemctl restart systemd-resolved.service
+                    systemctl enable systemd-resolved.service
+                    ;;
+                0)
+                    ;;
+                *)
+                    echo "DNS设置未更改"
+                    ;;
+            esac
+            ;;
 
           8)
 
@@ -4360,8 +4374,8 @@ fi
 echo "设置DNS为Cloudflare和Google"
 
 # 设置IPv4地址
-echo "nameserver $google_ipv4" > /etc/resolv.conf
-echo "nameserver $cloudflare_ipv4" >> /etc/resolv.conf
+echo "nameserver $cloudflare_ipv4" > /etc/resolv.conf
+echo "nameserver $google_ipv4" >> /etc/resolv.conf
 
 # 如果有IPv6地址，则设置IPv6地址
 if [[ $ipv6_available -eq 1 ]]; then
@@ -4373,7 +4387,6 @@ echo "DNS地址已更新"
 echo "------------------------"
 cat /etc/resolv.conf
 echo "------------------------"
-
 }
 
 
