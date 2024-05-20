@@ -245,13 +245,13 @@ ${Green_font_prefix} 1.${Font_color_suffix} 开启  ${Green_font_prefix} 2.${Fon
 }
 
 Set_psk_init(){
-	psk=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 32)
+	psk=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 }
 
 Set_psk(){
 	echo "请输入 Snell Server 密钥${Yellow_font_prefix}[0-9][a-z][A-Z]${Font_color_suffix}"
 	read -e -p "(默认: 随机生成):" psk
-	[[ -z "${psk}" ]] && psk=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 32)
+	[[ -z "${psk}" ]] && psk=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 	echo && echo "=============================="
 	echo -e "密钥 : ${Red_background_prefix} ${psk} ${Font_color_suffix}"
 	echo "==============================" && echo
