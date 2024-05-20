@@ -100,6 +100,7 @@ net.core.default_qdisc=fq
 net.ipv4.tcp_congestion_control = bbr" >>/etc/sysctl.d/local.conf && sysctl --system >/dev/null 2>&1
 	else
 		echo -e "$Error系统内核版本过低，无法支持 TCP Fast Open ！"
+		tfo=false
 	fi
 }
 
@@ -301,6 +302,7 @@ Set_host(){
 
 Set_tfo(){
 	tfo=true
+	enable_systfo
 }
 
 Set(){
