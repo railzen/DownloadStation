@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh /opt/cherry_script/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.7.2064 Build240521"
+main_version="V1.0.7.2065 Build240521"
 
 main_menu_start() {
 while true; do
@@ -4335,7 +4335,6 @@ new_ssh_port() {
 
 }
 
-
 bbr_on() {
 
 cat > /etc/sysctl.conf << EOF
@@ -4345,7 +4344,6 @@ EOF
 sysctl -p
 
 }
-
 
 set_dns() {
 
@@ -4403,15 +4401,11 @@ fi
 }
 
 
-
-
 add_sshkey() {
-
 ssh-keygen -t rsa -b 4096 -C "xxxx@gmail.com" -f /root/.ssh/sshkey -N ""
 
 cat ~/.ssh/sshkey.pub >> ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
-
 
 ip_address
 echo -e "私钥信息已生成，务必复制保存，可保存成 ${Yellow}${ipv4_address}_ssh.key${White} 文件，用于以后的SSH登录"
@@ -4459,5 +4453,6 @@ Gray='\e[37m'
 mkdir /opt/cherry_script > /dev/null 2>&1
 mv -f ./ludo.sh /opt/cherry_script/ludo.sh > /dev/null 2>&1
 cp -f /opt/cherry_script/ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
+#卸载：rm -rf ~/ludo.sh /opt/cherry_script/ /usr/local/bin/ludo
 
 main_menu_start
