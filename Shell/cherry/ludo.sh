@@ -1301,6 +1301,7 @@ WantedBy=multi-user.target' > /etc/systemd/system/User-frps.service
                         ;;
                     *)
                         echo "DNS设置未更改"
+                        sleep 1s
                         ;;
                 esac
             done
