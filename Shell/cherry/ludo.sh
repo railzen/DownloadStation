@@ -3657,8 +3657,6 @@ Update_Shell(){
             curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/ludo.sh && chmod +x ludo.sh
             rm -f /usr/local/bin/ludo
             cp -f /opt/cherry_script/ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
-            #rm -f -/ludo.sh
-            #cp -f /opt/cherry_script/ludo.sh -/ludo.sh > /dev/null 2>&1
             echo ""
 			echo -e "脚本已更新为最新版本 ${sh_new_ver} ! "
             break_end
