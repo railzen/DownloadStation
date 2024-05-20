@@ -5,7 +5,7 @@
 这里首先给出一个多功能面板工具，包含多种工具，他人脚本改良而来，仅供自用。
 
 ```
-bash -c "$(curl -sL https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/ludo.sh)"
+curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/ludo.sh && chmod +x ludo.sh && ./ludo.sh
 ```
 
 

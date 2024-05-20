@@ -4443,12 +4443,12 @@ server_reboot
 
 }
 
-
 root_use() {
 clear
 [ "$EUID" -ne 0 ] && echo -e "${Yellow}请注意，该功能需要root用户才能运行！${White}" && break_end && back_main
 }
 
+# 脚本从此处开始
 Yellow='\033[33m'
 White='\033[0m'
 Green='\033[0;32m'
@@ -4456,14 +4456,13 @@ Blue='\033[0;34m'
 Red='\033[31m'
 Gray='\e[37m'
 
-
 mkdir /opt/cherry_script > /dev/null 2>&1
-if [ -f " /opt/cherry_script/ludo.sh" ]; then
+if [ -f "/opt/cherry_script/ludo.sh" ]; then
     cp -f /opt/cherry_script/ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
     #ln -sf ~/ludo.sh /usr/local/bin/ludo
 else
-    curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/ludo.sh && chmod +x ludo.sh
+    mv -f ./ludo.sh /opt/cherry_script/ludo.sh > /dev/null 2>&1
+    cp -f /opt/cherry_script/ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
 fi
-
 
 main_menu_start
