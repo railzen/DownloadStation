@@ -1,17 +1,7 @@
 #!/bin/bash
-mkdir /opt/cherry_script > /dev/null 2>&1
-cp -f ./ludo.sh /opt/cherry_script/ludo.sh > /dev/null 2>&1
-cp -f /opt/cherry_script/ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
-#ln -sf ~/ludo.sh /usr/local/bin/ludo
+#cp -f ./ludo.sh /opt/cherry_script/ludo.sh > /dev/null 2>&1
 
-Yellow='\033[33m'
-White='\033[0m'
-Green='\033[0;32m'
-Blue='\033[0;34m'
-Red='\033[31m'
-Gray='\e[37m'
-
-main_version="V1.0.7.2061 Build240521"
+main_version="V1.0.7.2062 Build240521"
 
 main_menu_start() {
 while true; do
@@ -3667,8 +3657,8 @@ Update_Shell(){
             curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/ludo.sh && chmod +x ludo.sh
             rm -f /usr/local/bin/ludo
             cp -f /opt/cherry_script/ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
-            rm -f -/ludo.sh
-            cp -f /opt/cherry_script/ludo.sh -/ludo.sh > /dev/null 2>&1
+            #rm -f -/ludo.sh
+            #cp -f /opt/cherry_script/ludo.sh -/ludo.sh > /dev/null 2>&1
             echo ""
 			echo -e "脚本已更新为最新版本 ${sh_new_ver} ! "
             break_end
@@ -4459,7 +4449,21 @@ clear
 [ "$EUID" -ne 0 ] && echo -e "${Yellow}请注意，该功能需要root用户才能运行！${White}" && break_end && back_main
 }
 
+Yellow='\033[33m'
+White='\033[0m'
+Green='\033[0;32m'
+Blue='\033[0;34m'
+Red='\033[31m'
+Gray='\e[37m'
 
+
+mkdir /opt/cherry_script > /dev/null 2>&1
+if [ -f " /opt/cherry_script/ludo.sh" ]; then
+    cp -f /opt/cherry_script/ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
+    #ln -sf ~/ludo.sh /usr/local/bin/ludo
+else
+    curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/ludo.sh && chmod +x ludo.sh
+fi
 
 
 main_menu_start
