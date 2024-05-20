@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh /opt/cherry_script/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.7.2063 Build240521"
+main_version="V1.0.7.2064 Build240521"
 
 main_menu_start() {
 while true; do
@@ -4457,12 +4457,7 @@ Red='\033[31m'
 Gray='\e[37m'
 
 mkdir /opt/cherry_script > /dev/null 2>&1
-if [ -f "/opt/cherry_script/ludo.sh" ]; then
-    cp -f /opt/cherry_script/ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
-    #ln -sf ~/ludo.sh /usr/local/bin/ludo
-else
-    mv -f ./ludo.sh /opt/cherry_script/ludo.sh > /dev/null 2>&1
-    cp -f /opt/cherry_script/ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
-fi
+mv -f ./ludo.sh /opt/cherry_script/ludo.sh > /dev/null 2>&1
+cp -f /opt/cherry_script/ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
 
 main_menu_start
