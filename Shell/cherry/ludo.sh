@@ -11,7 +11,7 @@ Blue='\033[0;34m'
 Red='\033[31m'
 Gray='\e[37m'
 
-main_version="V1.0.7.2056 Build240521"
+main_version="V1.0.7.2057 Build240521"
 
 main_menu_start() {
 while true; do
@@ -1271,36 +1271,39 @@ WantedBy=multi-user.target' > /etc/systemd/system/User-frps.service
 
 
           7)
-            root_use
-            echo "当前DNS地址"
-            echo "------------------------"
-            cat /etc/resolv.conf
-            echo "------------------------"
-            echo "1. 优化DNS地址 "
-            echo "2. 恢复初始设置 "
-            echo "------------------------"
-            echo "0. 返回上一层 "
-            echo "------------------------"
-            echo ""
-            # 询问用户是否要优化DNS设置
-            read -p "" choice
-            case "$choice" in
-                1)
-                    set_dns
-                    ;;
-                2)
-                    # 重新启用systemd-resolved.service
-                    rm -f /etc/resolv.conf
-                    systemctl restart systemd-resolved.service
-                    systemctl enable systemd-resolved.service
-                    ;;
-                0)
-                    ;;
-                *)
-                    echo "DNS设置未更改"
-                    ;;
-            esac
-            ;;
+            while true; do
+                root_use
+                echo "当前DNS地址"
+                echo "------------------------"
+                cat /etc/resolv.conf
+                echo "------------------------"
+                echo "1. 优化DNS地址 "
+                echo "2. 恢复初始设置 "
+                echo "------------------------"
+                echo "0. 返回上一层 "
+                echo "------------------------"
+                echo ""
+                # 询问用户是否要优化DNS设置
+                read -p "" choice
+                case "$choice" in
+                    1)
+                        set_dns
+                        ;;
+                    2)
+                        # 重新启用systemd-resolved.service
+                        rm -f /etc/resolv.conf
+                        systemctl restart systemd-resolved.service
+                        systemctl enable systemd-resolved.service
+                        ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+                        ;;
+                    0)
+                        ;;
+                    *)
+                        echo "DNS设置未更改"
+                        ;;
+                esac
+                ;;
+            done
 
           8)
 
