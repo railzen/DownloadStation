@@ -11,7 +11,7 @@ Blue='\033[0;34m'
 Red='\033[31m'
 Gray='\e[37m'
 
-main_version="V1.0.7.2060 Build240521"
+main_version="V1.0.7.2061 Build240521"
 
 main_menu_start() {
 while true; do
@@ -3667,6 +3667,7 @@ Update_Shell(){
             curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/ludo.sh && chmod +x ludo.sh
             rm -f /usr/local/bin/ludo
             cp -f /opt/cherry_script/ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
+            rm -f -/ludo.sh
             cp -f /opt/cherry_script/ludo.sh -/ludo.sh > /dev/null 2>&1
             echo ""
 			echo -e "脚本已更新为最新版本 ${sh_new_ver} ! "
