@@ -554,7 +554,7 @@ Update_Shell(){
     bash snell.sh
 }
 before_start_menu() {
-    echo && echo -n -e "$${Yellow_font_prefix}按回车返回主菜单...${Font_color_suffix}" && read temp
+    echo && echo -n -e "${Yellow_font_prefix}按任意键返回主菜单...${Font_color_suffix}" && read -n 1 -s -r -p ""
     start_menu
 }
 
