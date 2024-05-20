@@ -11,7 +11,7 @@ Blue='\033[0;34m'
 Red='\033[31m'
 Gray='\e[37m'
 
-main_version="V1.0.7.2053 Build240520"
+main_version="V1.0.7.2055 Build240520"
 
 main_menu_start() {
 while true; do
@@ -3673,6 +3673,14 @@ ipv4_address=$(curl -s ipv4.ip.sb)
 ipv6_address=$(curl -s --max-time 1 ipv6.ip.sb)
 }
 
+open_firewall_port() {
+    ufw allow $1 > /dev/null 2>&1
+    firewall-cmd --permanent --add-port=$1 > /dev/null 2>&1
+    sed -i "/COMMIT/i -A INPUT -p tcp --dport $1 -j ACCEPT" /etc/iptables/rules.v4 > /dev/null 2>&1
+    sed -i "/COMMIT/i -A INPUT -p udp --dport $1 -j ACCEPT" /etc/iptables/rules.v4 > /dev/null 2>&1
+    iptables-restore < /etc/iptables/rules.v4 > /dev/null 2>&1
+}
+
 install() {
     if [ $# -eq 0 ]; then
         echo "未提供软件包参数!"
@@ -4304,6 +4312,9 @@ new_ssh_port() {
 
   # 替换 SSH 配置文件中的端口号
   sed -i "s/Port [0-9]\+/Port $new_port/g" /etc/ssh/sshd_config
+  
+  # 指定新端口放通
+  open_firewall_port $new_port > /dev/null 2>&1
 
   # 重启 SSH 服务
   service sshd restart
