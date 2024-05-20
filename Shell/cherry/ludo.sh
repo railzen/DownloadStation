@@ -11,7 +11,7 @@ Blue='\033[0;34m'
 Red='\033[31m'
 Gray='\e[37m'
 
-main_version="V1.0.7.2057 Build240521"
+main_version="V1.0.7.2058 Build240521"
 
 main_menu_start() {
 while true; do
@@ -1284,7 +1284,7 @@ WantedBy=multi-user.target' > /etc/systemd/system/User-frps.service
                 echo "------------------------"
                 echo ""
                 # 询问用户是否要优化DNS设置
-                read -p "" choice
+                read -p "请输入你的选择: " choice
                 case "$choice" in
                     1)
                         set_dns
@@ -1297,14 +1297,14 @@ WantedBy=multi-user.target' > /etc/systemd/system/User-frps.service
                         ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
                         ;;
                     0)
+                        break
                         ;;
                     *)
                         echo "DNS设置未更改"
                         ;;
                 esac
-                ;;
             done
-
+            ;;
           8)
 
           dd_xitong_2() {
