@@ -107,7 +107,7 @@ open_firewall_port $port
 
 echoContent skyBlue "您可以复制到任意客户端："
 echoContent skyBlue "hysteria2://${uuid}@${ipv4}:${port}?sni=apple.com&insecure=1&tfo=1#Hysteria2\n"
-echo "hysteria2://${uuid}@${ipv4}:${port}?sni=apple.com&insecure=1#Hysteria2\n" >> ~/Proxy.txt
+echo "hysteria2://${uuid}@${ipv4}:${port}?sni=apple.com&insecure=1&tfo=1#Hysteria2" >> ~/Proxy.txt
 }
 
 read -r -p "Are your sure to continue?(Y/N)" selectStart
