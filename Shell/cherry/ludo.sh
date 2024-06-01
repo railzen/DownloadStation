@@ -4497,6 +4497,12 @@ clear
 }
 
 # 脚本从此处开始
+
+if [[ ! $# = 0 && $1 = dir ]];then
+cd /opt/cherry_script/work
+exit 0
+fi
+
 Yellow='\033[33m'
 White='\033[0m'
 Green='\033[0;32m'
