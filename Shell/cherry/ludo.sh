@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh /opt/cherry_script/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.8.0001 Build240601"
+main_version="V1.0.8.0002 Build240601"
 
 main_menu_start() {
 while true; do
@@ -2597,7 +2597,8 @@ EOF
                     if [ ! -f "/opt/cherry_script/config/start.sh" ];then
                         echo "#!/usr/bin/env bash" > /opt/cherry_script/config/start.sh
                     fi
-
+                    
+                    chmod +x /opt/cherry_script/config/start.sh
                     echo '
 [Unit]
 Description= Cherry_startup
@@ -2614,7 +2615,6 @@ ExecStart=/opt/cherry_script/config/start.sh
 [Install]
 WantedBy=multi-user.target' > /etc/systemd/system/Cherry_startup.service
                     systemctl enable --now Cherry_startup
-                    break_end
                   ;;
                 [Nn])
                   echo "已取消"
