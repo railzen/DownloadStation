@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh /opt/cherry_script/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.7.2066 Build240601"
+main_version="V1.0.8.0001 Build240601"
 
 main_menu_start() {
 while true; do
@@ -181,6 +181,7 @@ case $choice in
       echo "13. gdu 磁盘占用查看工具"
       echo "14. fzf 全局搜索工具"
       echo "15. frps 内网穿透工具"
+      echo "16. gost 转发隧道工具"
       echo "------------------------"
       echo "21. cmatrix 黑客帝国屏保"
       echo "22. sl 跑火车屏保"
@@ -338,6 +339,16 @@ WantedBy=multi-user.target' > /etc/systemd/system/User-frps.service
                         echo && echo "操作取消" && echo
                     fi
                 fi
+              ;;
+             16)
+              clear
+              read -p "是否确认安装gost？[Y/n]" yn
+              if [[ ${yn} == [Yy] ]]; then
+              # 安装最新版本 [https://github.com/go-gost/gost/releases](https://github.com/go-gost/gost/releases)
+                bash <(curl -fsSL https://github.com/go-gost/gost/raw/master/install.sh) --install
+              else
+                echo && echo "操作取消" && echo
+              fi
               ;;
 
             21)
@@ -1126,6 +1137,7 @@ WantedBy=multi-user.target' > /etc/systemd/system/User-frps.service
       echo "22. fail2banSSH防御程序"
       echo "23. 限流自动关机"
       echo "24. ROOT私钥登录模式"
+      echo "25. 添加开机启动服务"
       echo "------------------------"
       echo "99. 重启服务器"
       echo "------------------------"
@@ -2572,6 +2584,48 @@ EOF
               esac
 
               ;;
+          25)
+              root_use
+              echo "添加开机启动项"
+              echo "------------------------------------------------"
+              echo "将会生成一个系统服务以启动开机启动项，可在[/opt/cherry_script/config/start.sh]修改，请问是否要新增？"
+
+              read -p "确定继续吗？(Y/N): " choice
+              case "$choice" in
+                [Yy])
+                    mkdir /opt/cherry_script/config
+                    if [ ! -f "/opt/cherry_script/config/start.sh" ];then
+                        echo "#!/usr/bin/env bash" > /opt/cherry_script/config/start.sh
+                    fi
+
+                    echo '
+[Unit]
+Description= Cherry_startup
+After=network-online.target
+Wants=network-online.target systemd-networkd-wait-online.service
+[Service]
+LimitNOFILE=32767 
+Type=simple
+User=root
+Restart=on-failure
+RestartSec=5s
+ExecStartPre=/bin/sh -c 'ulimit -n 51200'
+ExecStart=/opt/cherry_script/config/start.sh
+[Install]
+WantedBy=multi-user.target' > /etc/systemd/system/Cherry_startup.service
+                    systemctl enable --now Cherry_startup
+                    break_end
+                  ;;
+                [Nn])
+                  echo "已取消"
+                  ;;
+                *)
+                  echo "无效的选择，请输入 Y 或 N。"
+                  ;;
+              esac
+
+              ;;
+
           99)
               clear
               server_reboot
@@ -2582,7 +2636,8 @@ EOF
               ;;
           *)
               echo "无效的输入!"
-              ;;
+              ;;    
+              
       esac
       break_end
 
