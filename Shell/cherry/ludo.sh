@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh /opt/cherry_script/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.7.2065 Build240521"
+main_version="V1.0.7.2066 Build240601"
 
 main_menu_start() {
 while true; do
@@ -1877,7 +1877,7 @@ WantedBy=multi-user.target' > /etc/systemd/system/User-frps.service
               break
             fi
 
-            new_swap=1024
+            new_swap=510
             add_swap
             install wget gnupg
 

@@ -147,6 +147,8 @@ Install() {
 		echo -e "正在安装Snell v4..."
 
 	Install_v4
+	
+	rm -f snell-server-v4.0.1-linux-${arch}.zip
 
 }
 
