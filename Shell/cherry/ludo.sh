@@ -1853,7 +1853,7 @@ WantedBy=multi-user.target' > /etc/systemd/system/User-frps.service
           echo "官网介绍: https://xanmod.org/"
           echo "------------------------------------------------"
           echo "仅支持Debian/Ubuntu 仅支持x86_64架构"
-          echo "VPS是512M内存的，请提前添加1G虚拟内存，防止因内存不足失联！"
+          echo "VPS是512M内存的，将自动添加512M虚拟内存，防止因内存不足失联！"
           echo "------------------------------------------------"
           read -p "确定继续吗？(Y/N): " choice
 
