@@ -346,6 +346,7 @@ WantedBy=multi-user.target' > /etc/systemd/system/User-frps.service
               if [[ ${yn} == [Yy] ]]; then
               # 安装最新版本 [https://github.com/go-gost/gost/releases](https://github.com/go-gost/gost/releases)
                 bash <(curl -fsSL https://github.com/go-gost/gost/raw/master/install.sh) --install
+                rm -rf ./*
               else
                 echo && echo "操作取消" && echo
               fi
@@ -4504,6 +4505,8 @@ Red='\033[31m'
 Gray='\e[37m'
 
 mkdir /opt/cherry_script > /dev/null 2>&1
+mkdir /opt/cherry_script/work > /dev/null 2>&1
+cd /opt/cherry_script/work
 mv -f ./ludo.sh /opt/cherry_script/ludo.sh > /dev/null 2>&1
 cp -f /opt/cherry_script/ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
 #卸载：rm -rf ~/ludo.sh /opt/cherry_script/ /usr/local/bin/ludo
