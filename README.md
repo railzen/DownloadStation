@@ -18,6 +18,16 @@ FinalShell(推荐): [FinalShell下载](http://www.hostbuf.com/t/988.html)
 
 MobaXterm: [MobaXterm官网](https://mobaxterm.mobatek.net/)
 
+
+
+# 使用GOST实现端口转发
+
+```
+gost -L tcp://:37020/yourdomain:37020
+```
+
+
+
 # 正式安装、搭建节点
 
 ### 1、必要更新操作(Debian/Ubuntu)
