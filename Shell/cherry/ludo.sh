@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh /opt/cherry_script/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.8.0002 Build240601"
+main_version="V1.0.8.0003 Build240601"
 
 main_menu_start() {
 while true; do
