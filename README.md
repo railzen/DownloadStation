@@ -23,7 +23,7 @@ MobaXterm: [MobaXterm官网](https://mobaxterm.mobatek.net/)
 # 使用GOST实现端口转发
 
 ```
-gost -L tcp://:37020/yourdomain:37020
+gost -L tcp://:37020/yourdomain:37020 &
 ```
 
 
