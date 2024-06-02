@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh /opt/cherry_script/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.8.0004 Build240601"
+main_version="V1.0.8.0005 Build240601"
 
 main_menu_start() {
 while true; do
@@ -4512,9 +4512,9 @@ Gray='\e[37m'
 
 mkdir /opt/cherry_script > /dev/null 2>&1
 mkdir /opt/cherry_script/work > /dev/null 2>&1
-cd /opt/cherry_script/work
 mv -f ./ludo.sh /opt/cherry_script/ludo.sh > /dev/null 2>&1
 cp -f /opt/cherry_script/ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
+cd /opt/cherry_script/work
 #卸载：rm -rf ~/ludo.sh /opt/cherry_script/ /usr/local/bin/ludo
 
 main_menu_start
