@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh /opt/cherry_script/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.8.0005 Build240601"
+main_version="V1.0.8.0006 Build240607"
 
 main_menu_start() {
 while true; do
@@ -1078,15 +1078,18 @@ WantedBy=multi-user.target' > /etc/systemd/system/User-frps.service
 
 
   10)
-    #询问用户是否要安装Snell
-    read -p "是否要进入Snell V4安装脚本？(y/n): " choice
-    if [ "$choice" == "y" ]; then
-        clear
-        bash -c "$(curl -sL https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/snell/Snell_v2.sh)"
-    else
+    while true; do
+        #询问用户是否要安装Snell
+        #read -p "是否要进入Snell V4安装脚本？(y/n): " choice
+        #choice=y
+        #if [ "$choice" == "y" ]; then
+            clear
+            bash -c "$(curl -sL https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/snell/Snell_v2.sh)"
+        #else
+        #    back_main
+        #fi
         back_main
-    fi
-    exit 0
+    done
     ;;
 
   11)
