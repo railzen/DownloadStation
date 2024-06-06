@@ -261,7 +261,7 @@ Set_psk(){
 }
 
 Set_obfs_init(){
-	obfs=http
+	obfs=off
 }
 
 Set_obfs(){
@@ -275,10 +275,8 @@ ${Green_font_prefix} 1.${Font_color_suffix} HTTP ${Green_font_prefix} 2.${Font_c
 		obfs=http
 	elif [[ ${obfs} == "2" ]]; then
 		obfs=off
-	elif [[ ${obfs} == "3" ]]; then
-		obfs=off
 	else
-		obfs=http
+		obfs=off
 	fi
 	echo && echo "=================================="
 	echo -e "OBFS 状态：${Red_background_prefix} ${obfs} ${Font_color_suffix}"
