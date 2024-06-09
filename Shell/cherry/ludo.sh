@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh ${work_path}/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.8.0009 Build240609"
+main_version="V1.0.8.00010 Build240609"
 work_path="/opt/CherryScript"
 
 main_menu_start() {
@@ -309,6 +309,7 @@ case $choice in
                         mkdir ${work_path}/frps && cd ${work_path}/frps
                         wget -q -nc --no-check-certificate https://raw.githubusercontent.com/railzen/DownloadStation/main/Software/frps && chmod +x frps
                         wget -q -nc --no-check-certificate https://raw.githubusercontent.com/railzen/DownloadStation/main/Software/frps.toml
+                        mv -f frps.toml /opt/CherryScript/config/frps.toml
                         echo '
 [Unit]
 Description= Cherry-frps
@@ -321,7 +322,7 @@ User=root
 Restart=on-failure
 RestartSec=5s
 ExecStartPre=/bin/sh -c 'ulimit -n 51200'
-ExecStart=${work_path}/frps/frps -c ${work_path}/frps/frps.toml
+ExecStart=/opt/CherryScript/frps/frps -c /opt/CherryScript/config/frps.toml
 [Install]
 WantedBy=multi-user.target' > /etc/systemd/system/Cherry-frps.service
                         systemctl enable --now Cherry-frps
@@ -2629,7 +2630,7 @@ User=root
 Restart=on-failure
 RestartSec=5s
 ExecStartPre=/bin/sh -c 'ulimit -n 51200'
-ExecStart=${work_path}/config/start.sh
+ExecStart=/opt/CherryScript/config/start.sh
 [Install]
 WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
                     systemctl enable --now Cherry-startup
