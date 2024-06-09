@@ -1,7 +1,8 @@
 #!/bin/bash
-#cp -f ./ludo.sh /opt/cherry_script/ludo.sh > /dev/null 2>&1
+#cp -f ./ludo.sh ${work_path}/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.8.0006 Build240607"
+main_version="V1.0.8.0007 Build240609"
+work_path="/opt/CherryScript"
 
 main_menu_start() {
 while true; do
@@ -302,15 +303,15 @@ case $choice in
               ;;
             15)
                 clear
-                if [ ! -f "/etc/systemd/system/User-frps.service" ];then
+                if [ ! -f "/etc/systemd/system/Cherry-frps.service" ];then
                     read -p "尚未安装FRPS服务，是否安装？[Y/n]" yn
                     if [[ ${yn} == [Yy] ]]; then
-                        mkdir /opt/cherry_script/frps && cd /opt/cherry_script/frps
+                        mkdir ${work_path}/frps && cd ${work_path}/frps
                         wget -q -nc --no-check-certificate https://raw.githubusercontent.com/railzen/DownloadStation/main/Software/frps && chmod +x frps
                         wget -q -nc --no-check-certificate https://raw.githubusercontent.com/railzen/DownloadStation/main/Software/frps.toml
                         echo '
 [Unit]
-Description= User-frps
+Description= Cherry-frps
 After=network-online.target
 Wants=network-online.target systemd-networkd-wait-online.service
 [Service]
@@ -320,11 +321,11 @@ User=root
 Restart=on-failure
 RestartSec=5s
 ExecStartPre=/bin/sh -c 'ulimit -n 51200'
-ExecStart=/opt/cherry_script/frps/frps -c /opt/cherry_script/frps/frps.toml
+ExecStart=${work_path}/frps/frps -c ${work_path}/frps/frps.toml
 [Install]
-WantedBy=multi-user.target' > /etc/systemd/system/User-frps.service
-                        systemctl enable --now User-frps
-                        echo "服务已安装，可前往编辑[/opt/cherry_script/frps.toml]文件进行配置"
+WantedBy=multi-user.target' > /etc/systemd/system/Cherry-frps.service
+                        systemctl enable --now Cherry-frps
+                        echo "服务已安装，可前往编辑[${work_path}/frps.toml]文件进行配置"
                     else
                         echo && echo "操作取消" && echo
                     fi	
@@ -332,9 +333,9 @@ WantedBy=multi-user.target' > /etc/systemd/system/User-frps.service
                 else
                     read -p "当前已经安装FRPS服务，是否停止？[Y/n]" yn
                     if [[ ${yn} == [Yy] ]]; then
-                        systemctl stop User-frps
-                        systemctl disable User-frps
-                        rm -f /etc/systemd/system/User-frps.service
+                        systemctl stop Cherry-frps
+                        systemctl disable Cherry-frps
+                        rm -f /etc/systemd/system/Cherry-frps.service
                     else
                         echo && echo "操作取消" && echo
                     fi
@@ -2592,20 +2593,20 @@ EOF
               root_use
               echo "添加开机启动项"
               echo "------------------------------------------------"
-              echo "将会生成一个系统服务以启动开机启动项，可在[/opt/cherry_script/config/start.sh]修改，请问是否要新增？"
+              echo "将会生成一个系统服务以启动开机启动项，可在[${work_path}/config/start.sh]修改，请问是否要新增？"
 
               read -p "确定继续吗？(Y/N): " choice
               case "$choice" in
                 [Yy])
-                    mkdir /opt/cherry_script/config
-                    if [ ! -f "/opt/cherry_script/config/start.sh" ];then
-                        echo "#!/usr/bin/env bash" > /opt/cherry_script/config/start.sh
+                    mkdir ${work_path}/config
+                    if [ ! -f "${work_path}/config/start.sh" ];then
+                        echo "#!/usr/bin/env bash" > ${work_path}/config/start.sh
                     fi
                     
-                    chmod +x /opt/cherry_script/config/start.sh
+                    chmod +x ${work_path}/config/start.sh
                     echo '
 [Unit]
-Description= Cherry_startup
+Description= Cherry-startup
 After=network-online.target
 Wants=network-online.target systemd-networkd-wait-online.service
 [Service]
@@ -2615,10 +2616,10 @@ User=root
 Restart=on-failure
 RestartSec=5s
 ExecStartPre=/bin/sh -c 'ulimit -n 51200'
-ExecStart=/opt/cherry_script/config/start.sh
+ExecStart=${work_path}/config/start.sh
 [Install]
-WantedBy=multi-user.target' > /etc/systemd/system/Cherry_startup.service
-                    systemctl enable --now Cherry_startup
+WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
+                    systemctl enable --now Cherry-startup
                   ;;
                 [Nn])
                   echo "已取消"
@@ -3712,10 +3713,10 @@ Update_Shell(){
 		read -p "发现新版本 ${sh_new_ver} ，是否更新？[Y/n]" yn
 		[[ -z "${yn}" ]] && yn="y"
 		if [[ ${yn} == [Yy] ]]; then
-            cd /opt/cherry_script/
+            cd ${work_path}/
             curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/ludo.sh && chmod +x ludo.sh
             rm -f /usr/local/bin/ludo
-            cp -f /opt/cherry_script/ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
+            cp -f ${work_path}/ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
             echo ""
 			echo -e "脚本已更新为最新版本 ${sh_new_ver} ! "
             break_end
@@ -4502,7 +4503,7 @@ clear
 # 脚本从此处开始
 
 if [[ ! $# = 0 && $1 = dir ]];then
-cd /opt/cherry_script/work
+cd ${work_path}/work
 exit 0
 fi
 
@@ -4513,11 +4514,11 @@ Blue='\033[0;34m'
 Red='\033[31m'
 Gray='\e[37m'
 
-mkdir /opt/cherry_script > /dev/null 2>&1
-mkdir /opt/cherry_script/work > /dev/null 2>&1
-mv -f ./ludo.sh /opt/cherry_script/ludo.sh > /dev/null 2>&1
-cp -f /opt/cherry_script/ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
-cd /opt/cherry_script/work
-#卸载：rm -rf ~/ludo.sh /opt/cherry_script/ /usr/local/bin/ludo
+mkdir ${work_path} > /dev/null 2>&1
+mkdir ${work_path}/work > /dev/null 2>&1
+mv -f ./ludo.sh ${work_path}/ludo.sh > /dev/null 2>&1
+cp -f ${work_path}/ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
+cd ${work_path}/work
+#卸载：rm -rf ~/ludo.sh ${work_path}/ /usr/local/bin/ludo
 
 main_menu_start
