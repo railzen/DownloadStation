@@ -518,7 +518,7 @@ Get_subscribe_link(){
 	check_installed_status
 	Read_config
 	getipv4
-	finish_link="SnellV4 = snell, ${ipv4}, ${port}, psk=${psk}, obfs=${obfs}, version=${ver}, tfo=${tfo}, ip-version=prefer-v4"
+	finish_link="Region-Sign = snell, ${ipv4}, ${port}, psk=${psk}, version=${ver}, reuse=true, tfo=${tfo}, ip-version=prefer-v4"
 }
 
 Status(){
