@@ -344,11 +344,33 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-frps.service
               ;;
              16)
               clear
-              read -p "是否确认安装gost？[Y/n]" yn
+              read -p "是否确认安装gost并同步安装开机自启服务？[Y/n]" yn
               if [[ ${yn} == [Yy] ]]; then
               # 安装最新版本 [https://github.com/go-gost/gost/releases](https://github.com/go-gost/gost/releases)
                 bash <(curl -fsSL https://github.com/go-gost/gost/raw/master/install.sh) --install
                 rm -rf ./*
+                mkdir ${work_path}/config
+                    if [ ! -f "${work_path}/config/start.sh" ];then
+                        echo "#!/usr/bin/env bash" > ${work_path}/config/start.sh
+                    fi
+                    
+                    chmod +x ${work_path}/config/start.sh
+                    echo '
+[Unit]
+Description= Cherry-startup
+After=network-online.target
+Wants=network-online.target systemd-networkd-wait-online.service
+[Service]
+LimitNOFILE=32767 
+Type=simple
+User=root
+Restart=on-failure
+RestartSec=5s
+ExecStartPre=/bin/sh -c 'ulimit -n 51200'
+ExecStart=/opt/CherryScript/config/start.sh
+[Install]
+WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
+                    systemctl enable --now Cherry-startup
               else
                 echo && echo "操作取消" && echo
               fi
