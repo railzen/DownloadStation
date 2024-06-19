@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh ${work_path}/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.8.0011 Build240615"
+main_version="V1.0.8.0012 Build240619"
 work_path="/opt/CherryScript"
 
 main_menu_start() {
@@ -1577,7 +1577,7 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
                     
                 3)
                 clear
-                curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/change_ip_perfer.sh && chmod +x change_ip_perfer.sh && ./change_ip_perfer.sh
+                curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/change_ip_perfer.sh && chmod +x change_ip_perfer.sh && sudo ./change_ip_perfer.sh
                 ;;
 
                 0)
