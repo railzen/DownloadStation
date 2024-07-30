@@ -3,7 +3,7 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
 export PATH
 
 
-sh_ver="1.0.0 build240519"
+sh_ver="1.1.0 build240730"
 filepath=$(cd "$(dirname "$0")"; pwd)
 file_1=$(echo -e "${filepath}"|awk -F "$0" '{print $1}')
 FOLDER="/etc/snell/"
@@ -518,7 +518,9 @@ Get_subscribe_link(){
 	check_installed_status
 	Read_config
 	getipv4
-	finish_link="Region-Sign = snell, ${ipv4}, ${port}, psk=${psk}, version=${ver}, reuse=true, tfo=${tfo}, ip-version=prefer-v4"
+	country=$(curl -s ipinfo.io/country)
+	hostname=$(hostname)
+	finish_link="${country}-${hostname} = snell, ${ipv4}, ${port}, psk=${psk}, version=${ver}, reuse=true, tfo=${tfo}, ip-version=prefer-v4"
 }
 
 Status(){
