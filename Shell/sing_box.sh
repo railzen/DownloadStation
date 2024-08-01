@@ -178,26 +178,6 @@ input_cdn() {
   esac
 }
 
-# 输入 Nginx 服务端口
-input_nginx_port() {
-  local NUM=$1
-  local PORT_ERROR_TIME=6
-  # 生成 1000 - 65535 随机默认端口数
-  local PORT_NGINX_DEFAULT=$(shuf -i ${MIN_PORT}-${MAX_PORT} -n 1)
-  while true; do
-    [[ "$PORT_ERROR_TIME" > 1 && "$PORT_ERROR_TIME" < 6 ]] && unset IN_USED PORT_NGINX
-    (( PORT_ERROR_TIME-- )) || true
-    if [ "$PORT_ERROR_TIME" = 0 ]; then
-      error "\n $(text 3) \n"
-    else
-      [ -z "$PORT_NGINX" ] && reading "\n $(text 79) " PORT_NGINX
-    fi
-    PORT_NGINX=${PORT_NGINX:-"$PORT_NGINX_DEFAULT"}
-    if [[ "$PORT_NGINX" =~ ^[1-9][0-9]{1,4}$ && "$PORT_NGINX" -ge "$MIN_PORT" && "$PORT_NGINX" -le "$MAX_PORT" ]]; then
-      ss -nltup | grep -q ":$PORT_NGINX" && warning "\n $(text 44) \n" || break
-    fi
-  done
-}
 
 # 输入 hysteria2 跳跃端口
 input_hopping_port() {
@@ -228,106 +208,6 @@ input_hopping_port() {
   done
 }
 
-# 输入 Argo 域名和认证信息
-input_argo_auth() {
-  local IS_CHANGE_ARGO=$1
-  [ -n "$IS_CHANGE_ARGO" ] && local EMPTY_ERROR_TIME=5
-  local DOMAIN_ERROR_TIME=6
-
-  # 处理可能输入的错误，去掉开头和结尾的空格，去掉最后的 :
-  if [ "$IS_CHANGE_ARGO" = 'is_change_argo' ]; then
-    until [ -n "$ARGO_DOMAIN" ]; do
-      (( EMPTY_ERROR_TIME-- )) || true
-      [ "$EMPTY_ERROR_TIME" = 0 ] && error "\n $(text 3) \n"
-      reading "\n $(text 88) " ARGO_DOMAIN
-      [ -n "$IS_CHANGE_ARGO" ] && ARGO_DOMAIN=$(sed 's/[ ]*//g; s/:[ ]*//' <<< "$ARGO_DOMAIN")
-    done
-  elif [ "$NONINTERACTIVE_INSTALL" != 'noninteractive_install' ]; then
-    [ -z "$ARGO_DOMAIN" ] && reading "\n $(text 87) " ARGO_DOMAIN
-    ARGO_DOMAIN=$(sed 's/[ ]*//g; s/:[ ]*//' <<< "$ARGO_DOMAIN")
-  fi
-
-  if [[ -z "$ARGO_DOMAIN" && ( "$ARGO_DOMAIN" =~ trycloudflare\.com$ || "$IS_CHANGE_ARGO" = 'is_add_protocols' || "$IS_CHANGE_ARGO" = 'is_install' || "$NONINTERACTIVE_INSTALL" = 'noninteractive_install' ) ]]; then
-    ARGO_RUNS="$WORK_DIR/cloudflared tunnel --edge-ip-version auto --no-autoupdate --url http://localhost:$PORT_NGINX"
-  elif [ -n "${ARGO_DOMAIN}" ]; then
-    if [ -z "${ARGO_AUTH}" ]; then
-      until [[ "$ARGO_AUTH" =~ TunnelSecret || "$ARGO_AUTH" =~ ^[A-Z0-9a-z=]{120,250}$ || "$ARGO_AUTH" =~ .*cloudflared.*service[[:space:]]+install[[:space:]]+[A-Z0-9a-z=]{1,100} ]]; do
-        [ "$DOMAIN_ERROR_TIME" != 6 ] && warning "\n $(text 86) \n"
-      (( DOMAIN_ERROR_TIME-- )) || true
-        [ "$DOMAIN_ERROR_TIME" != 0 ] && reading "\n $(text 85) " ARGO_AUTH || error "\n $(text 3) \n"
-      done
-    fi
-
-    # 根据 ARGO_AUTH 的内容，自行判断是 Json 还是 Token
-    if [[ "$ARGO_AUTH" =~ TunnelSecret ]]; then
-      ARGO_TYPE=is_json_argo
-      ARGO_JSON=${ARGO_AUTH//[ ]/}
-      [ "$IS_CHANGE_ARGO" = 'is_install' ] && export_argo_json_file $TEMP_DIR || export_argo_json_file $WORK_DIR
-      ARGO_RUNS="$WORK_DIR/cloudflared tunnel --edge-ip-version auto --config $WORK_DIR/tunnel.yml run"
-    elif [[ "$ARGO_AUTH" =~ ^[A-Z0-9a-z=]{120,250}$ ]]; then
-      ARGO_TYPE=is_token_argo
-      ARGO_TOKEN=$ARGO_AUTH
-      ARGO_RUNS="$WORK_DIR/cloudflared tunnel --edge-ip-version auto run --token ${ARGO_TOKEN}"
-    elif [[ "$ARGO_AUTH" =~ .*cloudflared.*service[[:space:]]+install[[:space:]]+[A-Z0-9a-z=]{1,100} ]]; then
-      ARGO_TYPE=is_token_argo
-      ARGO_TOKEN=$(awk -F ' ' '{print $NF}' <<< "$ARGO_AUTH")
-      ARGO_RUNS="$WORK_DIR/cloudflared tunnel --edge-ip-version auto run --token ${ARGO_TOKEN}"
-    fi
-  fi
-}
-
-# 更换 Argo 隧道类型
-change_argo() {
-  check_install
-  if [ "${STATUS[0]}" =  "$(text 26)" ]; then
-    error "\n $(text 39) "
-  elif [ "${STATUS[1]}" = "$(text 26)" ]; then
-    error "\n $(text 61) "
-  fi
-
-  case $(grep "ExecStart=" /etc/systemd/system/argo.service) in
-    *--config* )
-      ARGO_TYPE='Json'
-      ;;
-    *--token* )
-      ARGO_TYPE='Token'
-      ;;
-    * )
-      ARGO_TYPE='Try'
-      cmd_systemctl enable argo && sleep 2 && [ "$(systemctl is-active argo)" = 'active' ] && fetch_quicktunnel_domain
-  esac
-
-  fetch_nodes_value
-  hint "\n $(text 90) \n"
-  unset ARGO_DOMAIN
-  hint " $(text 91) \n" && reading " $(text 24) " CHANGE_TO
-    case "$CHANGE_TO" in
-      1 )
-        cmd_systemctl disable argo
-        [ -s $WORK_DIR/tunnel.json ] && rm -f $WORK_DIR/tunnel.{json,yml}
-        sed -i "s@ExecStart=.*@ExecStart=$WORK_DIR/cloudflared tunnel --edge-ip-version auto --no-autoupdate --url http://localhost:$PORT_NGINX@g" /etc/systemd/system/argo.service
-        ;;
-      2 )
-        [ -s $WORK_DIR/tunnel.json ] && rm -f $WORK_DIR/tunnel.{json,yml}
-        input_argo_auth is_change_argo
-        cmd_systemctl disable argo
-        if [ -n "$ARGO_TOKEN" ]; then
-          sed -i "s@ExecStart=.*@ExecStart=$WORK_DIR/cloudflared tunnel --edge-ip-version auto run --token ${ARGO_TOKEN}@g" /etc/systemd/system/argo.service
-        elif [ -n "$ARGO_JSON" ]; then
-          sed -i "s@ExecStart=.*@ExecStart=$WORK_DIR/cloudflared tunnel --edge-ip-version auto --config $WORK_DIR/tunnel.yml run@g" /etc/systemd/system/argo.service
-        fi
-        [ -s $WORK_DIR/conf/17_${NODE_TAG[6]}_inbounds.json ] && sed -i "s/VMESS_HOST_DOMAIN.*/VMESS_HOST_DOMAIN\": \"$ARGO_DOMAIN\"/" $WORK_DIR/conf/17_${NODE_TAG[6]}_inbounds.json
-        [ -s $WORK_DIR/conf/18_${NODE_TAG[7]}_inbounds.json ] && sed -i "s/\"server_name\":.*/\"server_name\": \"$ARGO_DOMAIN\",/" $WORK_DIR/conf/18_${NODE_TAG[7]}_inbounds.json
-        ;;
-      * )
-        exit 0
-    esac
-
-  cmd_systemctl enable argo
-  fetch_nodes_value
-  export_nginx_conf_file
-  export_list
-}
 
 check_root() {
   [ "$(id -u)" != 0 ] && error "\n $(text 43) \n"
@@ -337,13 +217,13 @@ check_root() {
 check_arch() {
   case "$(uname -m)" in
     aarch64|arm64 )
-      SING_BOX_ARCH=arm64; JQ_ARCH=arm64; QRENCODE_ARCH=arm64; ARGO_ARCH=arm64
+      SING_BOX_ARCH=arm64; JQ_ARCH=arm64; QRENCODE_ARCH=arm64
       ;;
     x86_64|amd64 )
-      [[ "$(awk -F ':' '/flags/{print $2; exit}' /proc/cpuinfo)" =~ avx2 ]] && SING_BOX_ARCH=amd64v3 || SING_BOX_ARCH=amd64; JQ_ARCH=amd64; QRENCODE_ARCH=amd64; ARGO_ARCH=amd64
+      [[ "$(awk -F ':' '/flags/{print $2; exit}' /proc/cpuinfo)" =~ avx2 ]] && SING_BOX_ARCH=amd64v3 || SING_BOX_ARCH=amd64; JQ_ARCH=amd64; QRENCODE_ARCH=amd64
       ;;
     armv7l )
-      SING_BOX_ARCH=armv7; JQ_ARCH=armhf; QRENCODE_ARCH=arm; ARGO_ARCH=amd64
+      SING_BOX_ARCH=armv7; JQ_ARCH=armhf; QRENCODE_ARCH=arm
       ;;
     * )
       error " $(text 25) "
@@ -404,21 +284,6 @@ check_install() {
     wget --no-check-certificate --continue -qO $TEMP_DIR/qrencode https://github.com/fscarmen/client_template/raw/main/qrencode-go/qrencode-go-linux-$QRENCODE_ARCH >/dev/null 2>&1 && chmod +x $TEMP_DIR/qrencode >/dev/null 2>&1
     }&
   fi
-
-  if [ "$NONINTERACTIVE_INSTALL" != 'noninteractive_install' ]; then
-    STATUS[1]=$(text 26) && IS_ARGO=no_argo && [ -s /etc/systemd/system/argo.service ] && IS_ARGO=is_argo && STATUS[1]=$(text 27) && [ "$(systemctl is-active argo)" = 'active' ] && STATUS[1]=$(text 28)
-  fi
-  if [ -s /etc/systemd/system/argo.service ]; then
-    local ARGO_CONTENT=$(cat /etc/systemd/system/argo.service)
-    if grep -q '\--token' <<< "$ARGO_CONTENT"; then
-      ARGO_TYPE=is_token_argo
-    elif grep -q '\--config' <<< "$ARGO_CONTENT"; then
-      ARGO_TYPE=is_json_argo
-    elif grep -q '\--url' <<< "$ARGO_CONTENT"; then
-      ARGO_TYPE=is_quicktunnel_argo
-    fi
-  fi
-  [[ "${STATUS[1]}" = "$(text 26)" || "$NONINTERACTIVE_INSTALL" = 'noninteractive_install' ]] && [ ! -s $WORK_DIR/cloudflared ] && { wget --no-check-certificate -qO $TEMP_DIR/cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-$ARGO_ARCH >/dev/null 2>&1 && chmod +x $TEMP_DIR/cloudflared >/dev/null 2>&1; }&
 }
 
 # 检测 sing-box 的状态
@@ -433,21 +298,6 @@ check_sing-box_status() {
       ;;
     "$(text 28)" )
       info "\n Sing-box $(text 28) $(text 37) \n"
-  esac
-}
-
-# 检测 Argo 的状态
-check_argo_status() {
-  case "${STATUS[1]}" in
-    "$(text 26)" )
-      error "\n Argo $(text 28) $(text 38) \n"
-      ;;
-    "$(text 27)" )
-      cmd_systemctl enable argo
-      [ "$(systemctl is-active argo)" = 'active' ] && info "\n Argo $(text 28) $(text 37) \n" || error "\n Argo $(text 28) $(text 38) \n"
-      ;;
-    "$(text 28)" )
-      info "\n Argo $(text 28) $(text 37) \n"
   esac
 }
 
@@ -467,18 +317,15 @@ EOF
       rc-update add local >/dev/null 2>&1
     elif [ "$IS_CENTOS" = 'CentOS7' ]; then
       systemctl enable --now $APP
-      [ "$APP" = 'sing-box' ] && [[ "${IS_SUB}" = 'is_sub' || "${IS_ARGO}" = 'is_argo' ]] && $(type -p nginx) -c $WORK_DIR/nginx.conf
     else
       systemctl enable --now $APP
     fi
   elif [ "$ENABLE_DISABLE" = 'disable' ]; then
     if [ "$SYSTEM" = 'Alpine' ]; then
       systemctl stop $APP
-      [ "$APP" = 'sing-box' ] && [[ "${IS_SUB}" = 'is_sub' || "${IS_ARGO}" = 'is_argo' ]] && [ -s $WORK_DIR/nginx.conf ] && ss -nltp | grep $(awk '/listen/{print $2; exit}' $WORK_DIR/nginx.conf) | tr ',' '\n' | awk -F '=' '/pid/{print $2}' | sort -u | xargs kill -15 >/dev/null 2>&1
       rm -f /etc/local.d/$APP.start
     elif [ "$IS_CENTOS" = 'CentOS7' ]; then
       systemctl disable --now $APP
-      [ "$APP" = 'sing-box' ] && [[ "${IS_SUB}" = 'is_sub' || "${IS_ARGO}" = 'is_argo' ]] && [ -s $WORK_DIR/nginx.conf ] && ss -nltp | grep $(awk '/listen/{print $2; exit}' $WORK_DIR/nginx.conf) | tr ',' '\n' | awk -F '=' '/pid/{print $2}' | sort -u | xargs kill -15 >/dev/null 2>&1
     else
       systemctl disable --now $APP
     fi
@@ -704,9 +551,6 @@ sing-box_variables() {
     input_start_port ${#INSTALL_PROTOCOLS[@]}
   fi
 
-  # 输出模式选择，输入用于订阅的 Nginx 服务端口号， 后台根据选择安装依赖
-  [[ "$IS_SUB" = 'is_sub' || "$IS_ARGO" = 'is_argo' ]] && input_nginx_port
-
   # 输入服务器 IP,默认为检测到的服务器 IP，如果全部为空，则提示并退出脚本
   [ -z "$SERVER_IP" ] && reading "\n $(text 10) " SERVER_IP
   SERVER_IP=${SERVER_IP:-"$SERVER_IP_DEFAULT"} && WS_SERVER_IP_SHOW=$SERVER_IP
@@ -726,33 +570,21 @@ sing-box_variables() {
 
   # 如选择有 h. vmess + ws 或 i. vless + ws 时，先检测是否有支持的 http 端口可用，如有则要求输入域名和 cdn
   if [[ "${INSTALL_PROTOCOLS[@]}" =~ 'h' ]]; then
-    if [ "$IS_ARGO" = 'is_argo' ]; then
-      [ "$ARGO_READY" != 'argo_ready' ] && input_argo_auth is_install
-      local ARGO_READY=argo_ready
-    else
       local DOMAIN_ERROR_TIME=5
       until [ -n "$VMESS_HOST_DOMAIN" ]; do
         (( DOMAIN_ERROR_TIME-- )) || true
         [ "$DOMAIN_ERROR_TIME" != 0 ] && TYPE=VMESS && reading "\n $(text 50) " VMESS_HOST_DOMAIN || error "\n $(text 3) \n"
-      done
-    fi
+    done
+
   fi
 
   if [[ "${INSTALL_PROTOCOLS[@]}" =~ 'i' ]]; then
-    if [ "$IS_ARGO" = 'is_argo' ]; then
-      [ "$ARGO_READY" != 'argo_ready' ] && input_argo_auth is_install
-      local ARGO_READY=argo_ready
-    else
       local DOMAIN_ERROR_TIME=5
       until [ -n "$VLESS_HOST_DOMAIN" ]; do
         (( DOMAIN_ERROR_TIME-- )) || true
         [ "$DOMAIN_ERROR_TIME" != 0 ] && TYPE=VLESS && reading "\n $(text 50) " VLESS_HOST_DOMAIN || error "\n $(text 3) \n"
       done
-    fi
   fi
-
-  # 选择或者输入 cdn
-  [[ -z "$CDN" && -n "${VMESS_HOST_DOMAIN}${VLESS_HOST_DOMAIN}${ARGO_READY}" ]] && input_cdn
 
   # 输入 UUID ，错误超过 5 次将会退出
   UUID_DEFAULT=$(cat /proc/sys/kernel/random/uuid)
@@ -830,32 +662,7 @@ check_dependencies() {
   fi
 }
 
-# 检查并安装 nginx
-check_nginx() {
-  if [ ! -x "$(type -p nginx)" ]; then
-    info "\n $(text 7) nginx \n"
-    ${PACKAGE_UPDATE[int]} >/dev/null 2>&1
-    ${PACKAGE_INSTALL[int]} nginx >/dev/null 2>&1
-    # 如果新安装的 Nginx ，先停掉服务
-    systemctl disable --now nginx >/dev/null 2>&1
-  fi
-}
 
-# Json 生成两个配置文件
-export_argo_json_file() {
-  local FILE_PATH=$1
-  [[ -z "$PORT_NGINX" && -s $WORK_DIR/nginx.conf ]] && local PORT_NGINX=$(awk '/listen/{print $2; exit}' $WORK_DIR/nginx.conf)
-  [ ! -s $FILE_PATH/tunnel.json ] && echo $ARGO_JSON > $FILE_PATH/tunnel.json
-  [ ! -s $FILE_PATH/tunnel.yml ] && cat > $FILE_PATH/tunnel.yml << EOF
-tunnel: $(awk -F '"' '{print $12}' <<< "$ARGO_JSON")
-credentials-file: $WORK_DIR/tunnel.json
-
-ingress:
-  - hostname: ${ARGO_DOMAIN}
-    service: http://localhost:${PORT_NGINX}
-  - service: http_status:404
-EOF
-}
 
 # 生成100年的自签证书
 ssl_certificate() {
@@ -1263,7 +1070,7 @@ EOF
     NODE_NAME[17]=${NODE_NAME[17]:-"$NODE_NAME_CONFIRM"} && UUID[17]=${UUID[17]:-"$UUID_CONFIRM"} && WS_SERVER_IP[17]=${WS_SERVER_IP[17]:-"$SERVER_IP"} && CDN[17]=${CDN[17]:-"$CDN"} && VMESS_WS_PATH=${VMESS_WS_PATH:-"${UUID[17]}-vmess"}
     cat > $WORK_DIR/conf/17_${NODE_TAG[6]}_inbounds.json << EOF
 //  "WS_SERVER_IP_SHOW": "${WS_SERVER_IP[17]}"
-//  "VMESS_HOST_DOMAIN": "${VMESS_HOST_DOMAIN}${ARGO_DOMAIN}"
+//  "VMESS_HOST_DOMAIN": "${VMESS_HOST_DOMAIN}"
 //  "CDN": "${CDN[17]}"
 {
     "inbounds":[
@@ -1336,7 +1143,7 @@ EOF
             },
             "tls":{
                 "enabled":true,
-                "server_name":"${VLESS_HOST_DOMAIN}${ARGO_DOMAIN}",
+                "server_name":"${VLESS_HOST_DOMAIN}",
                 "min_version":"1.3",
                 "max_version":"1.3",
                 "certificate_path":"${WORK_DIR}/cert/cert.pem",
@@ -1481,9 +1288,8 @@ NoNewPrivileges=yes
 TimeoutStartSec=0
 WorkingDirectory=$WORK_DIR
 "
-  [[ -n "$PORT_NGINX" && "$IS_CENTOS" != 'CentOS7' ]] && SING_BOX_SERVICE+="ExecStartPre=$(type -p nginx) -c $WORK_DIR/nginx.conf
-"
-  SING_BOX_SERVICE+="ExecStart=$WORK_DIR/sing-box run -C $WORK_DIR/conf/
+  [[ -n "$PORT_NGINX" && "$IS_CENTOS" != 'CentOS7' ]] 
+SING_BOX_SERVICE+="ExecStart=$WORK_DIR/sing-box run -C $WORK_DIR/conf/
 ExecReload=/bin/kill -HUP \$MAINPID
 Restart=on-failure
 RestartSec=10
@@ -1497,20 +1303,12 @@ WantedBy=multi-user.target"
 
 # 获取原有各协议的参数，先清空所有的 key-value
 fetch_nodes_value() {
-  unset FILE NODE_NAME PORT_XTLS_REALITY UUID TLS_SERVER REALITY_PRIVATE REALITY_PUBLIC PORT_HYSTERIA2 OBFS PORT_TUIC TUIC_PASSWORD TUIC_CONGESTION_CONTROL PORT_SHADOWTLS SHADOWTLS_PASSWORD SHADOWSOCKS_METHOD PORT_SHADOWSOCKS PORT_TROJAN TROJAN_PASSWORD PORT_VMESS_WS VMESS_WS_PATH WS_SERVER_IP WS_SERVER_IP_SHOW VMESS_HOST_DOMAIN CDN PORT_VLESS_WS VLESS_WS_PATH VLESS_HOST_DOMAIN PORT_H2_REALITY PORT_GRPC_REALITY ARGO_DOMAIN
+  unset FILE NODE_NAME PORT_XTLS_REALITY UUID TLS_SERVER REALITY_PRIVATE REALITY_PUBLIC PORT_HYSTERIA2 OBFS PORT_TUIC TUIC_PASSWORD TUIC_CONGESTION_CONTROL PORT_SHADOWTLS SHADOWTLS_PASSWORD SHADOWSOCKS_METHOD PORT_SHADOWSOCKS PORT_TROJAN TROJAN_PASSWORD PORT_VMESS_WS VMESS_WS_PATH WS_SERVER_IP WS_SERVER_IP_SHOW VMESS_HOST_DOMAIN CDN PORT_VLESS_WS VLESS_WS_PATH VLESS_HOST_DOMAIN PORT_H2_REALITY PORT_GRPC_REALITY
 
   # 获取公共数据
   ls $WORK_DIR/conf/*-ws*inbounds.json >/dev/null 2>&1 && SERVER_IP=$(awk -F '"' '/"WS_SERVER_IP_SHOW"/{print $4; exit}' $WORK_DIR/conf/*-ws*inbounds.json) || SERVER_IP=$(grep -A1 '"tag"' $WORK_DIR/list | sed -E '/-ws(-tls)*",$/{N;d}' | awk -F '"' '/"server"/{count++; if (count == 1) {print $4; exit}}')
   EXISTED_PORTS=$(awk -F ':|,' '/listen_port/{print $2}' $WORK_DIR/conf/*_inbounds.json)
   START_PORT=$(awk 'NR == 1 { min = $0 } { if ($0 < min) min = $0; count++ } END {print min}' <<< "$EXISTED_PORTS")
-
-  # 如有 Argo，获取 Argo Tunnel
-  [[ ${STATUS[1]} =~ $(text 27)|$(text 28) ]] && grep -q '\--url' /etc/systemd/system/argo.service && cmd_systemctl enable argo && sleep 2 && [ "$(systemctl is-active argo)" = 'active' ] && fetch_quicktunnel_domain
-
-  # 获取 Nginx 端口和路径
-  [[ "${IS_SUB}" = 'is_sub' || "${IS_ARGO}" = 'is_argo' ]] && local NGINX_JSON=$(cat $WORK_DIR/nginx.conf) &&
-  PORT_NGINX=$(awk '/listen/{print $2; exit}' <<< "$NGINX_JSON") &&
-  UUID_CONFIRM=$(awk -F '/' '/location ~ \^/{print $2; exit}' <<< "$NGINX_JSON")
 
   # 获取 XTLS + Reality key-value
   [ -s $WORK_DIR/conf/*_${NODE_TAG[0]}_inbounds.json ] && local JSON=$(cat $WORK_DIR/conf/*_${NODE_TAG[0]}_inbounds.json) && NODE_NAME[11]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[0]}.*/\1/p" <<< "$JSON") && PORT_XTLS_REALITY=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && UUID[11]=$(awk -F '"' '/"uuid"/{print $4}' <<< "$JSON") && TLS_SERVER[11]=$(awk -F '"' '/"server_name"/{print $4}' <<< "$JSON") && REALITY_PRIVATE[11]=$(awk -F '"' '/"private_key"/{print $4}' <<< "$JSON") && REALITY_PUBLIC[11]=$(awk -F '"' '/"public_key"/{print $4}' <<< "$JSON")
@@ -1531,10 +1329,10 @@ fetch_nodes_value() {
   [ -s $WORK_DIR/conf/*_${NODE_TAG[5]}_inbounds.json ] && local JSON=$(cat $WORK_DIR/conf/*_${NODE_TAG[5]}_inbounds.json) && NODE_NAME[16]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[5]}.*/\1/p" <<< "$JSON") && PORT_TROJAN=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && TROJAN_PASSWORD=$(awk -F '"' '/"password"/{print $4}' <<< "$JSON")
 
   # 获取 vmess + ws key-value
-  [ -s $WORK_DIR/conf/*_${NODE_TAG[6]}_inbounds.json ] && local JSON=$(cat $WORK_DIR/conf/*_${NODE_TAG[6]}_inbounds.json) && NODE_NAME[17]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[6]}.*/\1/p" <<< "$JSON") && PORT_VMESS_WS=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && UUID[17]=$(awk -F '"' '/"uuid"/{print $4}' <<< "$JSON") && VMESS_WS_PATH=$(sed -n 's#.*"path":"/\(.*\)",#\1#p' <<< "$JSON") && WS_SERVER_IP[17]=$(awk  -F '"' '/"WS_SERVER_IP_SHOW"/{print $4}' <<< "$JSON") && CDN[17]=$(awk  -F '"' '/"CDN"/{print $4}' <<< "$JSON") && [[ "${STATUS[1]}" =~ $(text 27)|$(text 28) ]] && ARGO_DOMAIN=$(awk  -F '"' '/"VMESS_HOST_DOMAIN"/{print $4}' <<< "$JSON") || VMESS_HOST_DOMAIN=$(awk  -F '"' '/"VMESS_HOST_DOMAIN"/{print $4}' <<< "$JSON")
+  [ -s $WORK_DIR/conf/*_${NODE_TAG[6]}_inbounds.json ] && local JSON=$(cat $WORK_DIR/conf/*_${NODE_TAG[6]}_inbounds.json) && NODE_NAME[17]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[6]}.*/\1/p" <<< "$JSON") && PORT_VMESS_WS=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && UUID[17]=$(awk -F '"' '/"uuid"/{print $4}' <<< "$JSON") && VMESS_WS_PATH=$(sed -n 's#.*"path":"/\(.*\)",#\1#p' <<< "$JSON") && WS_SERVER_IP[17]=$(awk  -F '"' '/"WS_SERVER_IP_SHOW"/{print $4}' <<< "$JSON") && CDN[17]=$(awk  -F '"' '/"CDN"/{print $4}' <<< "$JSON") && [[ "${STATUS[1]}" =~ $(text 27)|$(text 28) ]] && VMESS_HOST_DOMAIN=$(awk  -F '"' '/"VMESS_HOST_DOMAIN"/{print $4}' <<< "$JSON")
 
   # 获取 vless + ws + tls key-value
-  [ -s $WORK_DIR/conf/*_${NODE_TAG[7]}_inbounds.json ] && local JSON=$(cat $WORK_DIR/conf/*_${NODE_TAG[7]}_inbounds.json) && NODE_NAME[18]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[7]}.*/\1/p" <<< "$JSON") && PORT_VLESS_WS=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && UUID[18]=$(awk -F '"' '/"uuid"/{print $4}' <<< "$JSON") && VLESS_WS_PATH=$(sed -n 's#.*"path":"/\(.*\)",#\1#p' <<< "$JSON") && WS_SERVER_IP[18]=$(awk  -F '"' '/"WS_SERVER_IP_SHOW"/{print $4}' <<< "$JSON") && CDN[18]=$(awk  -F '"' '/"CDN"/{print $4}' <<< "$JSON") && [[ "${STATUS[1]}" =~ $(text 27)|$(text 28) ]] && ARGO_DOMAIN=$(awk -F '"' '/"server_name"/{print $4}' <<< "$JSON") || VLESS_HOST_DOMAIN=$(awk -F '"' '/"server_name"/{print $4}' <<< "$JSON")
+  [ -s $WORK_DIR/conf/*_${NODE_TAG[7]}_inbounds.json ] && local JSON=$(cat $WORK_DIR/conf/*_${NODE_TAG[7]}_inbounds.json) && NODE_NAME[18]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[7]}.*/\1/p" <<< "$JSON") && PORT_VLESS_WS=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && UUID[18]=$(awk -F '"' '/"uuid"/{print $4}' <<< "$JSON") && VLESS_WS_PATH=$(sed -n 's#.*"path":"/\(.*\)",#\1#p' <<< "$JSON") && WS_SERVER_IP[18]=$(awk  -F '"' '/"WS_SERVER_IP_SHOW"/{print $4}' <<< "$JSON") && CDN[18]=$(awk  -F '"' '/"CDN"/{print $4}' <<< "$JSON") && [[ "${STATUS[1]}" =~ $(text 27)|$(text 28) ]] && VLESS_HOST_DOMAIN=$(awk -F '"' '/"server_name"/{print $4}' <<< "$JSON")
 
   # 获取 H2 + Reality key-value
   [ -s $WORK_DIR/conf/*_${NODE_TAG[8]}_inbounds.json ] && local JSON=$(cat $WORK_DIR/conf/*_${NODE_TAG[8]}_inbounds.json) && NODE_NAME[19]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[8]}.*/\1/p" <<< "$JSON") && PORT_H2_REALITY=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && UUID[19]=$(awk -F '"' '/"uuid"/{print $4}' <<< "$JSON") && TLS_SERVER[19]=$(awk -F '"' '/"server"/{print $4}' <<< "$JSON") && REALITY_PRIVATE[19]=$(awk -F '"' '/"private_key"/{print $4}' <<< "$JSON") && REALITY_PUBLIC[19]=$(awk -F '"' '/"public_key"/{print $4}' <<< "$JSON")
@@ -1548,7 +1346,6 @@ fetch_nodes_value() {
 # 安装 sing-box 全家桶
 install_sing-box() {
   sing-box_variables
-  [ -n "$PORT_NGINX" ] && check_nginx
   [ ! -d /etc/systemd/system ] && mkdir -p /etc/systemd/system
   [ ! -d $WORK_DIR/logs ] && mkdir -p $WORK_DIR/logs
   ssl_certificate
@@ -1561,16 +1358,6 @@ install_sing-box() {
 
   # 生成 sing-box systemd 配置文件
   sing-box_systemd
-
-  # 生成 Argo systemd 配置文件，并复制 cloudflared 可执行二进制文件
-  cp $TEMP_DIR/cloudflared $WORK_DIR
-  [ -n "$ARGO_RUNS" ] && argo_systemd
-
-  # 如果是 Json Argo，把配置文件复制到工作目录
-  [ -n "$ARGO_JSON" ] && cp $TEMP_DIR/tunnel.* $WORK_DIR
-
-  # 生成 Nginx 配置文件
-  [ -n "$PORT_NGINX" ] && export_nginx_conf_file
 
   # 如果 Alpine 系统，放到开机自启动
   if [ "$SYSTEM" = 'Alpine' ]; then
@@ -1587,24 +1374,12 @@ EOF
   check_install
   sleep 1
   check_sing-box_status
-  if [ "$IS_ARGO" = 'is_argo' ]; then
-    [ "$NONINTERACTIVE_INSTALL" = 'noninteractive_install' ] && cmd_systemctl enable argo || check_argo_status
-  fi
 }
 
 export_list() {
   IS_INSTALL=$1
 
   check_install
-
-  #### v1.1.9 处理的 jq 和 qrencode 二进制文件代替系统依赖的问题，此处预计6月30日删除
-  if [[ "${IS_SUB}" = 'is_sub' || "${IS_ARGO}" = 'is_argo' ]]; then
-    [[ ! -s $WORK_DIR/jq && -s /usr/bin/jq ]] && cp /usr/bin/jq $WORK_DIR/
-    if [ ! -s $WORK_DIR/qrencode ]; then
-      check_arch
-      wget -qO $WORK_DIR/qrencode https://github.com/fscarmen/client_template/raw/main/qrencode-go/qrencode-go-linux-$QRENCODE_ARCH && chmod +x $WORK_DIR/qrencode
-    fi
-  fi
 
   [ "$IS_INSTALL" != 'install' ] && fetch_nodes_value
 
@@ -1616,12 +1391,6 @@ export_list() {
     SERVER_IP_1="$SERVER_IP"
     SERVER_IP_2="$SERVER_IP"
   fi
-
-  # 使用 Argo 时，获取临时隧道域名
-  ls $WORK_DIR/conf/*-ws*inbounds.json >/dev/null 2>&1 && [ "$IS_ARGO" = 'is_argo' ] && [ -z "$ARGO_DOMAIN" ] && [[ "${STATUS[1]}" = "$(text 28)" || "$NONINTERACTIVE_INSTALL" = 'noninteractive_install' ]] && fetch_quicktunnel_domain
-
-  # 如果使用 Json 或者 Token Argo，则使用加密的而且是固定的 Argo 隧道域名，否则使用 IP:PORT 的 http 服务
-  [[ "$ARGO_TYPE" = 'is_token_argo' || "$ARGO_TYPE" = 'is_json_argo' ]] && SUBSCRIBE_ADDRESS="https://$ARGO_DOMAIN" || SUBSCRIBE_ADDRESS="http://${SERVER_IP_1}:${PORT_NGINX}"
 
   # 生成各订阅文件
   # 生成 Clash proxy providers 订阅文件
@@ -1657,35 +1426,15 @@ export_list() {
   $CLASH_TROJAN
 "
   if [ -n "$PORT_VMESS_WS" ]; then
-    if [[ "${STATUS[1]}" =~ $(text 27)|$(text 28) ]] || [[ "$IS_ARGO" = 'is_argo' && "$NONINTERACTIVE_INSTALL" = 'noninteractive_install' ]]; then
-      local CLASH_VMESS_WS="- {name: \"${NODE_NAME[17]} ${NODE_TAG[6]}\", type: vmess, server: ${CDN[17]}, port: 80, uuid: ${UUID[17]}, udp: true, tls: false, alterId: 0, cipher: none, skip-cert-verify: true, network: ws, ws-opts: { path: \"/$VMESS_WS_PATH\", headers: {Host: $ARGO_DOMAIN} }, smux: { enabled: true, protocol: 'h2mux', padding: true, max-connections: '8', min-streams: '16', statistic: true, only-tcp: false } }" &&
-      local CLASH_SUBSCRIBE+="
-  $CLASH_VMESS_WS
-"
-      [ "$ARGO_TYPE" = 'is_token_argo' ] && CLASH_SUBSCRIBE+="
-  # $(text 94)
-"
-    else
       local CLASH_VMESS_WS="- {name: \"${NODE_NAME[17]} ${NODE_TAG[6]}\", type: vmess, server: ${CDN[17]}, port: 80, uuid: ${UUID[17]}, udp: true, tls: false, alterId: 0, cipher: none, skip-cert-verify: true, network: ws, ws-opts: { path: \"/$VMESS_WS_PATH\", headers: {Host: $VMESS_HOST_DOMAIN} }, smux: { enabled: true, protocol: 'h2mux', padding: true, max-connections: '8', min-streams: '16', statistic: true, only-tcp: false } }" &&
       local WS_SERVER_IP_SHOW=${WS_SERVER_IP[17]} && local TYPE_HOST_DOMAIN=$VMESS_HOST_DOMAIN && local TYPE_PORT_WS=$PORT_VMESS_WS &&
       local CLASH_SUBSCRIBE+="
   $CLASH_VMESS_WS
-
   # $(text 52)
 "
-    fi
   fi
 
   if [ -n "$PORT_VLESS_WS" ]; then
-     if [[ "${STATUS[1]}" =~ $(text 27)|$(text 28) ]] || [[ "$IS_ARGO" = 'is_argo' && "$NONINTERACTIVE_INSTALL" = 'noninteractive_install' ]]; then
-      local CLASH_VLESS_WS="- {name: \"${NODE_NAME[18]} ${NODE_TAG[7]}\", type: vless, server: ${CDN[18]}, port: 443, uuid: ${UUID[18]}, udp: true, tls: true, servername: $ARGO_DOMAIN, network: ws, skip-cert-verify: true, ws-opts: { path: \"/$VLESS_WS_PATH\", headers: {Host: $ARGO_DOMAIN}, max-early-data: 2048, early-data-header-name: Sec-WebSocket-Protocol }, smux: { enabled: true, protocol: 'h2mux', padding: true, max-connections: '8', min-streams: '16', statistic: true, only-tcp: false } }" &&
-      local CLASH_SUBSCRIBE+="
-  $CLASH_VLESS_WS
-"
-      [ "$ARGO_TYPE" = 'is_token_argo' ] && CLASH_SUBSCRIBE+="
-  # $(text 94)
-"
-    else
       local CLASH_VLESS_WS="- {name: \"${NODE_NAME[18]} ${NODE_TAG[7]}\", type: vless, server: ${CDN[18]}, port: 443, uuid: ${UUID[18]}, udp: true, tls: true, servername: $VLESS_HOST_DOMAIN, network: ws, skip-cert-verify: true, ws-opts: { path: \"/$VLESS_WS_PATH\", headers: {Host: $VLESS_HOST_DOMAIN}, max-early-data: 2048, early-data-header-name: Sec-WebSocket-Protocol }, smux: { enabled: true, protocol: 'h2mux', padding: true, max-connections: '8', min-streams: '16', statistic: true, only-tcp: false } }" &&
       local WS_SERVER_IP_SHOW=${WS_SERVER_IP[18]} && local TYPE_HOST_DOMAIN=$VLESS_HOST_DOMAIN && local TYPE_PORT_WS=$PORT_VLESS_WS &&
       local CLASH_SUBSCRIBE+="
@@ -1693,7 +1442,6 @@ export_list() {
 
   # $(text 52)
 "
-    fi
   fi
 
   # Clash 的 H2 传输层未实现多路复用功能，在 Clash.Meta 中更建议使用 gRPC 协议，故不输出相关配置。 https://wiki.metacubex.one/config/proxies/vless/
@@ -1745,41 +1493,21 @@ ss://$(echo -n "${SHADOWSOCKS_METHOD}:${UUID[15]}@${SERVER_IP_2}:$PORT_SHADOWSOC
 trojan://$TROJAN_PASSWORD@${SERVER_IP_1}:$PORT_TROJAN?allowInsecure=1#${NODE_NAME[16]}%20${NODE_TAG[5]}
 "
   if [ -n "$PORT_VMESS_WS" ]; then
-     if [[ "${STATUS[1]}" =~ $(text 27)|$(text 28) ]] || [[ "$IS_ARGO" = 'is_argo' && "$NONINTERACTIVE_INSTALL" = 'noninteractive_install' ]]; then
-      local SHADOWROCKET_SUBSCRIBE+="
-----------------------------
-vmess://$(echo -n "none:${UUID[17]}@${CDN[17]}:80" | base64 -w0)?remarks=${NODE_NAME[17]}%20${NODE_TAG[6]}&obfsParam=$ARGO_DOMAIN&path=/$VMESS_WS_PATH&obfs=websocket&alterId=0
-"
-      [ "$ARGO_TYPE" = 'is_token_argo' ] && SHADOWROCKET_SUBSCRIBE+="
-  # $(text 94)
-"
-    else
       WS_SERVER_IP_SHOW=${WS_SERVER_IP[17]} && TYPE_HOST_DOMAIN=$VMESS_HOST_DOMAIN && TYPE_PORT_WS=$PORT_VMESS_WS && local SHADOWROCKET_SUBSCRIBE+="
 ----------------------------
 vmess://$(echo -n "none:${UUID[17]}@${CDN[17]}:80" | base64 -w0)?remarks=${NODE_NAME[17]}%20${NODE_TAG[6]}&obfsParam=$VMESS_HOST_DOMAIN&path=/$VMESS_WS_PATH&obfs=websocket&alterId=0
 
 # $(text 52)
 "
-    fi
   fi
 
   if [ -n "$PORT_VLESS_WS" ]; then
-     if [[ "${STATUS[1]}" =~ $(text 27)|$(text 28) ]] || [[ "$IS_ARGO" = 'is_argo' && "$NONINTERACTIVE_INSTALL" = 'noninteractive_install' ]]; then
-      local SHADOWROCKET_SUBSCRIBE+="
-----------------------------
-vless://$(echo -n "auto:${UUID[18]}@${CDN[18]}:443" | base64 -w0)?remarks=${NODE_NAME[18]}%20${NODE_TAG[7]}&obfsParam=$ARGO_DOMAIN&path=/$VLESS_WS_PATH?ed=2048&obfs=websocket&tls=1&peer=$ARGO_DOMAIN&allowInsecure=1
-"
-      [ "$ARGO_TYPE" = 'is_token_argo' ] && SHADOWROCKET_SUBSCRIBE+="
-  # $(text 94)
-"
-    else
       WS_SERVER_IP_SHOW=${WS_SERVER_IP[18]} && TYPE_HOST_DOMAIN=$VLESS_HOST_DOMAIN && TYPE_PORT_WS=$PORT_VLESS_WS && local SHADOWROCKET_SUBSCRIBE+="
 ----------------------------
 vless://$(echo -n "auto:${UUID[18]}@${CDN[18]}:443" | base64 -w0)?remarks=${NODE_NAME[18]} ${NODE_TAG[7]}&obfsParam=$VLESS_HOST_DOMAIN&path=/$VLESS_WS_PATH?ed=2048&obfs=websocket&tls=1&peer=$VLESS_HOST_DOMAIN&allowInsecure=1
 
 # $(text 52)
 "
-    fi
   fi
 
   [ -n "$PORT_H2_REALITY" ] && local SHADOWROCKET_SUBSCRIBE+="
@@ -1871,39 +1599,19 @@ trojan://$TROJAN_PASSWORD@${SERVER_IP_1}:$PORT_TROJAN?security=tls&type=tcp&head
 # $(text 70)"
 
   if [ -n "$PORT_VMESS_WS" ]; then
-     if [[ "${STATUS[1]}" =~ $(text 27)|$(text 28) ]] || [[ "$IS_ARGO" = 'is_argo' && "$NONINTERACTIVE_INSTALL" = 'noninteractive_install' ]]; then
-      local V2RAYN_SUBSCRIBE+="
-----------------------------
-vmess://$(echo -n "{ \"v\": \"2\", \"ps\": \"${NODE_NAME[17]} ${NODE_TAG[6]}\", \"add\": \"${CDN[18]}\", \"port\": \"80\", \"id\": \"${UUID[18]}\", \"aid\": \"0\", \"scy\": \"none\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"$ARGO_DOMAIN\", \"path\": \"/$VMESS_WS_PATH\", \"tls\": \"\", \"sni\": \"\", \"alpn\": \"\" }" | base64 -w0)"
-      [ "$ARGO_TYPE" = 'is_token_argo' ] && V2RAYN_SUBSCRIBE+="
-
-  # $(text 94)
-"
-    else
       WS_SERVER_IP_SHOW=${WS_SERVER_IP[17]} && TYPE_HOST_DOMAIN=$VMESS_HOST_DOMAIN && TYPE_PORT_WS=$PORT_VMESS_WS && local V2RAYN_SUBSCRIBE+="
 ----------------------------
 vmess://$(echo -n "{ \"v\": \"2\", \"ps\": \"${NODE_NAME[17]} ${NODE_TAG[6]}\", \"add\": \"${CDN[18]}\", \"port\": \"80\", \"id\": \"${UUID[18]}\", \"aid\": \"0\", \"scy\": \"none\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"$VMESS_HOST_DOMAIN\", \"path\": \"/$VMESS_WS_PATH\", \"tls\": \"\", \"sni\": \"\", \"alpn\": \"\" }" | base64 -w0)
 
 # $(text 52)"
-    fi
   fi
 
   if [ -n "$PORT_VLESS_WS" ]; then
-     if [[ "${STATUS[1]}" =~ $(text 27)|$(text 28) ]] || [[ "$IS_ARGO" = 'is_argo' && "$NONINTERACTIVE_INSTALL" = 'noninteractive_install' ]]; then
-      local V2RAYN_SUBSCRIBE+="
-----------------------------
-vless://${UUID[18]}@${CDN[18]}:443?encryption=none&security=tls&sni=$ARGO_DOMAIN&type=ws&host=$ARGO_DOMAIN&path=%2F$VLESS_WS_PATH%3Fed%3D2048#${NODE_NAME[18]// /%20}%20${NODE_TAG[7]}"
-      [ "$ARGO_TYPE" = 'is_token_argo' ] && V2RAYN_SUBSCRIBE+="
-
-  # $(text 94)
-"
-    else
       WS_SERVER_IP_SHOW=${WS_SERVER_IP[18]} && TYPE_HOST_DOMAIN=$VLESS_HOST_DOMAIN && TYPE_PORT_WS=$PORT_VLESS_WS && local V2RAYN_SUBSCRIBE+="
 ----------------------------
 vless://${UUID[18]}@${CDN[18]}:443?encryption=none&security=tls&sni=$VLESS_HOST_DOMAIN&type=ws&host=$VLESS_HOST_DOMAIN&path=%2F$VLESS_WS_PATH%3Fed%3D2048#${NODE_NAME[18]// /%20}%20${NODE_TAG[7]}
 
 # $(text 52)"
-    fi
   fi
 
   [ -n "$PORT_H2_REALITY" ] && local V2RAYN_SUBSCRIBE+="
@@ -1947,39 +1655,19 @@ ss://$(echo -n "${SHADOWSOCKS_METHOD}:${UUID[15]}" | base64 -w0)@${SERVER_IP_1}:
 trojan://$TROJAN_PASSWORD@${SERVER_IP_1}:$PORT_TROJAN?security=tls&allowInsecure=1&fp=random&type=tcp#${NODE_NAME[16]} ${NODE_TAG[5]}"
 
   if [ -n "$PORT_VMESS_WS" ]; then
-     if [[ "${STATUS[1]}" =~ $(text 27)|$(text 28) ]] || [[ "$IS_ARGO" = 'is_argo' && "$NONINTERACTIVE_INSTALL" = 'noninteractive_install' ]]; then
-      NEKOBOX_SUBSCRIBE+="
-----------------------------
-vmess://$(echo -n "{\"add\":\"${CDN[17]}\",\"aid\":\"0\",\"host\":\"$ARGO_DOMAIN\",\"id\":\"${UUID[17]}\",\"net\":\"ws\",\"path\":\"/$VMESS_WS_PATH\",\"port\":\"80\",\"ps\":\"${NODE_NAME[17]} ${NODE_TAG[6]}\",\"scy\":\"none\",\"sni\":\"\",\"tls\":\"\",\"type\":\"\",\"v\":\"2\"}" | base64 -w0)"
-      [ "$ARGO_TYPE" = 'is_token_argo' ] && NEKOBOX_SUBSCRIBE+="
-
-  # $(text 94)
-"
-    else
       WS_SERVER_IP_SHOW=${WS_SERVER_IP[17]} && TYPE_HOST_DOMAIN=$VMESS_HOST_DOMAIN && TYPE_PORT_WS=$PORT_VMESS_WS && local NEKOBOX_SUBSCRIBE+="
 ----------------------------
 vmess://$(echo -n "{\"add\":\"${CDN[17]}\",\"aid\":\"0\",\"host\":\"$VMESS_HOST_DOMAIN\",\"id\":\"${UUID[17]}\",\"net\":\"ws\",\"path\":\"/$VMESS_WS_PATH\",\"port\":\"80\",\"ps\":\"${NODE_NAME[17]} ${NODE_TAG[6]}\",\"scy\":\"none\",\"sni\":\"\",\"tls\":\"\",\"type\":\"\",\"v\":\"2\"}" | base64 -w0)
 
 # $(text 52)"
-    fi
   fi
 
   if [ -n "$PORT_VLESS_WS" ]; then
-     if [[ "${STATUS[1]}" =~ $(text 27)|$(text 28) ]] || [[ "$IS_ARGO" = 'is_argo' && "$NONINTERACTIVE_INSTALL" = 'noninteractive_install' ]]; then
-      local NEKOBOX_SUBSCRIBE+="
-----------------------------
-vless://${UUID[18]}@${CDN[18]}:443?security=tls&sni=$ARGO_DOMAIN&type=ws&path=/$VLESS_WS_PATH?ed%3D2048&host=$ARGO_DOMAIN&encryption=none#${NODE_NAME[18]}%20${NODE_TAG[7]}"
-      [ "$ARGO_TYPE" = 'is_token_argo' ] && NEKOBOX_SUBSCRIBE+="
-
-  # $(text 94)
-"
-    else
       WS_SERVER_IP_SHOW=${WS_SERVER_IP[18]} && TYPE_HOST_DOMAIN=$VLESS_HOST_DOMAIN && TYPE_PORT_WS=$PORT_VLESS_WS && local NEKOBOX_SUBSCRIBE+="
 ----------------------------
 vless://${UUID[18]}@${CDN[18]}:443?security=tls&sni=$VLESS_HOST_DOMAIN&type=ws&path=/$VLESS_WS_PATH?ed%3D2048&host=$VLESS_HOST_DOMAIN&encryption=none#${NODE_NAME[18]}%20${NODE_TAG[7]}
 
 # $(text 52)"
-    fi
   fi
 
   [ -n "$PORT_H2_REALITY" ] && local NEKOBOX_SUBSCRIBE+="
@@ -2020,34 +1708,22 @@ vless://${UUID[20]}@${SERVER_IP_1}:${PORT_GRPC_REALITY}?security=reality&sni=${T
   local NODE_REPLACE+="\"${NODE_NAME[16]} ${NODE_TAG[5]}\","
 
   if [ -n "$PORT_VMESS_WS" ]; then
-     if [[ "${STATUS[1]}" =~ $(text 27)|$(text 28) ]] || [[ "$IS_ARGO" = 'is_argo' && "$NONINTERACTIVE_INSTALL" = 'noninteractive_install' ]]; then
-      local INBOUND_REPLACE+=" { \"type\": \"vmess\", \"tag\": \"${NODE_NAME[17]} ${NODE_TAG[6]}\", \"server\":\"${CDN[17]}\", \"server_port\":80, \"uuid\":\"${UUID[17]}\", \"transport\": { \"type\":\"ws\", \"path\":\"/$VMESS_WS_PATH\", \"headers\": { \"Host\": \"$ARGO_DOMAIN\" } }, \"multiplex\": { \"enabled\":true, \"protocol\":\"h2mux\", \"max_streams\":16, \"padding\": true, \"brutal\":{ \"enabled\":true, \"up_mbps\":1000, \"down_mbps\":1000 } } }," && local NODE_REPLACE+="\"${NODE_NAME[17]} ${NODE_TAG[6]}\","
-      [ "$ARGO_TYPE" = 'is_token_argo' ] && [ -z "$PROMPT" ] && local PROMPT="
-  # $(text 94)"
-    else
       local WS_SERVER_IP_SHOW=${WS_SERVER_IP[17]} &&
       local TYPE_HOST_DOMAIN=$VMESS_HOST_DOMAIN &&
       local TYPE_PORT_WS=$PORT_VMESS_WS &&
       local PROMPT+="
       # $(text 52)" &&
       local INBOUND_REPLACE+=" { \"type\": \"vmess\", \"tag\": \"${NODE_NAME[17]} ${NODE_TAG[6]}\", \"server\":\"${CDN[17]}\", \"server_port\":80, \"uuid\":\"${UUID[17]}\", \"transport\": { \"type\":\"ws\", \"path\":\"/$VMESS_WS_PATH\", \"headers\": { \"Host\": \"$VMESS_HOST_DOMAIN\" } }, \"multiplex\": { \"enabled\":true, \"protocol\":\"h2mux\", \"max_streams\":16, \"padding\": true, \"brutal\":{ \"enabled\":true, \"up_mbps\":1000, \"down_mbps\":1000 } } },"
-    fi
     local NODE_REPLACE+="\"${NODE_NAME[17]} ${NODE_TAG[6]}\","
   fi
 
   if [ -n "$PORT_VLESS_WS" ]; then
-    if [[ "${STATUS[1]}" =~ $(text 27)|$(text 28) ]] || [[ "$IS_ARGO" = 'is_argo' && "$NONINTERACTIVE_INSTALL" = 'noninteractive_install' ]]; then
-      local INBOUND_REPLACE+=" { \"type\": \"vless\", \"tag\": \"${NODE_NAME[18]} ${NODE_TAG[7]}\", \"server\":\"${CDN[18]}\", \"server_port\":443, \"uuid\":\"${UUID[18]}\", \"tls\": { \"enabled\":true, \"server_name\":\"$ARGO_DOMAIN\", \"utls\": { \"enabled\":true, \"fingerprint\":\"chrome\" } }, \"transport\": { \"type\":\"ws\", \"path\":\"/$VLESS_WS_PATH\", \"headers\": { \"Host\": \"$ARGO_DOMAIN\" }, \"max_early_data\":2048, \"early_data_header_name\":\"Sec-WebSocket-Protocol\" }, \"multiplex\": { \"enabled\":true, \"protocol\":\"h2mux\", \"max_streams\":16, \"padding\": true, \"brutal\":{ \"enabled\":true, \"up_mbps\":1000, \"down_mbps\":1000 } } },"
-      [ "$ARGO_TYPE" = 'is_token_argo' ] && [ -z "$PROMPT" ] && local PROMPT="
-  # $(text 94)"
-    else
       local WS_SERVER_IP_SHOW=${WS_SERVER_IP[18]} &&
       local TYPE_HOST_DOMAIN=$VLESS_HOST_DOMAIN &&
       local TYPE_PORT_WS=$PORT_VLESS_WS &&
       local PROMPT+="
       # $(text 52)" &&
       local INBOUND_REPLACE+=" { \"type\": \"vless\", \"tag\": \"${NODE_NAME[18]} ${NODE_TAG[7]}\", \"server\":\"${CDN[18]}\", \"server_port\":443, \"uuid\":\"${UUID[18]}\", \"tls\": { \"enabled\":true, \"server_name\":\"$VLESS_HOST_DOMAIN\", \"utls\": { \"enabled\":true, \"fingerprint\":\"chrome\" } }, \"transport\": { \"type\":\"ws\", \"path\":\"/$VLESS_WS_PATH\", \"headers\": { \"Host\": \"$VLESS_HOST_DOMAIN\" }, \"max_early_data\":2048, \"early_data_header_name\":\"Sec-WebSocket-Protocol\" }, \"multiplex\": { \"enabled\":true, \"protocol\":\"h2mux\", \"max_streams\":16, \"padding\": true, \"brutal\":{ \"enabled\":true, \"up_mbps\":1000, \"down_mbps\":1000 } } },"
-    fi
     local NODE_REPLACE+="\"${NODE_NAME[18]} ${NODE_TAG[7]}\","
   fi
 
@@ -2219,9 +1895,7 @@ change_start_port() {
     [ -s $WORK_DIR/conf/${CONF_FILES[a]} ] && sed -i "s/\(.*listen_port.*:\)$((OLD_START_PORT+a))/\1$((START_PORT+a))/" $WORK_DIR/conf/*
   done
   fetch_nodes_value
-  [ -n "$PORT_NGINX" ] && export_nginx_conf_file
   cmd_systemctl enable sing-box
-  [ -n "$ARGO_DOMAIN" ] && export_argo_json_file
   sleep 2
   export_list
   [ "$(systemctl is-active sing-box)" = 'active' ] && info " Sing-box $(text 30) $(text 37) " || error " Sing-box $(text 30) $(text 38) "
@@ -2391,45 +2065,11 @@ change_protocols() {
     unset PORT_TROJAN
   fi
 
-  # 获取 ws 的 argo 或者 origin 状态
-  if [ -s /etc/systemd/system/argo.service ]; then
-    local ARGO_ORIGIN_RULES_STATUS=is_argo
-    ARGO_RUNS=$(sed -n "s/^ExecStart=\(.*\)/\1/gp" /etc/systemd/system/argo.service)
-  elif ls $WORK_DIR/conf/*-ws*inbounds.json >/dev/null 2>&1; then
-    local ARGO_ORIGIN_RULES_STATUS=is_origin
-  else
-    local ARGO_ORIGIN_RULES_STATUS=no_argo_no_origin
-  fi
 
   # 获取 vmess + ws 配置信息
   CHECK_PROTOCOLS=$(asc "$CHECK_PROTOCOLS" ++)
   if [[ "${INSTALL_PROTOCOLS[@]}" =~ "$CHECK_PROTOCOLS" ]]; then
     local DOMAIN_ERROR_TIME=5
-    if [[ "$ARGO_READY" != 'argo_ready' || "$ORIGIN_READY" != 'origin_ready' ]]; then
-      if [ "$ARGO_ORIGIN_RULES_STATUS" = 'is_origin' ]; then
-        until [ -n "$VMESS_HOST_DOMAIN" ]; do
-          (( DOMAIN_ERROR_TIME-- )) || true
-          [ "$DOMAIN_ERROR_TIME" != 0 ] && TYPE=VMESS && reading "\n $(text 50) " VMESS_HOST_DOMAIN || error "\n $(text 3) \n"
-        done
-      elif [ "$ARGO_ORIGIN_RULES_STATUS" = 'no_argo_no_origin' ]; then
-        [ -z "$ARGO_OR_ORIGIN_RULES" ] && hint "\n $(text 57) " && reading "\n $(text 24) " ARGO_OR_ORIGIN_RULES
-        [ "$ARGO_OR_ORIGIN_RULES" != '2' ] && ARGO_OR_ORIGIN_RULES=1 && IS_ARGO=is_argo || IS_ARGO=no_argo
-        if [ "$IS_ARGO" = 'is_argo' ]; then
-          # 如果原来没有 nginx 配置，需要获取 nginx 端口信息
-          [ -z "$PORT_NGINX"  ] && input_nginx_port
-          until [ -n "$ARGO_RUNS" ]; do
-            input_argo_auth is_add_protocols
-            [ -n "$ARGO_RUNS" ] && local ARGO_READY=argo_ready && break
-          done
-        else
-          until [ -n "$VMESS_HOST_DOMAIN" ]; do
-            (( DOMAIN_ERROR_TIME-- )) || true
-            [ "$DOMAIN_ERROR_TIME" != 0 ] && TYPE=VMESS && reading "\n $(text 50) " VMESS_HOST_DOMAIN || error "\n $(text 3) \n"
-          done
-          local ORIGIN_READY=origin_ready
-        fi
-      fi
-    fi
     POSITION=$(awk -v target=$CHECK_PROTOCOLS '{ for(i=1; i<=NF; i++) if($i == target) { print i-1; break } }' <<< "${INSTALL_PROTOCOLS[*]}")
     PORT_VMESS_WS=${REINSTALL_PORTS[POSITION]}
   else
@@ -2440,39 +2080,11 @@ change_protocols() {
   CHECK_PROTOCOLS=$(asc "$CHECK_PROTOCOLS" ++)
   if [[ "${INSTALL_PROTOCOLS[@]}" =~ "$CHECK_PROTOCOLS" ]]; then
     local DOMAIN_ERROR_TIME=5
-    if [[ "$ARGO_READY" != 'argo_ready' || "$ORIGIN_READY" != 'origin_ready' ]]; then
-      if [ "$ARGO_ORIGIN_RULES_STATUS" = 'is_origin' ]; then
-        until [ -n "$VLESS_HOST_DOMAIN" ]; do
-          (( DOMAIN_ERROR_TIME-- )) || true
-          [ "$DOMAIN_ERROR_TIME" != 0 ] && TYPE=VLESS && reading "\n $(text 50) " VLESS_HOST_DOMAIN || error "\n $(text   3) \n"
-        done
-      elif [ "$ARGO_ORIGIN_RULES_STATUS" = 'no_argo_no_origin' ]; then
-        [ -z "$ARGO_OR_ORIGIN_RULES" ] && hint "\n $(text 57) " && reading "\n $(text 24) " ARGO_OR_ORIGIN_RULES
-        [ "$ARGO_OR_ORIGIN_RULES" != '2' ] && ARGO_OR_ORIGIN_RULES=1 && IS_ARGO=is_argo || IS_ARGO=no_argo
-        if [ "$IS_ARGO" = 'is_argo' ]; then
-           # 如果原来没有 nginx 配置，需要获取 nginx 端口信息
-          [ -z "$PORT_NGINX"  ] && input_nginx_port
-          until [ -n "$ARGO_RUNS" ]; do
-            [ "$ARGO_READY" != 'argo_ready' ] && input_argo_auth is_add_protocols
-            [ -n "$ARGO_RUNS" ] && local ARGO_READY=argo_ready && break
-          done
-        else
-          until [ -n "$VLESS_HOST_DOMAIN" ]; do
-            (( DOMAIN_ERROR_TIME-- )) || true
-            [ "$DOMAIN_ERROR_TIME" != 0 ] && TYPE=VLESS && reading "\n $(text 50) " VLESS_HOST_DOMAIN || error "\n $(text   3) \n"
-          done
-          local ORIGIN_READY=origin_ready
-        fi
-      fi
-    fi
     POSITION=$(awk -v target=$CHECK_PROTOCOLS '{ for(i=1; i<=NF; i++) if($i == target) { print i-1; break } }' <<< "${INSTALL_PROTOCOLS[*]}")
     PORT_VLESS_WS=${REINSTALL_PORTS[POSITION]}
   else
     unset PORT_VLESS_WS
   fi
-
-  # 如之前没有 ws，现新增的 ws，则输入 cdn
-  [[ "${#CDN[@]}" = '0' && ( "$ARGO_READY" = 'argo_ready' || "$ORIGIN_READY" = 'origin_ready' ) ]] && input_cdn
 
   # 获取 H2 + Reality 端口
   CHECK_PROTOCOLS=$(asc "$CHECK_PROTOCOLS" ++)
@@ -2495,26 +2107,8 @@ change_protocols() {
   # 停止 sing-box 服务
   cmd_systemctl disable sing-box
 
-  # 生成 Nginx 配置文件
-  [ -n "$PORT_NGINX" ] && export_nginx_conf_file
-
   # 生成各协议的 json 文件
   sing-box_json change
-
-  # 如有需要，安装和删除 Argo 服务
-  if ls $WORK_DIR/conf/*-ws*inbounds.json >/dev/null 2>&1; then
-    if [[ "$ARGO_OR_ORIGIN_RULES" != '2' && "$ARGO_ORIGIN_RULES_STATUS" != 'is_origin' && ! -s /etc/systemd/system/argo.service ]]; then
-      argo_systemd
-      cmd_systemctl enable argo >/dev/null 2>&1
-    fi
-  elif [ -s /etc/systemd/system/argo.service ]; then
-    cmd_systemctl disable argo >/dev/null 2>&1
-    rm -f /etc/systemd/system/argo.service
-    [ -s $WORK_DIR/tunnel.json ] && rm -f $WORK_DIR/tunnel.*
-  fi
-
-  # 如有需要，删除 nginx 配置文件
-  ! ls /etc/systemd/system/argo.service >/dev/null 2>&1 && [[ -s $WORK_DIR/nginx.conf && "$IS_SUB" = 'no_sub' ]] && IS_ARGO=no_argo && rm -f $WORK_DIR/nginx.conf
 
   # 运行 sing-box
   cmd_systemctl enable sing-box
@@ -2530,15 +2124,12 @@ change_protocols() {
 # 卸载 sing-box 全家桶
 uninstall() {
   if [ -d $WORK_DIR ]; then
-    [ -s /etc/systemd/system/argo.service ] && ( cmd_systemctl disable argo 2>/dev/null; rm -f /etc/systemd/system/argo.service )
     if [ "$SYSTEM" = 'Alpine' ]; then
       cmd_systemctl disable sing-box 2>/dev/null
     else
       cmd_systemctl disable sing-box 2>/dev/null
     fi
     sleep 1
-    [[ -s $WORK_DIR/nginx.conf && $(ps -ef | grep 'nginx' | wc -l) -le 1 ]] && reading "\n $(text 83) " REMOVE_NGINX
-    [ "${REMOVE_NGINX,,}" = 'y' ] && ${PACKAGE_UNINSTALL[int]} nginx >/dev/null 2>&1
     [ "$IS_HOPPING" = 'is_hopping' ] && del_port_hopping_nat
     rm -rf $WORK_DIR $TEMP_DIR /etc/systemd/system/sing-box.service /usr/bin/sb
     info "\n $(text 16) \n"
@@ -2548,7 +2139,6 @@ uninstall() {
 
   # 如果 Alpine 系统，删除开机自启动和python3版systemd
   if [ "$SYSTEM" = 'Alpine' ]; then
-    rm -f /etc/local.d/{sing-box,argo}.start
     rc-update add local >/dev/null 2>&1
     ! ls /etc/systemd/system/*.service >/dev/null 2>&1 && rm -f /bin/systemctl
   fi
@@ -2598,7 +2188,7 @@ menu() {
   info " $(text 17): $VERSION\n $(text 18): $(text 1)\n $(text 19):\n\t $(text 20): $SYS\n\t $(text 21): $(uname -r)\n\t $(text 22): $SING_BOX_ARCH\n\t $(text 23): $VIRT "
   info "\t IPv4: $WAN4 $WARPSTATUS4 $COUNTRY4  $ASNORG4 "
   info "\t IPv6: $WAN6 $WARPSTATUS6 $COUNTRY6  $ASNORG6 "
-  info "\t Sing-box: ${STATUS[0]}\t $SING_BOX_VERSION\t\t $SING_BOX_MEMORY_USAGE\n\t Argo: ${STATUS[1]}\t $ARGO_VERSION\t\t $ARGO_MEMORY_USAGE\n \t Nginx: ${STATUS[0]}\t $NGINX_VERSION\t $NGINX_MEMORY_USAGE "
+  info "\t Sing-box: ${STATUS[0]}\t $SING_BOX_VERSION\t\t $SING_BOX_MEMORY_USAGE\n\t "
   echo -e "\n======================================================================================================================\n"
   for ((b=1;b<=${#OPTION[*]};b++)); do [ "$b" = "${#OPTION[*]}" ] && hint " ${OPTION[0]} " || hint " ${OPTION[b]} "; done
   reading "\n $(text 24) " CHOOSE
@@ -2615,14 +2205,6 @@ menu() {
 L=C
 
 check_system_info
-
-# 可以是 Key Value 或者 Key=Value 的形式。传参时，
-# 传参处理1: 把所有的 = 变为空格，但保留 =" ，因为 Json TunnelSecret 是 =" 结尾的，如 {"AccountTag":"9cc9e3e4d8f29d2a02e297f14f20513a","TunnelSecret":"6AYfKBOoNlPiTAuWg64ZwujsNuERpWLm6pPJ2qpN8PM=","TunnelID":"1ac55430-f4dc-47d5-a850-bdce824c4101"}
-# 传参处理2: 去掉 sudo cloudflared service install ，以方便用户输入 Token 并能正确读取真正的以 ey 开头的 Value
-ALL_PARAMETER=($(sed -E 's/(-c|-e|-C|-E) //; s/=([^"])/ \1/g; s/sudo cloudflared service install //' <<< $*))
-[[ "${#ALL_PARAMETER[@]}" > 13 && "${ALL_PARAMETER[@]^^}" == *"--LANGUAGE"* && "${ALL_PARAMETER[@]^^}" == *"--CHOOSE_PROTOCOLS"* && "${ALL_PARAMETER[@]^^}" == *"--START_PORT"* && "${ALL_PARAMETER[@]^^}" == *"--PORT_NGINX"* && "${ALL_PARAMETER[@]^^}" == *"--SERVER_IP"* && "${ALL_PARAMETER[@]^^}" == *"--UUID"* && "${ALL_PARAMETER[@]^^}" == *"--NODE_NAME"* ]] && NONINTERACTIVE_INSTALL=noninteractive_install
-
-
 check_root
 check_arch
 check_system_info
