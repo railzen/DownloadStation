@@ -1,18 +1,21 @@
 #!/usr/bin/env bash
 
 # 当前脚本版本号
-VERSION='v1.0.0039 build240802'
+VERSION='v1.1.3'
 
 # 各变量默认值
+GH_PROXY='cdn2.cloudflare.now.cc/https://'
 TEMP_DIR='/tmp/sing-box'
 WORK_DIR='/etc/sing-box'
 START_PORT_DEFAULT='8881'
 MIN_PORT=100
 MAX_PORT=65520
 TLS_SERVER_DEFAULT=addons.mozilla.org
+CDN_DEFAULT=cn.azhz.eu.org
 PROTOCOL_LIST=("XTLS + reality" "hysteria2" "tuic" "ShadowTLS" "shadowsocks" "trojan" "vmess + ws" "vless + ws + tls" "H2 + reality" "gRPC + reality")
 NODE_TAG=("xtls-reality" "hysteria2" "tuic" "ShadowTLS" "shadowsocks" "trojan" "vmess-ws" "vless-ws-tls" "h2-reality" "grpc-reality")
 CONSECUTIVE_PORTS=${#PROTOCOL_LIST[@]}
+CDN_DOMAIN=("cn.azhz.eu.org" "www.who.int" "skk.moe" "time.cloudflare.com" "csgo.com")
 
 trap "rm -rf $TEMP_DIR >/dev/null 2>&1 ; echo -e '\n' ;exit 1" INT QUIT TERM EXIT
 
@@ -124,6 +127,8 @@ E[51]="Please choose or custom a cdn, http support is required:"
 C[51]="请选择或输入 cdn，要求支持 http:"
 E[52]="Please set the ip \[\${WS_SERVER_IP}] to domain \[\${TYPE_HOST_DOMAIN}], and set the origin rule to \[\${TYPE_PORT_WS}] in Cloudflare."
 C[52]="请在 Cloudflare 绑定 \[\${WS_SERVER_IP}] 的域名为 \[\${TYPE_HOST_DOMAIN}], 并设置 origin rule 为 \[\${TYPE_PORT_WS}]"
+E[53]="Please select or enter the preferred domain, the default is \${CDN_DOMAIN[0]}:"
+C[53]="请选择或者填入优选域名，默认为 \${CDN_DOMAIN[0]}:"
 E[54]="The contents of the ShadowTLS configuration file need to be updated for the sing_box kernel."
 C[54]="ShadowTLS 配置文件内容，需要更新 sing_box 内核"
 E[55]="The script runs today: \$TODAY. Total: \$TOTAL"
@@ -183,6 +188,31 @@ hint() { echo -e "\033[33m\033[01m$*\033[0m"; }   # 黄色
 reading() { read -rp "$(info "$1")" "$2"; }
 text() { grep -q '\$' <<< "${E[$*]}" && eval echo "\$(eval echo "\${${L}[$*]}")" || eval echo "\${${L}[$*]}"; }
 
+# 自定义友道或谷歌翻译函数
+translate() {
+  [ -n "$@" ] && EN="$@"
+  ZH=$(wget --no-check-certificate -qO- --tries=1 --timeout=2 "https://translate.google.com/translate_a/t?client=any_client_id_works&sl=en&tl=zh&q=${EN//[[:space:]]/}" 2>/dev/null)
+  [[ "$ZH" =~ ^\[\".+\"\]$ ]] && cut -d \" -f2 <<< "$ZH"
+}
+
+# 脚本当天及累计运行次数统计
+statistics_of_run-times() {
+  local COUNT=$(wget --no-check-certificate -qO- --tries=2 --timeout=2 "https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fraw.githubusercontent.com%2Ffscarmen%2Fsing-box%2Fmain%2Fsing-box.sh" 2>&1 | grep -m1 -oE "[0-9]+[ ]+/[ ]+[0-9]+") &&
+  TODAY=$(cut -d " " -f1 <<< "$COUNT") &&
+  TOTAL=$(cut -d " " -f3 <<< "$COUNT")
+}
+
+# 选择中英语言
+select_language() {
+  if [ -z "$L" ]; then
+    case $(cat $WORK_DIR/language 2>&1) in
+      E ) L=E ;;
+      C ) L=C ;;
+      * ) [ -z "$L" ] && L=E && hint "\n $(text 0) \n" && reading " $(text 24) " LANGUAGE
+      [ "$LANGUAGE" = 2 ] && L=C ;;
+    esac
+  fi
+}
 
 # 字母与数字的 ASCII 码值转换
 asc(){
@@ -190,6 +220,26 @@ asc(){
     [ "$2" = '++' ] && printf "\\$(printf '%03o' "$[ $(printf "%d" "'$1'") + 1 ]")" || printf "%d" "'$1'"
   else
     [[ "$1" =~ ^[0-9]+$ ]] && printf "\\$(printf '%03o' "$1")"
+  fi
+}
+
+input_cdn() {
+  # 提供网上热心网友的anycast域名
+  if [[ -z "$CDN" && -n "$VMESS_HOST_DOMAIN$VLESS_HOST_DOMAIN" ]]; then
+    echo ""
+    for c in "${!CDN_DOMAIN[@]}"; do hint " $[c+1]. ${CDN_DOMAIN[c]} "; done
+
+    reading "\n $(text 53) " CUSTOM_CDN
+    case "$CUSTOM_CDN" in
+      [1-${#CDN_DOMAIN[@]}] )
+        CDN="${CDN_DOMAIN[$((CUSTOM_CDN-1))]}"
+      ;;
+      ?????* )
+        CDN="$CUSTOM_CDN"
+      ;;
+      * )
+        CDN="${CDN_DOMAIN[0]}"
+    esac
   fi
 }
 
@@ -215,7 +265,7 @@ check_install() {
     local VERSION_LATEST=$(wget --no-check-certificate -qO- "https://api.github.com/repos/SagerNet/sing-box/releases" | awk -F '["v-]' '/tag_name/{print $5}' | sort -r | sed -n '1p')
     local ONLINE=$(wget --no-check-certificate -qO- "https://api.github.com/repos/SagerNet/sing-box/releases" | awk -F '["v]' -v var="tag_name.*$VERSION_LATEST" '$0 ~ var {print $5; exit}')
     ONLINE=${ONLINE:-'1.9.0-alpha.8'}
-    wget --no-check-certificate -c https://github.com/SagerNet/sing-box/releases/download/v$ONLINE/sing-box-$ONLINE-linux-$SING_BOX_ARCH.tar.gz -qO- | tar xz -C $TEMP_DIR sing-box-$ONLINE-linux-$SING_BOX_ARCH/sing-box
+    wget --no-check-certificate -c https://${GH_PROXY}github.com/SagerNet/sing-box/releases/download/v$ONLINE/sing-box-$ONLINE-linux-$SING_BOX_ARCH.tar.gz -qO- | tar xz -C $TEMP_DIR sing-box-$ONLINE-linux-$SING_BOX_ARCH/sing-box
     [ -s $TEMP_DIR/sing-box-$ONLINE-linux-$SING_BOX_ARCH/sing-box ] && mv $TEMP_DIR/sing-box-$ONLINE-linux-$SING_BOX_ARCH/sing-box $TEMP_DIR
     }&
   fi
@@ -342,22 +392,27 @@ enter_start_port() {
 # 定义 Sing-box 变量
 sing-box_variable() {
   if grep -qi 'cloudflare' <<< "$ASNORG4$ASNORG6"; then
-    if grep -qi 'cloudflare' <<< "$ASNORG6" && [ -n "$WAN4" ] && ! grep -qi 'cloudflare' <<< "$ASNORG4"; then
-      SERVER_IP_DEFAULT=$WAN4
-    elif grep -qi 'cloudflare' <<< "$ASNORG4" && [ -n "$WAN6" ] && ! grep -qi 'cloudflare' <<< "$ASNORG6"; then
-      SERVER_IP_DEFAULT=$WAN6
+    local a=6
+    until [ -n "$SERVER_IP" ]; do
+      ((a--)) || true
+      [ "$a" = 0 ] && error "\n $(text 3) \n"
+      reading "\n $(text 46) " SERVER_IP
+    done
+    if [[ "$SERVER_IP" =~ : ]]; then
+      WARP_ENDPOINT=2606:4700:d0::a29f:c101
+      DOMAIN_STRATEG=prefer_ipv6
     else
-      local a=6
-      until [ -n "$SERVER_IP" ]; do
-        ((a--)) || true
-        [ "$a" = 0 ] && error "\n $(text 3) \n"
-        reading "\n $(text 46) " SERVER_IP
-      done
+      WARP_ENDPOINT=162.159.193.10
+      DOMAIN_STRATEG=prefer_ipv4
     fi
   elif [ -n "$WAN4" ]; then
     SERVER_IP_DEFAULT=$WAN4
+    WARP_ENDPOINT=162.159.193.10
+    DOMAIN_STRATEG=prefer_ipv4
   elif [ -n "$WAN6" ]; then
     SERVER_IP_DEFAULT=$WAN6
+    WARP_ENDPOINT=2606:4700:d0::a29f:c101
+    DOMAIN_STRATEG=prefer_ipv6
   fi
 
   # 选择安装的协议，由于选项 a 为全部协议，所以选项数不是从 a 开始，而是从 b 开始，处理输入：把大写全部变为小写，把不符合的选项去掉，把重复的选项合并
@@ -404,7 +459,10 @@ sing-box_variable() {
     done
   fi
 
+  # 选择或者输入 cdn
+  input_cdn
 
+  wait
 
   # 输入 UUID ，错误超过 5 次将会退出
   UUID_DEFAULT=$($TEMP_DIR/sing-box generate uuid)
@@ -1434,7 +1492,7 @@ $(hint "ss://$(echo -n "$SHADOWSOCKS_METHOD:${UUID[15]}" | base64 -w0)@${SERVER_
 EOF
   [ -n "$PORT_TROJAN" ] && cat >> $WORK_DIR/list << EOF
 ----------------------------
-$(hint "trojan://$TROJAN_PASSWORD@${SERVER_IP_1}:$PORT_TROJAN?security=tls&allowInsecure=1&fp=random&type=tcp#${NODE_NAME[16]} ${NODE_TAG[5]}")
+$(hint "trojan://$TROJAN_PASSWORD@${SERVER_IP_1}:$PORT_TROJAN?security=tls&allowInsecure=1&fp=random&type=tcp#${NODE_NAME} ${NODE_TAG[5]}")
 EOF
   [ -n "$PORT_VMESS_WS" ] && WS_SERVER_IP=${WS_SERVER_IP[17]} && TYPE_HOST_DOMAIN=$VMESS_HOST_DOMAIN && TYPE_PORT_WS=$PORT_VMESS_WS && cat >> $WORK_DIR/list << EOF
 ----------------------------
@@ -1765,7 +1823,7 @@ change_start_port() {
   for ((a=0; a<$OLD_CONSECUTIVE_PORTS; a++)) do
     [ -s $WORK_DIR/conf/${CONF_FILES[a]} ] && sed -i "s/\(.*listen_port.*:\)$((OLD_START_PORT+a))/\1$((START_PORT+a))/" $WORK_DIR/conf/*
   done
-  systemctl restart sing-box
+  systemctl start sing-box
   sleep 2
   export_list
   [ "$(systemctl is-active sing-box)" = 'active' ] && info " Sing-box $(text 30) $(text 37) " || error " Sing-box $(text 30) $(text 38) "
@@ -1849,9 +1907,7 @@ change_protocols() {
 
   # 用于新节点的配置信息
   UUID=$(awk '{print $1}' <<< "${UUID[@]} $TROJAN_PASSWORD")
-  for v in "${NODE_NAME[@]}"; do
-    [ -n "$v" ] && NODE_NAME="$v" && break
-  done
+  NODE_NAME=$(awk '{print $1}' <<< "${NODE_NAME[@]}")
   [ "${#WS_SERVER_IP[@]}" -gt 0 ] && WS_SERVER_IP=$(awk '{print $1}' <<< "${WS_SERVER_IP[@]}") && CDN=$(awk '{print $1}' <<< "${CDN[@]}")
 
   # 寻找待删除协议的 inbound 文件名
@@ -1886,8 +1942,6 @@ change_protocols() {
   if [[ "${INSTALL_PROTOCOLS[@]}" =~ "$CHECK_PROTOCOLS" ]]; then
     POSITION=$(awk -v target=$CHECK_PROTOCOLS '{ for(i=1; i<=NF; i++) if($i == target) { print i-1; break } }' <<< "${INSTALL_PROTOCOLS[*]}")
     PORT_XTLS_REALITY=${REINSTALL_PORTS[POSITION]}
-  else
-    unset PORT_XTLS_REALITY
   fi
 
   # 获取原始 Hysteria2 配置信息
@@ -1895,8 +1949,6 @@ change_protocols() {
   if [[ "${INSTALL_PROTOCOLS[@]}" =~ "$CHECK_PROTOCOLS" ]]; then
     POSITION=$(awk -v target=$CHECK_PROTOCOLS '{ for(i=1; i<=NF; i++) if($i == target) { print i-1; break } }' <<< "${INSTALL_PROTOCOLS[*]}")
     PORT_HYSTERIA2=${REINSTALL_PORTS[POSITION]}
-  else
-    unset PORT_HYSTERIA2
   fi
 
   # 获取原始 Tuic V5 配置信息
@@ -1904,8 +1956,6 @@ change_protocols() {
   if [[ "${INSTALL_PROTOCOLS[@]}" =~ "$CHECK_PROTOCOLS" ]]; then
     POSITION=$(awk -v target=$CHECK_PROTOCOLS '{ for(i=1; i<=NF; i++) if($i == target) { print i-1; break } }' <<< "${INSTALL_PROTOCOLS[*]}")
     PORT_TUIC=${REINSTALL_PORTS[POSITION]}
-  else
-    unset PORT_TUIC
   fi
 
   # 获取原始 ShadowTLS 配置信息
@@ -1920,8 +1970,6 @@ change_protocols() {
   if [[ "${INSTALL_PROTOCOLS[@]}" =~ "$CHECK_PROTOCOLS" ]]; then
     POSITION=$(awk -v target=$CHECK_PROTOCOLS '{ for(i=1; i<=NF; i++) if($i == target) { print i-1; break } }' <<< "${INSTALL_PROTOCOLS[*]}")
     PORT_SHADOWSOCKS=${REINSTALL_PORTS[POSITION]}
-  else
-    unset PORT_SHADOWSOCKS
   fi
 
   # 获取原始 Trojan 配置信息
@@ -1929,8 +1977,6 @@ change_protocols() {
   if [[ "${INSTALL_PROTOCOLS[@]}" =~ "$CHECK_PROTOCOLS" ]]; then
     POSITION=$(awk -v target=$CHECK_PROTOCOLS '{ for(i=1; i<=NF; i++) if($i == target) { print i-1; break } }' <<< "${INSTALL_PROTOCOLS[*]}")
     PORT_TROJAN=${REINSTALL_PORTS[POSITION]}
-  else
-    unset PORT_TROJAN
   fi
 
   # 获取原始 vmess + ws 配置信息
@@ -2011,7 +2057,7 @@ version() {
 
   if [ "${UPDATE,,}" = 'y' ]; then
     check_system_info
-    wget --no-check-certificate -c https://github.com/SagerNet/sing-box/releases/download/v$ONLINE/sing-box-$ONLINE-linux-$SING_BOX_ARCH.tar.gz -qO- | tar xz -C $TEMP_DIR sing-box-$ONLINE-linux-$SING_BOX_ARCH/sing-box
+    wget --no-check-certificate -c https://${GH_PROXY}github.com/SagerNet/sing-box/releases/download/v$ONLINE/sing-box-$ONLINE-linux-$SING_BOX_ARCH.tar.gz -qO- | tar xz -C $TEMP_DIR sing-box-$ONLINE-linux-$SING_BOX_ARCH/sing-box
 
     if [ -s $TEMP_DIR/sing-box-$ONLINE-linux-$SING_BOX_ARCH/sing-box ]; then
       systemctl stop sing-box
@@ -2106,22 +2152,24 @@ menu() {
   fi
 }
 
+statistics_of_run-times
+
 # 传参
 [[ "${*,,}" =~ '-c' ]] && L=C
-L=C
+
 while getopts ":P:p:OoUuVvNnBbRr" OPTNAME; do
   case "${OPTNAME,,}" in
-    p ) START_PORT=$OPTARG; check_install; [ "$STATUS" = "$(text 26)" ] && error "\n Sing-box $(text 26) "; change_start_port; exit 0 ;;
-    o ) check_system_info; check_install; [ "$STATUS" = "$(text 26)" ] && error "\n Sing-box $(text 26) "; [ "$STATUS" = "$(text 28)" ] && ( cmd_systemctl disable sing-box; [ "$(systemctl is-active sing-box)" = 'inactive' ] && info "\n Sing-box $(text 27) $(text 37)" ) || ( cmd_systemctl enable sing-box && [ "$(systemctl is-active sing-box)" = 'active' ] && info "\n Sing-box $(text 28) $(text 37)" ); exit 0;;
-    u ) check_system_info; uninstall; exit 0 ;;
-    n ) [ ! -s $WORK_DIR/list ] && error " Sing-box $(text 26) "; export_list; exit 0 ;;
-    v ) check_arch; version; exit 0 ;;
-    b ) bash <(wget --no-check-certificate -qO- "https://raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master/tcp.sh"); exit ;;
-    r ) check_system_info; change_protocols; exit 0 ;;
+    p ) START_PORT=$OPTARG; select_language; check_install; [ "$STATUS" = "$(text 26)" ] && error "\n Sing-box $(text 26) "; change_start_port; exit 0 ;;
+    o ) select_language; check_system_info; check_install; [ "$STATUS" = "$(text 26)" ] && error "\n Sing-box $(text 26) "; [ "$STATUS" = "$(text 28)" ] && ( cmd_systemctl disable sing-box; [ "$(systemctl is-active sing-box)" = 'inactive' ] && info "\n Sing-box $(text 27) $(text 37)" ) || ( cmd_systemctl enable sing-box && [ "$(systemctl is-active sing-box)" = 'active' ] && info "\n Sing-box $(text 28) $(text 37)" ); exit 0;;
+    u ) select_language; check_system_info; uninstall; exit 0 ;;
+    n ) select_language; [ ! -s $WORK_DIR/list ] && error " Sing-box $(text 26) "; export_list; exit 0 ;;
+    v ) select_language; check_arch; version; exit 0 ;;
+    b ) select_language; bash <(wget --no-check-certificate -qO- "https://raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master/tcp.sh"); exit ;;
+    r ) select_language; check_system_info; change_protocols; exit 0 ;;
   esac
 done
 
-
+L=C
 check_root
 check_arch
 check_system_info
