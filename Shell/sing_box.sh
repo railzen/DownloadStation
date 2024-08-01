@@ -65,7 +65,7 @@ C[38]="失败"
 C[40]="Sing-box 本地版本: \$LOCAL\\\t 最新版本: \$ONLINE"
 C[41]="不需要升级"
 C[42]="下载最新版本 Sing-box 失败，脚本退出"
-C[43]="必须以root方式运行脚本，可以输入 sudo -i 后重新下载运行]"
+C[43]="必须以root方式运行脚本，可以输入 sudo -i 后重新下载运行"
 C[44]="正在使用中的端口: \${IN_USED[*]}"
 C[45]="使用端口: \${NOW_START_PORT} - \$((NOW_START_PORT+NOW_CONSECUTIVE_PORTS-1))"
 C[46]="检测到 warp / warp-go 正在运行，请输入确认的服务器 IP:"
@@ -192,7 +192,7 @@ input_hopping_port() {
 
 
 check_root() {
-  [ "$(id -u)" != 0 ] && error "\n $(text 43) \n"
+  [ "$(id -u)" != 0 ] && error "\n 必须以root方式运行脚本，可以输入 sudo -i 后重新下载运行 \n"
 }
 
 # 判断处理器架构
