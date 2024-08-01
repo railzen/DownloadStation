@@ -231,7 +231,6 @@ check_arch() {
 
 # 查安装及运行状态，下标0: sing-box，下标1: argo，下标2：docker；状态码: 26 未安装， 27 已安装未运行， 28 运行中
 check_install() {
-  [[ "$IS_SUB" = 'is_sub' || -s $WORK_DIR/subscribe/qr ]] && IS_SUB=is_sub || IS_SUB=no_sub
   if ls $WORK_DIR/conf/*${NODE_TAG[1]}_inbounds.json >/dev/null 2>&1; then
     check_port_hopping_nat
     [ -n "$PORT_HOPPING_END" ] && IS_HOPPING=is_hopping || IS_HOPPING=no_hopping
@@ -1745,28 +1744,6 @@ vless://${UUID[20]}@${SERVER_IP_1}:${PORT_GRPC_REALITY}?security=reality&sni=${T
   local SING_BOX_JSON2=$(wget --no-check-certificate -qO- --tries=3 --timeout=2 ${SUBSCRIBE_TEMPLATE}/sing-box2)
   echo $SING_BOX_JSON2 | sed "s#\"<INBOUND_REPLACE>\",#$INBOUND_REPLACE#; s#\"<NODE_REPLACE>\"#${NODE_REPLACE%,}#g" | $WORK_DIR/jq > $WORK_DIR/subscribe/sing-box2
 
-  # 生成二维码 url 文件
-  [ "$IS_SUB" = 'is_sub' ] && cat > $WORK_DIR/subscribe/qr << EOF
-$(text 81):
-$(text 82) 1:
-$SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/auto
-
-$(text 82) 2:
-$SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/auto2
-
-$(text 80) QRcode:
-$(text 82) 1:
-https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=$SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/auto
-
-$(text 82) 2:
-https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=$SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/auto2
-
-$(text 82) 1:
-$($WORK_DIR/qrencode "$SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/auto")
-
-$(text 82) 2:
-$($WORK_DIR/qrencode "$SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/auto2")
-EOF
 
   # 生成配置文件
   EXPORT_LIST_FILE="*******************************************
@@ -1819,67 +1796,10 @@ ${PROMPT}
   $(text 72)")
 "
 
-  [ "$IS_SUB" = 'is_sub' ] && EXPORT_LIST_FILE+="
-
-*******************************************
-
-$(hint "Index:
-$SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/
-
-QR code:
-$SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/qr
-
-V2rayN $(text 80):
-$SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/v2rayn")
-
-$(hint "NekoBox $(text 80):
-$SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/neko")
-
-$(hint "Clash $(text 80):
-$SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/clash
-$SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/clash2
-
-sing-box for pc $(text 80):
-$SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/sing-box-pc
-
-sing-box for cellphone $(text 80):
-$SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/sing-box-phone
-
-SFI / SFA / SFM $(text 80):
-$SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/sing-box2
-
-ShadowRocket $(text 80):
-$SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/shadowrocket")
-
-*******************************************
-
-$(info " $(text 81):
-$(text 82) 1:
-$SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/auto
-
-$(text 82) 2:
-$SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/auto2
-
- $(text 80) QRcode:
-$(text 82) 1:
-https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=$SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/auto
-
-$(text 82) 2:
-https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=$SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/auto2")
-
-$(hint "$(text 82) 1:")
-$($WORK_DIR/qrencode $SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/auto)
-
-$(hint "$(text 82) 2:")
-$($WORK_DIR/qrencode $SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/auto2)
-"
-
   # 生成并显示节点信息
   echo "$EXPORT_LIST_FILE" > $WORK_DIR/list
   cat $WORK_DIR/list
 
-  # 显示脚本使用情况数据
-  hint "\n*******************************************\n\n $(text 55) \n"
 }
 
 
