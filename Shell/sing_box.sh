@@ -1711,18 +1711,6 @@ ${PROMPT}
 
 }
 
-# 创建快捷方式
-create_shortcut() {
-  cat > $WORK_DIR/sb.sh << EOF
-#!/usr/bin/env bash
-
-bash <(wget --no-check-certificate -qO- https://raw.githubusercontent.com/fscarmen/sing-box/main/sing-box.sh) \$1
-EOF
-  chmod +x $WORK_DIR/sb.sh
-  ln -sf $WORK_DIR/sb.sh /usr/bin/sb
-  [ -s /usr/bin/sb ] && info "\n $(text 71) "
-}
-
 # 更换各协议的监听端口
 change_start_port() {
   OLD_PORTS=$(awk -F ':|,' '/listen_port/{print $2}' $WORK_DIR/conf/*)
@@ -2028,7 +2016,7 @@ menu_setting() {
     OPTION[1]="1.  $(text 34)"
     OPTION[2]="2.  $(text 32)"
 
-    ACTION[1]() { install_sing-box; export_list install; create_shortcut; exit; }
+    ACTION[1]() { install_sing-box; export_list install; exit; }
     ACTION[2]() { bash <(wget --no-check-certificate -qO- "https://raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master/tcp.sh"); exit; }
 
   fi
