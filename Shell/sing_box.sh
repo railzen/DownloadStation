@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # 当前脚本版本号
-VERSION='V1.0.0 build240801'
+VERSION='V1.0.0036 build240801'
 
 # 各变量默认值
 TEMP_DIR='/tmp/sing-box'
@@ -35,7 +35,7 @@ C[7]="安装依赖列表:"
 C[8]="所有依赖已存在，不需要额外安装"
 C[9]="升级请按 [y]，默认不升级:"
 C[10]="\(4/6\) 请输入 VPS IP \(默认为: \${SERVER_IP_DEFAULT}\):"
-C[11]="\(2/6\) 请输入开始的端口号，必须是 \100 - \65520 \(默认为: \${START_PORT_DEFAULT}\):"
+C[11]="\(2/6\) 请输入开始的端口号，必须是 \MIN_PORT - \MAX_PORT \(默认为: \${START_PORT_DEFAULT}\):"
 C[12]="\(5/6\) 请输入 UUID \(默认为 \${UUID_DEFAULT}\):"
 C[13]="\(6/6\) 请输入节点名称 \(默认为: \${NODE_NAME_DEFAULT}\):"
 C[14]="节点名称只允许英文大小写及数字字符，请重新输入 \(剩余\${a}次\):"
@@ -98,7 +98,7 @@ C[75]="新增协议"
 C[76]="安装 TCP brutal"
 C[77]="已安装 sing-box ，脚本退出"
 C[78]="[ $ERROR_PARAMETER ] 参数错误，脚本退出"
-C[79]="\(3/6\) 请输入 nginx 端口号，必须是 \${MIN_PORT} - \${MAX_PORT} \(默认为: \${PORT_NGINX_DEFAULT}\):"
+C[79]="(3/6) 请输入 nginx 端口号，必须是 \${MIN_PORT} - \${MAX_PORT} \(默认为: \${PORT_NGINX_DEFAULT}\):"
 C[80]="订阅"
 C[81]="自适应 Clash / V2rayN / NekoBox / ShadowRocket / SFI / SFA / SFM 客户端"
 C[82]="模版"
@@ -512,7 +512,7 @@ sing-box_variables() {
   # 选择安装的协议，由于选项 a 为全部协议，所以选项数不是从 a 开始，而是从 b 开始，处理输入：把大写全部变为小写，把不符合的选项去掉，把重复的选项合并
   MAX_CHOOSE_PROTOCOLS=$(asc $[CONSECUTIVE_PORTS+96+1])
   if [ -z "$CHOOSE_PROTOCOLS" ]; then
-    hint "\n $(text 49) "
+    hint "\n (1/6) 多选需要安装协议(比如 hgbd)，协议的端口号次序与多选的排序有关:\n a. all (默认) "
     for e in "${!PROTOCOL_LIST[@]}"; do
       [[ "$e" =~ '6'|'7' ]] && hint " $(asc $[e+98]). ${PROTOCOL_LIST[e]} " || hint " $(asc $[e+98]). ${PROTOCOL_LIST[e]} "
     done
