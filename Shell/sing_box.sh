@@ -2015,9 +2015,6 @@ menu_setting() {
     OPTION[5]="5 .  $(text 32)"
     OPTION[6]="6 .  $(text 62)"
     OPTION[7]="7 .  $(text 33)"
-    OPTION[8]="8 .  $(text 59)"
-    OPTION[9]="9 .  $(text 69)"
-    OPTION[10]="10.  $(text 76)"
 
     ACTION[1]() { export_list; exit 0; }
     [ "$STATUS" = "$(text 28)" ] && ACTION[2]() { cmd_systemctl disable sing-box; [[ "$(systemctl is-active sing-box)" =~ 'inactive'|'unknown' ]] && info " Sing-box $(text 27) $(text 37)" || error " Sing-box $(text 27) $(text 38) "; } || ACTION[2]() { cmd_systemctl enable sing-box && [ "$(systemctl is-active sing-box)" = 'active' ] && info " Sing-box $(text 28) $(text 37)" || error " Sing-box $(text 28) $(text 38) "; }
@@ -2026,21 +2023,14 @@ menu_setting() {
     ACTION[5]() { bash <(wget --no-check-certificate -qO- "https://raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master/tcp.sh"); exit; }
     ACTION[6]() { change_protocols; exit; }
     ACTION[7]() { uninstall; exit; }
-    ACTION[8]() { bash <(wget --no-check-certificate -qO- https://raw.githubusercontent.com/fscarmen/argox/main/argox.sh) -$L; exit; }
-    ACTION[9]() { bash <(wget --no-check-certificate -qO- https://raw.githubusercontent.com/fscarmen/sba/main/sba.sh) -$L; exit; }
-    ACTION[10]() { bash <(wget --no-check-certificate -qO- https://tcp.hy2.sh/); exit; }
+
   else
     OPTION[1]="1.  $(text 34)"
     OPTION[2]="2.  $(text 32)"
-    OPTION[3]="3.  $(text 59)"
-    OPTION[4]="4.  $(text 69)"
-    OPTION[5]="5.  $(text 76)"
 
     ACTION[1]() { install_sing-box; export_list install; create_shortcut; exit; }
     ACTION[2]() { bash <(wget --no-check-certificate -qO- "https://raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master/tcp.sh"); exit; }
-    ACTION[3]() { bash <(wget --no-check-certificate -qO- https://raw.githubusercontent.com/fscarmen/argox/main/argox.sh) -$L; exit; }
-    ACTION[4]() { bash <(wget --no-check-certificate -qO- https://raw.githubusercontent.com/fscarmen/sba/main/sba.sh) -$L; exit; }
-    ACTION[5]() { bash <(wget --no-check-certificate -qO- https://tcp.hy2.sh/); exit; }
+
   fi
 
   [ "${#OPTION[@]}" -ge '10' ] && OPTION[0]="0 .  $(text 35)" || OPTION[0]="0.  $(text 35)"
