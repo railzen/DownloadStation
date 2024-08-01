@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # 当前脚本版本号
-VERSION='V1.0.0036 build240801'
+VERSION='V1.0.0037 build240801'
 
 # 各变量默认值
 TEMP_DIR='/tmp/sing-box'
@@ -1266,7 +1266,7 @@ NoNewPrivileges=yes
 TimeoutStartSec=0
 WorkingDirectory=$WORK_DIR
 "
-  [[ -n "$PORT_NGINX" && "$IS_CENTOS" != 'CentOS7' ]] 
+
 SING_BOX_SERVICE+="ExecStart=$WORK_DIR/sing-box run -C $WORK_DIR/conf/
 ExecReload=/bin/kill -HUP \$MAINPID
 Restart=on-failure
@@ -1358,6 +1358,15 @@ export_list() {
   IS_INSTALL=$1
 
   check_install
+
+  #### v1.1.9 处理的 jq 和 qrencode 二进制文件代替系统依赖的问题，此处预计6月30日删除
+  if [[ "${IS_SUB}" = 'is_sub' || "${IS_ARGO}" = 'is_argo' ]]; then
+    [[ ! -s $WORK_DIR/jq && -s /usr/bin/jq ]] && cp /usr/bin/jq $WORK_DIR/
+    if [ ! -s $WORK_DIR/qrencode ]; then
+      check_arch
+      wget -qO $WORK_DIR/qrencode ${GH_PROXY}https://github.com/fscarmen/client_template/raw/main/qrencode-go/qrencode-go-linux-$QRENCODE_ARCH && chmod +x $WORK_DIR/qrencode
+    fi
+  fi
 
   [ "$IS_INSTALL" != 'install' ] && fetch_nodes_value
 
