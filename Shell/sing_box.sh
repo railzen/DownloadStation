@@ -131,8 +131,6 @@ E[53]="Please select or enter the preferred domain, the default is \${CDN_DOMAIN
 C[53]="请选择或者填入优选域名，默认为 \${CDN_DOMAIN[0]}:"
 E[54]="The contents of the ShadowTLS configuration file need to be updated for the sing_box kernel."
 C[54]="ShadowTLS 配置文件内容，需要更新 sing_box 内核"
-E[55]="The script runs today: \$TODAY. Total: \$TOTAL"
-C[55]="脚本当天运行次数: \$TODAY，累计运行次数: \$TOTAL"
 E[56]="Process ID"
 C[56]="进程ID"
 E[57]="Runtime"
@@ -224,18 +222,6 @@ statistics_of_run-times() {
   local COUNT=$(wget --no-check-certificate -qO- --tries=2 --timeout=2 "https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https://raw.githubusercontent.com/fscarmen/sing-box/main/sing-box.sh" 2>&1 | grep -m1 -oE "[0-9]+[ ]+/[ ]+[0-9]+") &&
   TODAY=$(awk -F ' ' '{print $1}' <<< "$COUNT") &&
   TOTAL=$(awk -F ' ' '{print $3}' <<< "$COUNT")
-}
-
-# 选择中英语言
-select_language() {
-  if [ -z "$L" ]; then
-    case $(cat $WORK_DIR/language 2>&1) in
-      E ) L=E ;;
-      C ) L=C ;;
-      * ) [ -z "$L" ] && L=E && hint "\n $(text 0) \n" && reading " $(text 24) " LANGUAGE
-      [ "$LANGUAGE" = 2 ] && L=C ;;
-    esac
-  fi
 }
 
 # 字母与数字的 ASCII 码值转换
@@ -1753,8 +1739,6 @@ ${PROMPT}
   echo "$EXPORT_LIST_FILE" > $WORK_DIR/list
   cat $WORK_DIR/list
 
-  # 显示脚本使用情况数据
-  hint "\n*******************************************\n\n $(text 55) \n"
 }
 
 # 创建快捷方式
@@ -2121,13 +2105,10 @@ menu() {
 }
 
 check_cdn
-statistics_of_run-times
 
 # 传参
-[[ "${*^^}" =~ '-E' ]] && L=E
 [[ "${*^^}" =~ '-C'|'-B' ]] && L=C
-
-select_language
+L=C
 
 # 可以是 Key Value 或者 Key=Value 的形式
 ALL_PARAMETER=($(sed -E 's/(-c|-e|-C|-E) //; ; s/=/ /g' <<< $*))
@@ -2200,10 +2181,6 @@ check_system_info
 check_dependencies
 check_system_ip
 check_install
-if [ "$NONINTERACTIVE_INSTALL" = 'noninteractive_install' ]; then
-  install_sing-box
-  export_list install
-else
-  menu_setting
-  menu
-fi
+
+menu_setting
+menu
