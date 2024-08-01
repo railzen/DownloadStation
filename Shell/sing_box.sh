@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # 当前脚本版本号
-VERSION='v1.0.0038 build240802'
+VERSION='v1.0.0039 build240802'
 
 # 各变量默认值
 TEMP_DIR='/tmp/sing-box'
