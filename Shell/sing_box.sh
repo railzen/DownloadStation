@@ -123,7 +123,6 @@ C[95]="netfilter-persistent安装失败,但安装进度不会停止。PortHoppin
 C[96]="netfilter-persistent未启动，PortHopping转发规则无法持久化，重启系统，规则将会失效，请手动执行 [netfilter-persistent save],继续运行脚本不影响后续配置"
 C[97]="端口跳跃/多端口(Port Hopping)功能需要占用多个端口，请保证这些端口没有监听其他服务\n Tip1: 端口选择数量不宜过多，推荐1000个左右，最小值:$MIN_HOPPING_PORT，最大值: $MAX_HOPPING_PORT\n Tip2: nat 鸡由于可用于监听的端口有限，一般为20-30个。如设置了不开放的端口会导致节点不通，请慎用！\n 默认不使用该功能"
 C[98]="请输入端口范围，例如 50000:51000，如要禁用请留空:"
-C[99]="检测到已安装 \${SING_BOX_SCRIPT}，脚本退出!"
 
 # 自定义字体彩色，read 函数
 warning() { echo -e "\033[31m\033[01m$*\033[0m"; }  # 红色
@@ -246,28 +245,28 @@ check_install() {
         [ "$(systemctl is-active sing-box)" = 'active' ] && STATUS[0]=$(text 28) || STATUS[0]=$(text 27)
         ;;
       'ExecStart=/etc/v2ray-agent/sing-box/sing-box run -c /etc/v2ray-agent/sing-box/conf/config.json' )
-        SING_BOX_SCRIPT='mack-a/v2ray-agent' && error "\n $(text 99) \n"
+        SING_BOX_SCRIPT='mack-a/v2ray-agent' && error "\n 检测到已安装 \${SING_BOX_SCRIPT}，脚本退出! \n"
         ;;
       'ExecStart=/etc/s-box/sing-box run -c /etc/s-box/sb.json' )
-        SING_BOX_SCRIPT='yonggekkk/sing-box_hysteria2_tuic_argo_reality' && error "\n $(text 99) \n"
+        SING_BOX_SCRIPT='yonggekkk/sing-box_hysteria2_tuic_argo_reality' && error "\n 检测到已安装 \${SING_BOX_SCRIPT}，脚本退出! \n"
         ;;
       'ExecStart=/usr/local/s-ui/bin/runSingbox.sh' )
-        SING_BOX_SCRIPT='alireza0/s-ui' && error "\n $(text 99) \n"
+        SING_BOX_SCRIPT='alireza0/s-ui' && error "\n 检测到已安装 \${SING_BOX_SCRIPT}，脚本退出! \n"
         ;;
       'ExecStart=/usr/local/bin/sing-box run -c /usr/local/etc/sing-box/config.json' )
-        SING_BOX_SCRIPT='FranzKafkaYu/sing-box-yes' && error "\n $(text 99) \n"
+        SING_BOX_SCRIPT='FranzKafkaYu/sing-box-yes' && error "\n 检测到已安装 \${SING_BOX_SCRIPT}，脚本退出! \n"
         ;;
       * )
-        SING_BOX_SCRIPT='Unknown or customized sing-box' && error "\n $(text 99) \n"
+        SING_BOX_SCRIPT='Unknown or customized sing-box' && error "\n 检测到已安装 \${SING_BOX_SCRIPT}，脚本退出! \n"
     esac
   elif [ -s /lib/systemd/system/sing-box.service ]; then
     SYSTEMD_EXECSTART=$(grep '^ExecStart=' /lib/systemd/system/sing-box.service)
     case "$SYSTEMD_EXECSTART" in
       'ExecStart=/etc/sing-box/bin/sing-box run -c /etc/sing-box/config.json -C /etc/sing-box/conf' )
-        SING_BOX_SCRIPT='233boy/sing-box' && error "\n $(text 99) \n"
+        SING_BOX_SCRIPT='233boy/sing-box' && error "\n 检测到已安装 \${SING_BOX_SCRIPT}，脚本退出! \n"
         ;;
       * )
-        SING_BOX_SCRIPT='Unknown or customized sing-box' && error "\n $(text 99) \n"
+        SING_BOX_SCRIPT='Unknown or customized sing-box' && error "\n 检测到已安装 \${SING_BOX_SCRIPT}，脚本退出! \n"
     esac
   else
     STATUS[0]=$(text 26)
