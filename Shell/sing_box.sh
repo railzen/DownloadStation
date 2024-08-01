@@ -10,11 +10,9 @@ START_PORT_DEFAULT='8881'
 MIN_PORT=100
 MAX_PORT=65520
 TLS_SERVER_DEFAULT=addons.mozilla.org
-CDN_DEFAULT=cn.azhz.eu.org
 PROTOCOL_LIST=("XTLS + reality" "hysteria2" "tuic" "ShadowTLS" "shadowsocks" "trojan" "vmess + ws" "vless + ws + tls" "H2 + reality" "gRPC + reality")
 NODE_TAG=("xtls-reality" "hysteria2" "tuic" "ShadowTLS" "shadowsocks" "trojan" "vmess-ws" "vless-ws-tls" "h2-reality" "grpc-reality")
 CONSECUTIVE_PORTS=${#PROTOCOL_LIST[@]}
-CDN_DOMAIN=("cn.azhz.eu.org" "www.who.int" "skk.moe" "time.cloudflare.com" "csgo.com")
 
 trap "rm -rf $TEMP_DIR >/dev/null 2>&1 ; echo -e '\n' ;exit 1" INT QUIT TERM EXIT
 
@@ -126,8 +124,6 @@ E[51]="Please choose or custom a cdn, http support is required:"
 C[51]="请选择或输入 cdn，要求支持 http:"
 E[52]="Please set the ip \[\${WS_SERVER_IP}] to domain \[\${TYPE_HOST_DOMAIN}], and set the origin rule to \[\${TYPE_PORT_WS}] in Cloudflare."
 C[52]="请在 Cloudflare 绑定 \[\${WS_SERVER_IP}] 的域名为 \[\${TYPE_HOST_DOMAIN}], 并设置 origin rule 为 \[\${TYPE_PORT_WS}]"
-E[53]="Please select or enter the preferred domain, the default is \${CDN_DOMAIN[0]}:"
-C[53]="请选择或者填入优选域名，默认为 \${CDN_DOMAIN[0]}:"
 E[54]="The contents of the ShadowTLS configuration file need to be updated for the sing_box kernel."
 C[54]="ShadowTLS 配置文件内容，需要更新 sing_box 内核"
 E[55]="The script runs today: \$TODAY. Total: \$TOTAL"
@@ -187,21 +183,6 @@ hint() { echo -e "\033[33m\033[01m$*\033[0m"; }   # 黄色
 reading() { read -rp "$(info "$1")" "$2"; }
 text() { grep -q '\$' <<< "${E[$*]}" && eval echo "\$(eval echo "\${${L}[$*]}")" || eval echo "\${${L}[$*]}"; }
 
-# 自定义友道或谷歌翻译函数
-translate() {
-  [ -n "$@" ] && EN="$@"
-  ZH=$(wget --no-check-certificate -qO- --tries=1 --timeout=2 "https://translate.google.com/translate_a/t?client=any_client_id_works&sl=en&tl=zh&q=${EN//[[:space:]]/}" 2>/dev/null)
-  [[ "$ZH" =~ ^\[\".+\"\]$ ]] && cut -d \" -f2 <<< "$ZH"
-}
-
-# 脚本当天及累计运行次数统计
-statistics_of_run-times() {
-  local COUNT=$(wget --no-check-certificate -qO- --tries=2 --timeout=2 "https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fraw.githubusercontent.com%2Ffscarmen%2Fsing-box%2Fmain%2Fsing-box.sh" 2>&1 | grep -m1 -oE "[0-9]+[ ]+/[ ]+[0-9]+") &&
-  TODAY=$(cut -d " " -f1 <<< "$COUNT") &&
-  TOTAL=$(cut -d " " -f3 <<< "$COUNT")
-}
-
-
 
 # 字母与数字的 ASCII 码值转换
 asc(){
@@ -209,26 +190,6 @@ asc(){
     [ "$2" = '++' ] && printf "\\$(printf '%03o' "$[ $(printf "%d" "'$1'") + 1 ]")" || printf "%d" "'$1'"
   else
     [[ "$1" =~ ^[0-9]+$ ]] && printf "\\$(printf '%03o' "$1")"
-  fi
-}
-
-input_cdn() {
-  # 提供网上热心网友的anycast域名
-  if [[ -z "$CDN" && -n "$VMESS_HOST_DOMAIN$VLESS_HOST_DOMAIN" ]]; then
-    echo ""
-    for c in "${!CDN_DOMAIN[@]}"; do hint " $[c+1]. ${CDN_DOMAIN[c]} "; done
-
-    reading "\n $(text 53) " CUSTOM_CDN
-    case "$CUSTOM_CDN" in
-      [1-${#CDN_DOMAIN[@]}] )
-        CDN="${CDN_DOMAIN[$((CUSTOM_CDN-1))]}"
-      ;;
-      ?????* )
-        CDN="$CUSTOM_CDN"
-      ;;
-      * )
-        CDN="${CDN_DOMAIN[0]}"
-    esac
   fi
 }
 
@@ -381,27 +342,22 @@ enter_start_port() {
 # 定义 Sing-box 变量
 sing-box_variable() {
   if grep -qi 'cloudflare' <<< "$ASNORG4$ASNORG6"; then
-    local a=6
-    until [ -n "$SERVER_IP" ]; do
-      ((a--)) || true
-      [ "$a" = 0 ] && error "\n $(text 3) \n"
-      reading "\n $(text 46) " SERVER_IP
-    done
-    if [[ "$SERVER_IP" =~ : ]]; then
-      WARP_ENDPOINT=2606:4700:d0::a29f:c101
-      DOMAIN_STRATEG=prefer_ipv6
+    if grep -qi 'cloudflare' <<< "$ASNORG6" && [ -n "$WAN4" ] && ! grep -qi 'cloudflare' <<< "$ASNORG4"; then
+      SERVER_IP_DEFAULT=$WAN4
+    elif grep -qi 'cloudflare' <<< "$ASNORG4" && [ -n "$WAN6" ] && ! grep -qi 'cloudflare' <<< "$ASNORG6"; then
+      SERVER_IP_DEFAULT=$WAN6
     else
-      WARP_ENDPOINT=162.159.193.10
-      DOMAIN_STRATEG=prefer_ipv4
+      local a=6
+      until [ -n "$SERVER_IP" ]; do
+        ((a--)) || true
+        [ "$a" = 0 ] && error "\n $(text 3) \n"
+        reading "\n $(text 46) " SERVER_IP
+      done
     fi
   elif [ -n "$WAN4" ]; then
     SERVER_IP_DEFAULT=$WAN4
-    WARP_ENDPOINT=162.159.193.10
-    DOMAIN_STRATEG=prefer_ipv4
   elif [ -n "$WAN6" ]; then
     SERVER_IP_DEFAULT=$WAN6
-    WARP_ENDPOINT=2606:4700:d0::a29f:c101
-    DOMAIN_STRATEG=prefer_ipv6
   fi
 
   # 选择安装的协议，由于选项 a 为全部协议，所以选项数不是从 a 开始，而是从 b 开始，处理输入：把大写全部变为小写，把不符合的选项去掉，把重复的选项合并
@@ -448,10 +404,7 @@ sing-box_variable() {
     done
   fi
 
-  # 选择或者输入 cdn
-  input_cdn
 
-  wait
 
   # 输入 UUID ，错误超过 5 次将会退出
   UUID_DEFAULT=$($TEMP_DIR/sing-box generate uuid)
@@ -1812,7 +1765,7 @@ change_start_port() {
   for ((a=0; a<$OLD_CONSECUTIVE_PORTS; a++)) do
     [ -s $WORK_DIR/conf/${CONF_FILES[a]} ] && sed -i "s/\(.*listen_port.*:\)$((OLD_START_PORT+a))/\1$((START_PORT+a))/" $WORK_DIR/conf/*
   done
-  systemctl start sing-box
+  systemctl restart sing-box
   sleep 2
   export_list
   [ "$(systemctl is-active sing-box)" = 'active' ] && info " Sing-box $(text 30) $(text 37) " || error " Sing-box $(text 30) $(text 38) "
@@ -1933,6 +1886,8 @@ change_protocols() {
   if [[ "${INSTALL_PROTOCOLS[@]}" =~ "$CHECK_PROTOCOLS" ]]; then
     POSITION=$(awk -v target=$CHECK_PROTOCOLS '{ for(i=1; i<=NF; i++) if($i == target) { print i-1; break } }' <<< "${INSTALL_PROTOCOLS[*]}")
     PORT_XTLS_REALITY=${REINSTALL_PORTS[POSITION]}
+  else
+    unset PORT_XTLS_REALITY
   fi
 
   # 获取原始 Hysteria2 配置信息
@@ -1940,6 +1895,8 @@ change_protocols() {
   if [[ "${INSTALL_PROTOCOLS[@]}" =~ "$CHECK_PROTOCOLS" ]]; then
     POSITION=$(awk -v target=$CHECK_PROTOCOLS '{ for(i=1; i<=NF; i++) if($i == target) { print i-1; break } }' <<< "${INSTALL_PROTOCOLS[*]}")
     PORT_HYSTERIA2=${REINSTALL_PORTS[POSITION]}
+  else
+    unset PORT_HYSTERIA2
   fi
 
   # 获取原始 Tuic V5 配置信息
@@ -1947,6 +1904,8 @@ change_protocols() {
   if [[ "${INSTALL_PROTOCOLS[@]}" =~ "$CHECK_PROTOCOLS" ]]; then
     POSITION=$(awk -v target=$CHECK_PROTOCOLS '{ for(i=1; i<=NF; i++) if($i == target) { print i-1; break } }' <<< "${INSTALL_PROTOCOLS[*]}")
     PORT_TUIC=${REINSTALL_PORTS[POSITION]}
+  else
+    unset PORT_TUIC
   fi
 
   # 获取原始 ShadowTLS 配置信息
@@ -1961,6 +1920,8 @@ change_protocols() {
   if [[ "${INSTALL_PROTOCOLS[@]}" =~ "$CHECK_PROTOCOLS" ]]; then
     POSITION=$(awk -v target=$CHECK_PROTOCOLS '{ for(i=1; i<=NF; i++) if($i == target) { print i-1; break } }' <<< "${INSTALL_PROTOCOLS[*]}")
     PORT_SHADOWSOCKS=${REINSTALL_PORTS[POSITION]}
+  else
+    unset PORT_SHADOWSOCKS
   fi
 
   # 获取原始 Trojan 配置信息
@@ -1968,6 +1929,8 @@ change_protocols() {
   if [[ "${INSTALL_PROTOCOLS[@]}" =~ "$CHECK_PROTOCOLS" ]]; then
     POSITION=$(awk -v target=$CHECK_PROTOCOLS '{ for(i=1; i<=NF; i++) if($i == target) { print i-1; break } }' <<< "${INSTALL_PROTOCOLS[*]}")
     PORT_TROJAN=${REINSTALL_PORTS[POSITION]}
+  else
+    unset PORT_TROJAN
   fi
 
   # 获取原始 vmess + ws 配置信息
@@ -2142,8 +2105,6 @@ menu() {
     warning " $(text 36) [0-$((${#OPTION[*]}-1))] " && sleep 1 && menu
   fi
 }
-
-statistics_of_run-times
 
 # 传参
 [[ "${*,,}" =~ '-c' ]] && L=C
