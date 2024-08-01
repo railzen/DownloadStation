@@ -636,8 +636,6 @@ check_dependencies() {
       firewall-cmd --add-port=0-65535/udp --permanent >/dev/null 2>&1
       firewall-cmd --reload >/dev/null 2>&1
     fi
-  else
-
   fi
 }
 
