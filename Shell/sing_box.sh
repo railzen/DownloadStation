@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # 当前脚本版本号
-VERSION='v1.2.4 (2024.05.09)'
+VERSION='V1.0.0 build240801'
 
 # 各变量默认值
 TEMP_DIR='/tmp/sing-box'
@@ -109,10 +109,10 @@ C[97]="端口跳跃/多端口(Port Hopping)功能需要占用多个端口，请�
 C[98]="请输入端口范围，例如 50000:51000，如要禁用请留空:"
 
 # 自定义字体彩色，read 函数
-warning() { echo -e "\033[31m\033[01m$*\033[0m"; }  # 红色
-error() { echo -e "\033[31m\033[01m$*\033[0m" && exit 1; } # 红色
-info() { echo -e "\033[32m\033[01m$*\033[0m"; }   # 绿色
-hint() { echo -e "\033[33m\033[01m$*\033[0m"; }   # 黄色
+warning() { echo "\033[31m\033[01m$*\033[0m"; }  # 红色
+error() { echo "\033[31m\033[01m$*\033[0m" && exit 1; } # 红色
+info() { echo "\033[32m\033[01m$*\033[0m"; }   # 绿色
+hint() { echo "\033[33m\033[01m$*\033[0m"; }   # 黄色
 reading() { read -rp "$(info "$1")" "$2"; }
 text() { grep -q '\$' <<< "${E[$*]}" && eval echo "\$(eval echo "\${${L}[$*]}")" || eval echo "\${${L}[$*]}"; }
 
@@ -246,7 +246,7 @@ check_install() {
     SYSTEMD_EXECSTART=$(grep '^ExecStart=' /lib/systemd/system/sing-box.service)
     case "$SYSTEMD_EXECSTART" in
       'ExecStart=/etc/sing-box/bin/sing-box run -c /etc/sing-box/config.json -C /etc/sing-box/conf' )
-        SING_BOX_SCRIPT='233boy/sing-box' && error "\n 检测到已安装 \${SING_BOX_SCRIPT}，脚本退出! \n"
+        SING_BOX_SCRIPT='233boy/sing-box' && error "\n 检测到已安装 ${SING_BOX_SCRIPT}，脚本退出! \n"
         ;;
       * )
         SING_BOX_SCRIPT='Unknown or customized sing-box' && error "\n 检测到已安装 \${SING_BOX_SCRIPT}，脚本退出! \n"
