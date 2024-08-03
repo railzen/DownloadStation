@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh ${work_path}/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.9071 Build240804"
+main_version="V1.0.9072 Build240804"
 work_path="/opt/CherryScript"
 
 main_menu_start() {
@@ -1549,14 +1549,14 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
           while true;do
                 root_use
                 ipv6_disabled=$(sysctl -n net.ipv6.conf.all.disable_ipv6)
-                result=$(wget -6 -qO- --no-check-certificate --user-agent=Mozilla --tries=1 --timeout=1 https://api.ip.sb/geoip)
                 echo ""
                 if [ "$ipv6_disabled" -eq 1 ]; then
                     echo "当前网络优先级设置: IPv4 优先"
                 else
                     echo "当前网络优先级设置: IPv6 优先"
                 fi
-              
+
+                result=$(wget -6 -qO- --no-check-certificate --user-agent=Mozilla --timeout=1 https://api.ip.sb/geoip)
                 if [ -n "$result" ]; then
                     echo "当前IPV6可用性: 可用"
                 else
@@ -1566,8 +1566,8 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
                 echo "------------------------"
                 echo "切换的网络优先级"
                 echo "------------------------"
-                echo "1. IPv4 优先       2. IPv6 优先 "
-                echo "3. 启用 IPv6       4. 禁用 IPv6 "
+                echo "1. IPv4 优先        2. IPv6 优先 "
+                echo "3. 启用 IPv6        4. 禁用 IPv6 "
                 echo "5. 还原 网络(IPv4/IPv6) 默认配置 "
                 echo "6. 还原 IPv6(启用/禁用) 默认配置  "
                 echo "------------------------"
