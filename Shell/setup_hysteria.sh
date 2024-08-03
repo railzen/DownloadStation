@@ -3,7 +3,7 @@
 # -------------------------------------------------------------
 # 检查系统
 export LANG=en_US.UTF-8
-sh_ver="V1.0.01 build240803"
+sh_ver="V1.0.2 build240803"
 echoType='echo -e'
  
 Green_font_prefix="\033[32m" && Red_font_prefix="\033[31m" && Green_background_prefix="\033[42;37m" && Red_background_prefix="\033[41;37m" && Font_color_suffix="\033[0m" && Yellow_font_prefix="\033[0;33m"
@@ -123,6 +123,7 @@ while true;do
 ======================================\n
  ${Green_font_prefix} 1.${Font_color_suffix} 安装 Hysteria2 Server
  ${Green_font_prefix} 2.${Font_color_suffix} 卸载 Hysteria2 Server
+ ${Green_font_prefix} 3.${Font_color_suffix} 启停 Hysteria2 Server
 \n======================================
  ${Green_font_prefix} 0.${Font_color_suffix} 退出脚本
 ======================================" && echo
@@ -153,6 +154,21 @@ while true;do
             2)
                 bash <(curl -fsSL https://get.hy2.sh/) --remove
                 exit 0
+            ;;
+            3)
+                if [[ -e "/etc/systemd/system/hysteria-server.service" ]]; then
+                    check_status
+                    if [[ "$status" == "running" ]]; then
+                        systemctl stop hysteria-server.service
+                        systemctl disable hysteria-server.service
+                    else
+                        systemctl restart hysteria-server.service
+                        systemctl enable hysteria-server.service
+                    fi
+                else
+                    echo -e " 尚未安装Hysteria2"
+                    read -p "按任意键继续……" temp
+                fi
             ;;
             0)
             exit 0
