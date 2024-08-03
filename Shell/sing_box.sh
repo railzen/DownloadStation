@@ -5,7 +5,7 @@ VERSION='v1.0.0053 (2024.08.03)'
 
 function rand() {  min=$1 ; max=$(($2-$min+1)) ; num=$(($RANDOM+$RANDOM+$RANDOM+1000000000)) ; echo $(($num%$max+$min)) ; } #增加一个十位数再求余
 # 各变量默认值
-TEMP_DIR='/tmp/sing-box'
+TEMP_DIR='/tmp/cherry-sing-box'
 WORK_DIR='/opt/CherryScript/work/sing-box'
 MIN_PORT=1000
 MAX_PORT=65520
@@ -1914,7 +1914,7 @@ menu_setting() {
 menu() {
   clear
   echo -e "======================================================================================================================\n"
-  info " $(text 17): $VERSION\n $(text 18): $(text 1)\n $(text 19):\n\t $(text 20): $SYS\n\t $(text 21): $(uname -r)\n\t $(text 22): $SING_BOX_ARCH\n\t $(text 23): $VIRT "
+  info " $(text 17): $VERSION\n $(text 19):\n\t $(text 20): $SYS\n\t $(text 21): $(uname -r)\n\t $(text 22): $SING_BOX_ARCH\n\t $(text 23): $VIRT "
   info "\t IPv4: $WAN4 $WARPSTATUS4 $COUNTRY4  $ASNORG4 "
   info "\t IPv6: $WAN6 $WARPSTATUS6 $COUNTRY6  $ASNORG6 "
   info "\t Sing-box: $STATUS\t $SING_BOX_VERSION "
