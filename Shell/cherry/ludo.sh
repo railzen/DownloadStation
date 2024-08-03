@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh ${work_path}/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.8.0012 Build240619"
+main_version="V1.0.9.0010 Build240803"
 work_path="/opt/CherryScript"
 
 main_menu_start() {
@@ -30,9 +30,10 @@ echo "8. 测试脚本合集 ▶ "
 echo "9. 甲骨文云脚本合集 ▶ "
 echo "10. 安装Snell V4 "
 echo "11. 安装Hysteria2 "
-echo "12. 安装3X-UI "
-echo "13. 系统工具 ▶ "
-echo "14. 面板工具 ▶ "
+echo "12. 安装SingBox管理脚本 ▶ "
+echo "13. 安装3X-UI "
+echo "14. 系统工具 ▶ "
+echo "15. 面板工具 ▶ "
 echo "------------------------"
 echo "99. 脚本更新"
 echo "------------------------"
@@ -1121,8 +1122,13 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
     curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/setup_hysteria.sh && chmod +x setup_hysteria.sh && ./setup_hysteria.sh
     exit
     ;;
-
   12)
+    clear
+    curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/sing_box.sh && chmod +x sing_box.sh && ./sing_box.sh
+    exit
+    ;;
+
+  13)
     clear
     #询问用户是否要安装3XUI
     read -p "是否要安装3X-UI最新版？(y/n): " choice
@@ -1135,7 +1141,7 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
     fi
     ;;
 
-  13)
+  14)
     while true; do
       clear
       echo "▶ 系统工具"
@@ -2685,7 +2691,7 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
     done
     ;;
 
-  14)
+  15)
     while true; do
       clear
       echo "▶ 面板工具"
@@ -4518,7 +4524,6 @@ echo -e "${Green}ROOT私钥登录已开启，已关闭ROOT密码登录，重连�
 
 
 add_sshpasswd() {
-
 echo "设置你的ROOT密码"
 passwd
 sed -i 's/^\s*#\?\s*PermitRootLogin.*/PermitRootLogin yes/g' /etc/ssh/sshd_config;
@@ -4527,8 +4532,6 @@ rm -rf /etc/ssh/sshd_config.d/* /etc/ssh/ssh_config.d/*
 restart_ssh
 echo -e "${Green}ROOT登录设置完毕！${White}"
 server_reboot
-
-
 }
 
 root_use() {
@@ -4538,9 +4541,12 @@ clear
 
 # 脚本从此处开始
 
-if [[ ! $# = 0 && $1 = dir ]];then
-cd ${work_path}/work
-exit 0
+if [[ ! $# = 0 && $1 = "dir" ]];then
+    cd ${work_path}/work
+    exit 0
+elif [[ ! $# = 0 && $1 = "restart" ]];then
+    ls /etc/systemd/system | grep Cherry- | xargs systemctl restart
+    exit 0
 fi
 
 Yellow='\033[33m'
