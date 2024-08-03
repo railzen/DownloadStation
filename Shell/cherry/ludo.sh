@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh ${work_path}/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.9030 Build240804"
+main_version="V1.0.9040 Build240804"
 work_path="/opt/CherryScript"
 
 main_menu_start() {
@@ -1557,12 +1557,12 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
                 echo "当前网络优先级设置: IPv6 优先"
             fi
             echo "------------------------"
-
-            echo ""
             echo "切换的网络优先级"
             echo "------------------------"
-            echo "1. IPv4 优先          2. IPv6 优先"
-            echo "3. 高级设置"
+            echo "1. IPv4 优先          2. IPv6 优先  "
+            echo "3. 启用 IPv6          3. 禁用 IPv6  "
+            echo "5. 还原 网络(IPv4/IPv6) 默认配置     "
+            echo "6. 还原 IPv6(启用/禁用) 默认配置      "
             echo "------------------------"
             echo "0. 返回主菜单"
             echo "------------------------"
@@ -1571,18 +1571,38 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
             case $choice in
                 1)
                     sysctl -w net.ipv6.conf.all.disable_ipv6=1 > /dev/null 2>&1
-                    closeipv6 > /dev/null 2>&1
+                    restore_ip46
+                    prefer_ipv4
                     echo "已切换为 IPv4 优先,可能需要重启！"
                     ;;
+
                 2)
                     sysctl -w net.ipv6.conf.all.disable_ipv6=0 > /dev/null 2>&1
-                    openipv6 > /dev/null 2>&1
+                    restore_ip46
+                    prefer_ipv6
                     echo "已切换为 IPv6 优先,可能需要重启！"
                     ;;
                     
                 3)
-                clear
-                curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/change_ip_perfer.sh && chmod +x change_ip_perfer.sh && sudo ./change_ip_perfer.sh
+                    openipv6 > /dev/null 2>&1
+                    restore_ipv6
+                    enable_ipv6
+                    echo "已启用 IPv6,可能需要重启！"
+                ;;
+
+                4)
+                    closeipv6 > /dev/null 2>&1
+                    restore_ipv6
+                    disable_ipv6
+                    echo "已禁用 IPv6,可能需要重启！"
+                ;;
+
+                5)
+                    restore_ip46 'info'
+                ;;
+
+                6)
+                    restore_ipv6 'info'
                 ;;
 
                 0)
@@ -1601,8 +1621,6 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
             ;;
 
           12)
-
-
             root_use
             # 获取当前交换空间信息
             swap_used=$(free -m | awk 'NR==3{print $3}')
@@ -3758,7 +3776,78 @@ esac
     break_end
 done
 }
+# 从这里开始是IPV6优先级的函数部分[TAG279]
 
+reload_sysctl() { sysctl -q -p && sysctl -q --system; }
+restart_network() {
+  echo -e "${Blue}正在重启网络服务...${White}"
+  # NetworkManager
+  if systemctl is-active --quiet NetworkManager; then systemctl restart NetworkManager
+  # NetworkManager
+  # elif command -v nmcli >/dev/null 2>&1; then nmcli networking off && nmcli networking on
+  # CentOS/RedHat
+  elif systemctl is-active --quiet network; then systemctl restart network
+  # Debian/Ubuntu
+  elif systemctl is-active --quiet networking; then systemctl restart networking
+  else echo -e "${Yellow}无法重启网络服务, 请手动重启${White}"
+  fi
+}
+
+# = prefer IPv4/IPv6
+restore_ip46() {
+  if [[ -f $GAICONF ]]; then
+    sed -i "/$MARK/d" $GAICONF
+  fi
+  if [[ "$@" = 'info' ]]; then echo -e "${Green}已还原为默认配置${White}";check_ip46; fi
+}
+prefer_ipv4() {
+  echo "precedence ::ffff:0:0/96  100 $MARK" >>$GAICONF
+  check_ip46
+}
+prefer_ipv6() {
+  echo "label 2002::/16   2 $MARK" >>$GAICONF
+  check_ip46
+}
+check_ip46() {
+  echo -e "${Green}检测访问网络优先级 (显示IPv4, 则为IPv4优先; 显示IPv6, 则为IPv6优先):${White}"
+  curl ip.sb
+  echo -e "${Yellow}PS: IPv6优先, 并不能保证所有请求都走IPv6, 某些客户端可能需要额外设定${White}"
+  echo "比如: xray/v2ray设定UseIPv6, ss设定ipv6_first, trojan设定prefer_ipv4, hy2设定 direct.mode"
+}
+
+# = enable/disable IPv6
+restore_ipv6() {
+  sed -i "/$MARK/d" $SYSCTLCONF
+  if [[ "$@" = 'info' ]]; then reload_sysctl;restart_network;echo -e "${Green}已还原为默认配置${White}";check_ipv6; fi
+}
+interfaces=("all" "default");
+# interfaces+=$(ls /sys/class/net | grep -E '^(eth.*|lo)$')
+# for interface in "${interfaces[@]}"; do echo $interface; done;
+enable_ipv6() {
+  for interface in "${interfaces[@]}"; do
+    echo "net.ipv6.conf.${interface}.disable_ipv6=0 $MARK" >>$SYSCTLCONF
+  done;
+  reload_sysctl
+  restart_network
+  check_ipv6
+}
+disable_ipv6() {
+  for interface in "${interfaces[@]}"; do
+    echo "net.ipv6.conf.${interface}.disable_ipv6=1 $MARK" >>$SYSCTLCONF
+  done;
+  reload_sysctl
+  check_ipv6
+}
+check_ipv6() {
+  echo -e "${Green}检测IPv6 启用/禁用:${White}"
+  result=$(curl -6 -s ip.sb)
+  if [ -n "$result" ]; then
+    echo "IPv6 is enabled. $result"
+  else
+    echo "IPv6 is disabled."
+  fi
+}
+# 结束IPV6优先级的函数部分[/TAG279]
 Update_Shell(){
 	echo -e "当前版本为 ${main_version} ，开始检测最新版本..."
 	sh_new_ver=$(curl -s "https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/ludo.sh"|grep 'main_version="'|awk -F "=" '{print $NF}'|sed 's/\"//g'|head -1)
@@ -4571,12 +4660,11 @@ elif [[ ! $# = 0 && $1 = "restart" ]];then
     exit 0
 fi
 
-Yellow='\033[33m'
-White='\033[0m'
-Green='\033[0;32m'
-Blue='\033[0;34m'
-Red='\033[31m'
-Gray='\e[37m'
+Yellow='\033[33m'; White='\033[0m'; Green='\033[0;32m'; Blue='\033[0;34m'; Red='\033[31m'; Gray='\e[37m'
+
+SYSCTLCONF=/etc/sysctl.conf
+GAICONF=/etc/gai.conf
+MARK="# CherryModified"
 
 mkdir ${work_path} > /dev/null 2>&1
 mkdir ${work_path}/work > /dev/null 2>&1
