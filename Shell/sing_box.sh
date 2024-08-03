@@ -4,11 +4,11 @@
 VERSION='v1.0.0053 (2024.08.03)'
 
 # 各变量默认值
-TEMP_DIR='/tmp/sing-box'
-WORK_DIR='/etc/sing-box'
-START_PORT_DEFAULT='8881'
+TEMP_DIR='/opt/CherryScript/work/tmp/sing-box'
+WORK_DIR='/opt/CherryScript/work/sing-box'
 MIN_PORT=100
 MAX_PORT=65520
+START_PORT_DEFAULT=$(rand $MIN_PORT $MAX_PORT) 
 TLS_SERVER_DEFAULT=addons.mozilla.org
 PROTOCOL_LIST=("XTLS + reality" "hysteria2" "tuic" "ShadowTLS" "shadowsocks" "trojan" "vmess + ws" "vless + ws + tls" "H2 + reality" "gRPC + reality")
 NODE_TAG=("xtls-reality" "hysteria2" "tuic" "ShadowTLS" "shadowsocks" "trojan" "vmess-ws" "vless-ws-tls" "h2-reality" "grpc-reality")
@@ -59,12 +59,11 @@ C[38]="失败"
 C[39]="Sing-box 未安装"
 C[40]="Sing-box 本地版本: \$LOCAL\\\t 最新版本: \$ONLINE"
 C[41]="不需要升级"
-C[42]="下载最新版本 Sing-box 失败，脚本退出，问题反馈:[https://github.com/fscarmen/sing-box/issues]"
-C[43]="必须以root方式运行脚本，可以输入 sudo -i 后重新下载运行，问题反馈:[https://github.com/fscarmen/sing-box/issues]"
+C[42]="下载最新版本 Sing-box 失败，脚本退出"
 C[44]="正在使用中的端口: \${IN_USED[*]}"
 C[45]="使用端口: \${NOW_START_PORT} - \$((NOW_START_PORT+NOW_CONSECUTIVE_PORTS-1))"
 C[46]="检测到 warp / warp-go 正在运行，请输入确认的服务器 IP:"
-C[47]="没有 server ip，脚本退出，问题反馈:[https://github.com/fscarmen/sing-box/issues]"
+C[47]="没有 server ip，脚本退出"
 C[48]="ShadowTLS - 复制上面两条 Neko links 进去，并按顺序手动设置链式代理，详细教程: https://github.com/fscarmen/sing-box/blob/main/README.md#sekobox-%E8%AE%BE%E7%BD%AE-shadowtls-%E6%96%B9%E6%B3%95"
 C[49]="(1/6) 多选需要安装协议(比如 hgbd):\n a. all (默认)"
 C[50]="请输入 \$TYPE 域名:"
@@ -85,7 +84,6 @@ C[65]="(2/3) 未安装的协议"
 C[66]="请选择需要增加的协议（可以多选）:"
 C[67]="(3/3) 确认重装的所有协议"
 C[68]="如有错误请按 [n]，其他键继续:"
-C[69]="安装 sba 脚本 (argo + sing-box) [https://github.com/fscarmen/sba]"
 C[70]="请把 tls 里的 inSecure 设置为 true"
 C[71]="创建快捷 [ sb ] 指令成功!"
 C[72]="各客户端配置文件路径: $WORK_DIR/subscribe/\n 完整模板可参照:\n https://t.me/ztvps/100\n https://github.com/chika0801/sing-box-examples/tree/main/Tun"
@@ -110,18 +108,11 @@ hint() { echo -e "\033[33m\033[01m$*\033[0m"; }   # 黄色
 reading() { read -rp "$(info "$1")" "$2"; }
 text() { grep -q '\$' <<< "${E[$*]}" && eval echo "\$(eval echo "\${${L}[$*]}")" || eval echo "\${${L}[$*]}"; }
 
-# 自定义谷歌翻译函数
-translate() {
-  [ -n "$@" ] && EN="$@"
-  ZH=$(wget --no-check-certificate -qO- --tries=1 --timeout=2 "https://translate.google.com/translate_a/t?client=any_client_id_works&sl=en&tl=zh&q=${EN//[[:space:]]/%20}" 2>/dev/null)
-  [[ "$ZH" =~ ^\[\".+\"\]$ ]] && awk -F '"' '{print $2}' <<< "$ZH"
-}
-
-# 脚本当天及累计运行次数统计
-statistics_of_run-times() {
-  local COUNT=$(wget --no-check-certificate -qO- --tries=2 --timeout=2 "https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https://raw.githubusercontent.com/fscarmen/sing-box/main/sing-box.sh" 2>&1 | grep -m1 -oE "[0-9]+[ ]+/[ ]+[0-9]+") &&
-  TODAY=$(awk -F ' ' '{print $1}' <<< "$COUNT") &&
-  TOTAL=$(awk -F ' ' '{print $3}' <<< "$COUNT")
+function rand() { 
+ min=$1 
+ max=$(($2-$min+1)) 
+ num=$(($RANDOM+$RANDOM+$RANDOM+1000000000)) #增加一个10位的数再求余 
+ echo $(($num%$max+$min)) 
 }
 
 # 字母与数字的 ASCII 码值转换
@@ -134,7 +125,7 @@ asc(){
 }
 
 check_root() {
-  [ "$(id -u)" != 0 ] && error "\n $(text 43) \n"
+  [ "$(id -u)" != 0 ] && error "\n 必须以root方式运行脚本，可以输入 sudo -i 后重新下载运行 \n"
 }
 
 # 判断处理器架构
@@ -255,14 +246,12 @@ check_system_ip() {
   IP4=$(wget -4 -qO- --no-check-certificate --user-agent=Mozilla --tries=2 --timeout=1 http://ip-api.com/json/) &&
   WAN4=$(expr "$IP4" : '.*query\":[ ]*\"\([^"]*\).*') &&
   COUNTRY4=$(expr "$IP4" : '.*country\":[ ]*\"\([^"]*\).*') &&
-  ASNORG4=$(expr "$IP4" : '.*isp\":[ ]*\"\([^"]*\).*') &&
-  [[ "$L" = C && -n "$COUNTRY4" ]] && COUNTRY4=$(translate "$COUNTRY4")
+  ASNORG4=$(expr "$IP4" : '.*isp\":[ ]*\"\([^"]*\).*')
 
   IP6=$(wget -6 -qO- --no-check-certificate --user-agent=Mozilla --tries=2 --timeout=1 https://api.ip.sb/geoip) &&
   WAN6=$(expr "$IP6" : '.*ip\":[ ]*\"\([^"]*\).*') &&
   COUNTRY6=$(expr "$IP6" : '.*country\":[ ]*\"\([^"]*\).*') &&
-  ASNORG6=$(expr "$IP6" : '.*isp\":[ ]*\"\([^"]*\).*') &&
-  [[ "$L" = C && -n "$COUNTRY6" ]] && COUNTRY6=$(translate "$COUNTRY6")
+  ASNORG6=$(expr "$IP6" : '.*isp\":[ ]*\"\([^"]*\).*')
 }
 
 # 输入起始 port 函数
@@ -1435,7 +1424,7 @@ vless://${UUID[19]}@${SERVER_IP_1}:${PORT_H2_REALITY}?encryption=none&security=r
 ----------------------------
 vless://${UUID[20]}@${SERVER_IP_1}:${PORT_GRPC_REALITY}?encryption=none&security=reality&sni=${TLS_SERVER[20]}&fp=chrome&pbk=${REALITY_PUBLIC[20]}&type=grpc&serviceName=grpc&mode=gun#${NODE_NAME[20]// /%20}%20${NODE_TAG[9]}"
 
-  echo -n "$V2RAYN_SUBSCRIBE" | sed -E '/^[ ]*#|^[ ]+|^--|^\{|^\}/d' | sed '/^$/d' | base64 -w0 > $WORK_DIR/subscribe/v2rayn
+  echo -n "$V2RAYN_SUBSCRIBE" | sed -E '/^[ ]*#|^[ ]+|^--|^\{|^\}/d' | sed '/^$/d' | base64 -w0 > ~/Proxy.txt
 
   # 生成 NekoBox 订阅文件
   [ -n "$PORT_XTLS_REALITY" ] && local NEKOBOX_SUBSCRIBE+="
@@ -1955,71 +1944,6 @@ menu() {
 # 传参
 [[ "${*^^}" =~ '-C'|'-B' ]] && L=C
 L=C
-
-# 可以是 Key Value 或者 Key=Value 的形式
-ALL_PARAMETER=($(sed -E 's/(-c|-e|-C|-E) //; ; s/=/ /g' <<< $*))
-[[ "${#ALL_PARAMETER[@]}" > 13 && "${ALL_PARAMETER[@]^^}" == *"--LANGUAGE"* && "${ALL_PARAMETER[@]^^}" == *"--CHOOSE_PROTOCOLS"* && "${ALL_PARAMETER[@]^^}" == *"--START_PORT"* && "${ALL_PARAMETER[@]^^}" == *"--SERVER_IP"* && "${ALL_PARAMETER[@]^^}" == *"--UUID"* && "${ALL_PARAMETER[@]^^}" == *"--NODE_NAME"* ]] && NONINTERACTIVE_INSTALL=noninteractive_install
-
-# 传参处理，无交互快速安装参数
-for z in ${!ALL_PARAMETER[@]}; do
-  case "${ALL_PARAMETER[z]^^}" in
-    -P )
-      ((z++)); START_PORT=${ALL_PARAMETER[z]}; check_install; [ "$STATUS" = "$(text 26)" ] && error "\n Sing-box $(text 26) "; change_start_port; exit 0
-      ;;
-    -O )
-      check_system_info; check_install; [ "$STATUS" = "$(text 26)" ] && error "\n Sing-box $(text 26) "; [ "$STATUS" = "$(text 28)" ] && ( cmd_systemctl disable sing-box; [[ "$(systemctl is-active sing-box)" =~ 'inactive'|'unknown' ]] && info "\n Sing-box $(text 27) $(text 37)" ) || ( cmd_systemctl enable sing-box && [ "$(systemctl is-active sing-box)" = 'active' ] && info "\n Sing-box $(text 28) $(text 37)" ); exit 0
-      ;;
-    -U )
-      check_system_info; check_install; uninstall; exit 0
-      ;;
-    -N )
-      [ ! -s $WORK_DIR/list ] && error " Sing-box $(text 26) "; export_list; exit 0
-      ;;
-    -V )
-      check_arch; version; exit 0
-      ;;
-    -B )
-      bash <(wget --no-check-certificate -qO- "https://raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master/tcp.sh"); exit
-      ;;
-    -R )
-      check_system_info; change_protocols; exit 0
-      ;;
-    -F )
-      ((z++)); VARIABLE_FILE=${ALL_PARAMETER[z]}; . $VARIABLE_FILE; NONINTERACTIVE_INSTALL=noninteractive_install
-      ;;
-    --LANGUAGE )
-      ((z++)); [[ "${ALL_PARAMETER[z]^^}" =~ ^C ]] && L=C || L=E
-      ;;
-    --CHOOSE_PROTOCOLS )
-      ((z++)); CHOOSE_PROTOCOLS=${ALL_PARAMETER[z]}
-      ;;
-    --START_PORT )
-      ((z++)); START_PORT=${ALL_PARAMETER[z]}
-      ;;
-    --SERVER_IP )
-      ((z++)); SERVER_IP=${ALL_PARAMETER[z]}
-      ;;
-    --VMESS_HOST_DOMAIN )
-      ((z++)); VMESS_HOST_DOMAIN=${ALL_PARAMETER[z]}
-      ;;
-    --VLESS_HOST_DOMAIN )
-      ((z++)); VLESS_HOST_DOMAIN=${ALL_PARAMETER[z]}
-      ;;
-    --CDN )
-      ((z++)); CDN=${ALL_PARAMETER[z]}
-      ;;
-    --UUID_CONFIRM )
-      ((z++)); UUID_CONFIRM=${ALL_PARAMETER[z]}
-      ;;
-    --NODE_NAME_CONFIRM )
-      ((z++))
-      for ((z=$z; z<${#ALL_PARAMETER[@]}; z++)); do
-        [[ ! "${ALL_PARAMETER[z]}" =~ ^- ]] && NODE_NAME_ARRAY+=(${ALL_PARAMETER[z]}) || break
-      done
-      NODE_NAME_CONFIRM=${NODE_NAME_ARRAY[@]}
-      ;;
-  esac
-done
 
 check_root
 check_arch
