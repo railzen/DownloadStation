@@ -256,6 +256,30 @@ enter_start_port() {
 
 # 定义 Sing-box 变量
 sing-box_variables() {
+  clear
+  # 选择安装的协议，由于选项 a 为全部协议，所以选项数不是从 a 开始，而是从 b 开始，处理输入：把大写全部变为小写，把不符合的选项去掉，把重复的选项合并
+  MAX_CHOOSE_PROTOCOLS=$(asc $[CONSECUTIVE_PORTS+96+1])
+  if [ -z "$CHOOSE_PROTOCOLS" ]; then
+    listchoice "\n 多选需要安装协议(比如 bcdf):\n "
+    for e in "${!PROTOCOL_LIST[@]}"; do
+      [[ "$e" =~ '6'|'7' ]] && listchoice " $(asc $[e+98]). ${PROTOCOL_LIST[e]} (必须在 Cloudflare 解析自有域名) " || listchoice " $(asc $[e+98]). ${PROTOCOL_LIST[e]} "
+    done
+    echo "======================================================================================================================"
+    echo " 0.退出"
+    reading "\n 请选择: " CHOOSE_PROTOCOLS
+  fi
+  
+  if [[ "${CHOOSE_PROTOCOLS}" == "a" ]]; then
+      reading "\n 按任意键退出程序" CHOOSE_PROTOCOLS
+      exit
+  elif [[ "${CHOOSE_PROTOCOLS}" == "A" ]]; then
+      reading "\n 按任意键退出程序" CHOOSE_PROTOCOLS
+      exit
+  elif [[ "${CHOOSE_PROTOCOLS}" == "0" ]]; then
+      exit
+  fi
+
+  check_system_ip
   if grep -qi 'cloudflare' <<< "$ASNORG4$ASNORG6"; then
     local a=6
     until [ -n "$SERVER_IP" ]; do
@@ -278,30 +302,6 @@ sing-box_variables() {
     SERVER_IP_DEFAULT=$WAN6
     WARP_ENDPOINT=2606:4700:d0::a29f:c101
     DOMAIN_STRATEG=prefer_ipv6
-  fi
-  
-  clear
-  # 选择安装的协议，由于选项 a 为全部协议，所以选项数不是从 a 开始，而是从 b 开始，处理输入：把大写全部变为小写，把不符合的选项去掉，把重复的选项合并
-  MAX_CHOOSE_PROTOCOLS=$(asc $[CONSECUTIVE_PORTS+96+1])
-  if [ -z "$CHOOSE_PROTOCOLS" ]; then
-    listchoice "\n 多选需要安装协议(比如 bcdf):\n "
-    for e in "${!PROTOCOL_LIST[@]}"; do
-      [[ "$e" =~ '6'|'7' ]] && listchoice " $(asc $[e+98]). ${PROTOCOL_LIST[e]} (必须在 Cloudflare 解析自有域名) " || listchoice " $(asc $[e+98]). ${PROTOCOL_LIST[e]} "
-    done
-    echo "======================================================================================================================"
-    echo " 0.退出"
-    reading "\n 请选择: " CHOOSE_PROTOCOLS
-  fi
-  
-  if [[ "${CHOOSE_PROTOCOLS}" == "a" ]]; then
-      reading "\n 按任意键退出程序" CHOOSE_PROTOCOLS
-      exit
-  elif [[ "${CHOOSE_PROTOCOLS}" == "A" ]]; then
-      reading "\n 按任意键退出程序" CHOOSE_PROTOCOLS
-      exit
-  elif [[ "${CHOOSE_PROTOCOLS}" == "0" ]]; then
-      reading "\n 按任意键退出程序" CHOOSE_PROTOCOLS
-      exit
   fi
 
   # 对选择协议的输入处理逻辑：先把所有的大写转为小写，并把所有没有去选项剔除掉，最后按输入的次序排序。如果选项为 a(all) 和其他选项并存，将会忽略 a，如 abc 则会处理为 bc
@@ -1927,7 +1927,7 @@ menu() {
 
   #只有一个选项，那就直接进吧
   if [[ "${#OPTION[*]}" == "2" ]]; then
-      check_system_ip || ACTION[1]
+      ACTION[1]
       exit
   fi
 
