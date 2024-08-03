@@ -3,7 +3,7 @@
 # 当前脚本版本号
 VERSION='v1.0.0053 (2024.08.03)'
 
-function rand() {  min=$1 ; max=$(($2-$min+1)) ; num=$(($RANDOM+$RANDOM+$RANDOM+1000000000)) ; echo $(($num%$max+$min)) ; } #增加一个十位数再求余
+function rand() {  min=$1 ; max=$(($2-$min+1)) ; num=$(date +%s%n) ; echo $(($num%$max+$min)) ; } #增加一个十位数再求余
 # 各变量默认值
 TEMP_DIR='/tmp/cherry-sing-box'
 WORK_DIR='/opt/CherryScript/work/sing-box'
@@ -20,7 +20,6 @@ trap "rm -rf $TEMP_DIR >/dev/null 2>&1 ; echo -e '\n' ;exit 1" INT QUIT TERM EXI
 
 mkdir -p $TEMP_DIR
 
-C[1]="增加两个的无交互安装模式: 1. 传参；2.kv 文件，详细参考: https://github.com/fscarmen/sing-box/blob/main/README.md"
 C[2]="下载 Sing-box 中，请稍等 ..."
 C[3]="输入错误达5次,脚本退出"
 C[4]="UUID 应为36位字符,请重新输入 \(剩余\${UUID_ERROR_TIME}次\):"
@@ -1915,8 +1914,8 @@ menu() {
   clear
   echo -e "======================================================================================================================\n"
   info " $(text 17): $VERSION\n $(text 19):\n\t $(text 20): $SYS\n\t $(text 21): $(uname -r)\n\t $(text 22): $SING_BOX_ARCH\n\t $(text 23): $VIRT "
-  info "\t IPv4: $WAN4 $WARPSTATUS4 $COUNTRY4  $ASNORG4 "
-  info "\t IPv6: $WAN6 $WARPSTATUS6 $COUNTRY6  $ASNORG6 "
+  info "\t IPv4: $WAN4 $COUNTRY4  $ASNORG4 "
+  info "\t IPv6: $WAN6 $COUNTRY6  $ASNORG6 "
   info "\t Sing-box: $STATUS\t $SING_BOX_VERSION "
   [ -n "$PID" ] && info "\t 进程ID: $PID "
   [ -n "$RUNTIME" ] && info "\t 运行时长: $RUNTIME "
