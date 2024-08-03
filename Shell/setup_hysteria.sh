@@ -3,8 +3,10 @@
 # -------------------------------------------------------------
 # 检查系统
 export LANG=en_US.UTF-8
-
+sh_ver="V1.0.01 build240803"
 echoType='echo -e'
+ 
+Green_font_prefix="\033[32m" && Red_font_prefix="\033[31m" && Green_background_prefix="\033[42;37m" && Red_background_prefix="\033[41;37m" && Font_color_suffix="\033[0m" && Yellow_font_prefix="\033[0;33m"
  
 function rand() { 
  min=$1 
@@ -110,14 +112,54 @@ echoContent skyBlue "hysteria2://${uuid}@${ipv4}:${port}?sni=apple.com&insecure=
 echo "hysteria2://${uuid}@${ipv4}:${port}?sni=apple.com&insecure=1&tfo=1#Hysteria2" >> ~/Proxy.txt
 }
 
-read -r -p "Are your sure to continue?(Y/N)" selectStart
+check_status(){
+	status=`systemctl status hysteria-server | grep Active | awk '{print $3}' | cut -d "(" -f2 | cut -d ")" -f1`
+}
 
-if [[ "${selectStart}" == "Y" ]]; then
-    setup_hysteria
-    exit
-elif [[ "${selectStart}" == "y" ]]; then
-    setup_hysteria
-    exit
-else
-    exit
-fi
+while true;do
+    clear
+    echo -e "======================================
+ Hysteria2 脚本 $sh_ver 
+======================================\n
+ ${Green_font_prefix} 1.${Font_color_suffix} 安装 Hysteria2 Server
+ ${Green_font_prefix} 2.${Font_color_suffix} 卸载 Hysteria2 Server
+\n======================================
+ ${Green_font_prefix} 0.${Font_color_suffix} 退出脚本
+======================================" && echo
+        if [[ -e "/etc/systemd/system/hysteria-server.service" ]]; then
+            check_status
+            if [[ "$status" == "running" ]]; then
+                echo -e " 当前状态:  ${Green_font_prefix}已安装${Font_color_suffix} 并 ${Green_font_prefix}已启动${Font_color_suffix}"
+            else
+                echo -e " 当前状态:  ${Green_font_prefix}已安装${Font_color_suffix} 但 ${Red_font_prefix}未启动${Font_color_suffix}"
+            fi
+        else
+            echo -e " 当前状态: ${Red_font_prefix}未安装${Font_color_suffix}"
+        fi
+        echo
+        read -e -p " 请输入数字[0-9]:" num
+        case "$num" in
+            1)
+                echo
+                read -r -p " Are your sure to continue?(Y/N) " selectStart
+
+                if [[ "${selectStart}" == "Y" ]]; then
+                    setup_hysteria
+                    read -p "按任意键继续……" temp
+                elif [[ "${selectStart}" == "y" ]]; then
+                    read -p "按任意键继续……" temp
+                fi
+            ;;
+            2)
+                bash <(curl -fsSL https://get.hy2.sh/) --remove
+                exit 0
+            ;;
+            0)
+            exit 0
+            ;;
+            *)
+            echo "请输入正确数字${Yellow_font_prefix}[0-9]${Font_color_suffix}"
+            ;;
+        esac
+done
+
