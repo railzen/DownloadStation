@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh ${work_path}/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.9004 Build240803"
+main_version="V1.0.9005 Build240803"
 work_path="/opt/CherryScript"
 
 main_menu_start() {
@@ -1103,18 +1103,12 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
 
 
   10)
-    while true; do
-        #询问用户是否要安装Snell
+    #询问用户是否要安装Snell
         #read -p "是否要进入Snell V4安装脚本？(y/n): " choice
         #choice=y
         #if [ "$choice" == "y" ]; then
-            clear
-            bash -c "$(curl -sL https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/snell/Snell_v2.sh)"
-        #else
-        #    back_main
-        #fi
-        back_main
-    done
+    clear
+    bash -c "$(curl -sL https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/snell/Snell_v2.sh)"
     ;;
 
   11)
