@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh ${work_path}/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.9073 Build240804"
+main_version="V1.0.9075 Build240804"
 work_path="/opt/CherryScript"
 
 main_menu_start() {
@@ -1556,7 +1556,7 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
                     echo "当前网络优先级设置: IPv6 优先"
                 fi
 
-                result=$(wget -6 -qO- --no-check-certificate --user-agent=Mozilla --tries=0 --timeout=1 https://api.ip.sb/geoip)
+                result=$(curl -s --max-time 1 ipv6.ip.sb)
                 if [ -n "$result" ]; then
                     echo "当前IPV6可用性: 可用"
                 else
