@@ -15,7 +15,7 @@ echo " | |____| |  | | |____| | \ \| | \ \  | |   "
 echo "  \_____|_|  |_|______|_|  \_\_|  \_\ |_|   "
 echo "                                "
 
-echo -e "\033[96mCherry Script $main_version（Support for Ubuntu/Debian/CentOS）\033[0m"
+echo -e "\033[96mCherry Script $main_version(Support for Ubuntu/Debian/CentOS)\033[0m"
 echo -e "\033[96mPersonal use, unauthorized use prohibited!\033[0m"
 echo -e "\033[96m-- Press \033[93mludo\033[96m to start script --\033[0m"
 echo "------------------------"
