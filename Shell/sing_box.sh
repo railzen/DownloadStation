@@ -3,10 +3,11 @@
 # 当前脚本版本号
 VERSION='v1.0.0053 (2024.08.03)'
 
+function rand() {  min=$1 ; max=$(($2-$min+1)) ; num=$(($RANDOM+$RANDOM+$RANDOM+1000000000)) ; echo $(($num%$max+$min)) ; } #增加一个十位数再求余
 # 各变量默认值
-TEMP_DIR='/opt/CherryScript/work/tmp/sing-box'
+TEMP_DIR='/tmp/sing-box'
 WORK_DIR='/opt/CherryScript/work/sing-box'
-MIN_PORT=100
+MIN_PORT=1000
 MAX_PORT=65520
 START_PORT_DEFAULT=$(rand $MIN_PORT $MAX_PORT) 
 TLS_SERVER_DEFAULT=addons.mozilla.org
@@ -28,7 +29,6 @@ C[7]="安装依赖列表:"
 C[8]="所有依赖已存在，不需要额外安装"
 C[9]="升级请按 [y]，默认不升级:"
 C[10]="\(4/6\) 请输入 VPS IP \(默认为: \${SERVER_IP_DEFAULT}\):"
-C[11]="\(2/6\) 请输入开始的端口号，必须是 \${MIN_PORT} - \${MAX_PORT}，需要连续\${NUM}个空闲的端口 \(默认为: \${START_PORT_DEFAULT}\):"
 C[12]="\(5/6\) 请输入 UUID \(默认为 \${UUID_DEFAULT}\):"
 C[13]="\(6/6\) 请输入节点名称 \(默认为 \${NODE_NAME_DEFAULT}\):"
 C[14]="节点名称只允许英文大小写及数字字符，请重新输入 \(剩余\${a}次\):"
@@ -41,21 +41,11 @@ C[20]="当前操作系统"
 C[21]="内核"
 C[22]="处理器架构"
 C[23]="虚拟化"
-C[24]="请选择:"
 C[25]="当前架构 \$(uname -m) 暂不支持"
 C[26]="未安装"
-C[27]="关闭"
-C[28]="开启"
-C[29]="查看节点信息 (sb -n)"
-C[30]="更换监听端口 (sb -p)"
-C[31]="同步 Sing-box 至最新版本 (sb -v)"
-C[32]="升级内核、安装BBR、DD脚本 (sb -b)"
-C[33]="卸载 (sb -u)"
 C[34]="安装 Sing-box 协议全家桶脚本"
 C[35]="退出"
 C[36]="请输入正确数字"
-C[37]="成功"
-C[38]="失败"
 C[39]="Sing-box 未安装"
 C[40]="Sing-box 本地版本: \$LOCAL\\\t 最新版本: \$ONLINE"
 C[41]="不需要升级"
@@ -65,19 +55,14 @@ C[45]="使用端口: \${NOW_START_PORT} - \$((NOW_START_PORT+NOW_CONSECUTIVE_POR
 C[46]="检测到 warp / warp-go 正在运行，请输入确认的服务器 IP:"
 C[47]="没有 server ip，脚本退出"
 C[48]="ShadowTLS - 复制上面两条 Neko links 进去，并按顺序手动设置链式代理，详细教程: https://github.com/fscarmen/sing-box/blob/main/README.md#sekobox-%E8%AE%BE%E7%BD%AE-shadowtls-%E6%96%B9%E6%B3%95"
-C[49]="(1/6) 多选需要安装协议(比如 hgbd):\n a. all (默认)"
 C[50]="请输入 \$TYPE 域名:"
 C[51]="请选择或输入 cdn，要求支持 http:"
 C[52]="请在 Cloudflare 绑定 \[\${WS_SERVER_IP_SHOW}] 的域名为 \[\${TYPE_HOST_DOMAIN}], 并设置 origin rule 为 \[\${TYPE_PORT_WS}]"
 C[53]="请选择或者填入优选域名，默认为 \${CDN_DOMAIN[0]}:"
 C[54]="ShadowTLS 配置文件内容，需要更新 sing_box 内核"
-C[56]="进程ID"
-C[57]="运行时长"
 C[58]="内存占用"
-C[59]="安装 ArgoX 脚本 (argo + xray) [https://github.com/fscarmen/argox]"
 C[60]="选择的协议及端口次序如下:"
 C[61]="(必须在 Cloudflare 解析自有域名)"
-C[62]="增加 / 删除协议 (sb -r)"
 C[63]="(1/3) 已安装的协议"
 C[64]="请选择需要删除的协议（可以多选）:"
 C[65]="(2/3) 未安装的协议"
@@ -104,16 +89,11 @@ C[84]="设置 SElinux: enforcing --> disabled"
 warning() { echo -e "\033[31m\033[01m$*\033[0m"; }  # 红色
 error() { echo -e "\033[31m\033[01m$*\033[0m" && exit 1; } # 红色
 info() { echo -e "\033[32m\033[01m$*\033[0m"; }   # 绿色
-hint() { echo -e "\033[33m\033[01m$*\033[0m"; }   # 黄色
+listchoice() { echo -e "\033[33m\033[01m$*\033[0m"; }   # 黄色
+listchoice() { echo -e "$*"; }
 reading() { read -rp "$(info "$1")" "$2"; }
 text() { grep -q '\$' <<< "${E[$*]}" && eval echo "\$(eval echo "\${${L}[$*]}")" || eval echo "\${${L}[$*]}"; }
 
-function rand() { 
- min=$1 
- max=$(($2-$min+1)) 
- num=$(($RANDOM+$RANDOM+$RANDOM+1000000000)) #增加一个10位的数再求余 
- echo $(($num%$max+$min)) 
-}
 
 # 字母与数字的 ASCII 码值转换
 asc(){
@@ -140,7 +120,7 @@ check_arch() {
 
 # 查安装及运行状态；状态码: 26 未安装， 27 已安装未运行， 28 运行中
 check_install() {
-  STATUS=$(text 26) && [ -s /etc/systemd/system/sing-box.service ] && STATUS=$(text 27) && [ "$(systemctl is-active sing-box)" = 'active' ] && STATUS=$(text 28)
+  STATUS=$(text 26) && [ -s /etc/systemd/system/sing-box.service ] && STATUS="关闭" && [ "$(systemctl is-active sing-box)" = 'active' ] && STATUS="开启"
   if [[ $STATUS = "$(text 26)" ]] && [ ! -s $WORK_DIR/sing-box ]; then
     {
     local VERSION_LATEST=$(wget --no-check-certificate -qO- "https://api.github.com/repos/SagerNet/sing-box/releases" | awk -F '["v-]' '/tag_name/{print $5}' | sort -r | sed -n '1p')
@@ -158,13 +138,13 @@ check_install() {
 check_sing-box_status(){
   case "$STATUS" in
     "$(text 26)" )
-      error "\n Sing-box $(text 28) $(text 38) \n"
+      error "\n Sing-box 开启 失败 \n"
       ;;
-    "$(text 27)" )
-      cmd_systemctl enable sing-box && info "\n Sing-box $(text 28) $(text 37) \n" || error "\n Sing-box $(text 28) $(text 38) \n"
+    "关闭" )
+      cmd_systemctl enable sing-box && info "\n Sing-box 开启 成功 \n" || error "\n Sing-box 开启 失败 \n"
       ;;
-    "$(text 28)" )
-      info "\n Sing-box $(text 28) $(text 37) \n"
+    "开启" )
+      info "\n Sing-box 开启 成功 \n"
   esac
 }
 
@@ -264,7 +244,7 @@ enter_start_port() {
     if [ "$PORT_ERROR_TIME" = 0 ]; then
       error "\n $(text 3) \n"
     else
-      [ -z "$START_PORT" ] && reading "\n $(text 11) " START_PORT
+      [ -z "$START_PORT" ] && info "\n (2/6) 请输入开始的端口号，必须是 ${MIN_PORT} - ${MAX_PORT}，需要连续${NUM}个空闲的端口 (默认为: ${START_PORT_DEFAULT}): "&& read START_PORT
     fi
     START_PORT=${START_PORT:-"$START_PORT_DEFAULT"}
     if [[ "$START_PORT" =~ ^[1-9][0-9]{2,4}$ && "$START_PORT" -ge "$MIN_PORT" && "$START_PORT" -le "$MAX_PORT" ]]; then
@@ -301,15 +281,29 @@ sing-box_variables() {
     WARP_ENDPOINT=2606:4700:d0::a29f:c101
     DOMAIN_STRATEG=prefer_ipv6
   fi
-
+  
+  clear
   # 选择安装的协议，由于选项 a 为全部协议，所以选项数不是从 a 开始，而是从 b 开始，处理输入：把大写全部变为小写，把不符合的选项去掉，把重复的选项合并
   MAX_CHOOSE_PROTOCOLS=$(asc $[CONSECUTIVE_PORTS+96+1])
   if [ -z "$CHOOSE_PROTOCOLS" ]; then
-    hint "\n $(text 49) "
+    listchoice "\n (1/6) 多选需要安装协议(比如 hgbd):\n "
     for e in "${!PROTOCOL_LIST[@]}"; do
-      [[ "$e" =~ '6'|'7' ]] && hint " $(asc $[e+98]). ${PROTOCOL_LIST[e]} $(text 61) " || hint " $(asc $[e+98]). ${PROTOCOL_LIST[e]} "
+      [[ "$e" =~ '6'|'7' ]] && listchoice " $(asc $[e+98]). ${PROTOCOL_LIST[e]} $(text 61) " || listchoice " $(asc $[e+98]). ${PROTOCOL_LIST[e]} "
     done
-    reading "\n $(text 24) " CHOOSE_PROTOCOLS
+    echo "======================================================================================================================"
+    echo " 0.退出"
+    reading "\n 请选择: " CHOOSE_PROTOCOLS
+  fi
+  
+  if [[ "${CHOOSE_PROTOCOLS}" == "a" ]]; then
+      reading "\n 按任意键退出程序" CHOOSE_PROTOCOLS
+      exit
+  elif [[ "${CHOOSE_PROTOCOLS}" == "A" ]]; then
+      reading "\n 按任意键退出程序" CHOOSE_PROTOCOLS
+      exit
+  elif [[ "${CHOOSE_PROTOCOLS}" == "0" ]]; then
+      reading "\n 按任意键退出程序" CHOOSE_PROTOCOLS
+      exit
   fi
 
   # 对选择协议的输入处理逻辑：先把所有的大写转为小写，并把所有没有去选项剔除掉，最后按输入的次序排序。如果选项为 a(all) 和其他选项并存，将会忽略 a，如 abc 则会处理为 bc
@@ -317,9 +311,9 @@ sing-box_variables() {
 
   # 显示选择协议及其次序，输入开始端口号
   if [ -z "$START_PORT" ]; then
-    hint "\n $(text 60) "
+    listchoice "\n $(text 60) "
     for w in "${!INSTALL_PROTOCOLS[@]}"; do
-      [ "$w" -ge 9 ] && hint " $[w+1]. ${PROTOCOL_LIST[$(($(asc ${INSTALL_PROTOCOLS[w]}) - 98))]} " || hint " $[w+1] . ${PROTOCOL_LIST[$(($(asc ${INSTALL_PROTOCOLS[w]}) - 98))]} "
+      [ "$w" -ge 9 ] && listchoice " $[w+1]. ${PROTOCOL_LIST[$(($(asc ${INSTALL_PROTOCOLS[w]}) - 98))]} " || listchoice " $[w+1] . ${PROTOCOL_LIST[$(($(asc ${INSTALL_PROTOCOLS[w]}) - 98))]} "
     done
     enter_start_port ${#INSTALL_PROTOCOLS[@]}
   fi
@@ -415,7 +409,7 @@ ssl_certificate() {
 # 处理防火墙规则
 check_firewall_configuration() {
   if [[ -s /etc/selinux/config && $(type -p getenforce) && $(getenforce) = 'Enforcing' ]]; then
-    hint "\n $(text 84) "
+    listchoice "\n $(text 84) "
     setenforce 0
     sed -i 's/^SELINUX=.*/# &/; /SELINUX=/a\SELINUX=disabled' /etc/selinux/config
   fi
@@ -1176,7 +1170,7 @@ install_sing-box() {
   [ ! -d $WORK_DIR/logs ] && mkdir -p $WORK_DIR/logs
   ssl_certificate
   [ "$SYSTEM" = 'CentOS' ] && check_firewall_configuration
-  hint "\n $(text 2) " && wait
+  listchoice "\n $(text 2) " && wait
   sing-box_json
   echo "${L^^}" > $WORK_DIR/language
   cp $TEMP_DIR/sing-box $TEMP_DIR/jq $WORK_DIR
@@ -1562,7 +1556,7 @@ $(info "${V2RAYN_SUBSCRIBE}")
 │                │
 └────────────────┘
 ----------------------------
-$(hint "${SHADOWROCKET_SUBSCRIBE}")
+$(listchoice "${SHADOWROCKET_SUBSCRIBE}")
 
 *******************************************
 ┌────────────────┐
@@ -1580,7 +1574,7 @@ $(info "$(sed '1d' <<< "${CLASH_SUBSCRIBE}")")
 │    $(warning "NekoBox")     │
 │                │
 └────────────────┘
-$(hint "${NEKOBOX_SUBSCRIBE}")
+$(listchoice "${NEKOBOX_SUBSCRIBE}")
 
 *******************************************
 ┌────────────────┐
@@ -1616,7 +1610,7 @@ change_start_port() {
   systemctl enable sing-box
   sleep 2
   export_list
-  [ "$(systemctl is-active sing-box)" = 'active' ] && info " Sing-box $(text 30) $(text 37) " || error " Sing-box $(text 30) $(text 38) "
+  [ "$(systemctl is-active sing-box)" = 'active' ] && info " Sing-box 更换监听端口 成功 " || error " Sing-box 更换监听端口 失败 "
 }
 
 # 增加或删除协议
@@ -1629,9 +1623,9 @@ change_protocols() {
   for f in ${!NODE_TAG[@]}; do [[ $INSTALLED_PROTOCOLS_LIST =~ "${NODE_TAG[f]}" ]] && EXISTED_PROTOCOLS+=("${PROTOCOL_LIST[f]}") || NOT_EXISTED_PROTOCOLS+=("${PROTOCOL_LIST[f]}"); done
 
   # 列出已安装协议
-  hint "\n $(text 63) (${#EXISTED_PROTOCOLS[@]})"
+  listchoice "\n $(text 63) (${#EXISTED_PROTOCOLS[@]})"
   for h in "${!EXISTED_PROTOCOLS[@]}"; do
-    hint " $(asc $[h+97]). ${EXISTED_PROTOCOLS[h]} "
+    listchoice " $(asc $[h+97]). ${EXISTED_PROTOCOLS[h]} "
   done
 
   # 从已安装的协议中选择需要删除的协议名，并存放在 REMOVE_PROTOCOLS，把保存的协议的协议存放在 KEEP_PROTOCOLS
@@ -1649,9 +1643,9 @@ change_protocols() {
 
   # 如有未安装的协议，列表显示并选择安装，把增加的协议存在放在 ADD_PROTOCOLS
   if [ "${#NOT_EXISTED_PROTOCOLS[@]}" -gt 0 ]; then
-    hint "\n $(text 65) (${#NOT_EXISTED_PROTOCOLS[@]}) "
+    listchoice "\n $(text 65) (${#NOT_EXISTED_PROTOCOLS[@]}) "
     for i in "${!NOT_EXISTED_PROTOCOLS[@]}"; do
-      hint " $(asc $[i+97]). ${NOT_EXISTED_PROTOCOLS[i]} "
+      listchoice " $(asc $[i+97]). ${NOT_EXISTED_PROTOCOLS[i]} "
     done
     reading "\n $(text 66) " ADD_SELECT
     # 统一为小写，去掉重复选项，处理不在可选列表里的选项，把特殊符号处理
@@ -1667,15 +1661,15 @@ change_protocols() {
   [ "${#REINSTALL_PROTOCOLS[@]}" = 0 ] && error "\n $(text 73) "
 
   # 显示重新安装的协议列表，并确认是否正确
-  hint "\n $(text 67) (${#REINSTALL_PROTOCOLS[@]}) "
-  [ "${#KEEP_PROTOCOLS[@]}" -gt 0 ] && hint "\n $(text 74) (${#KEEP_PROTOCOLS[@]}) "
+  listchoice "\n $(text 67) (${#REINSTALL_PROTOCOLS[@]}) "
+  [ "${#KEEP_PROTOCOLS[@]}" -gt 0 ] && listchoice "\n $(text 74) (${#KEEP_PROTOCOLS[@]}) "
   for r in "${!KEEP_PROTOCOLS[@]}"; do
-    hint " $[r+1]. ${KEEP_PROTOCOLS[r]} "
+    listchoice " $[r+1]. ${KEEP_PROTOCOLS[r]} "
   done
 
-  [ "${#ADD_PROTOCOLS[@]}" -gt 0 ] && hint "\n $(text 75) (${#ADD_PROTOCOLS[@]}) "
+  [ "${#ADD_PROTOCOLS[@]}" -gt 0 ] && listchoice "\n $(text 75) (${#ADD_PROTOCOLS[@]}) "
   for r in "${!ADD_PROTOCOLS[@]}"; do
-    hint " $[r+1]. ${ADD_PROTOCOLS[r]} "
+    listchoice " $[r+1]. ${ADD_PROTOCOLS[r]} "
   done
 
   reading "\n $(text 68) " CONFIRM
@@ -1861,7 +1855,7 @@ version() {
     if [ -s $TEMP_DIR/sing-box-$ONLINE-linux-$SING_BOX_ARCH/sing-box ]; then
       cmd_systemctl disable sing-box
       chmod +x $TEMP_DIR/sing-box-$ONLINE-linux-$SING_BOX_ARCH/sing-box && mv $TEMP_DIR/sing-box-$ONLINE-linux-$SING_BOX_ARCH/sing-box $WORK_DIR/sing-box
-      systemctl enable sing-box && sleep 2 && [ "$(systemctl is-active sing-box)" = 'active' ] && info " Sing-box $(text 28) $(text 37)" || error "Sing-box $(text 28) $(text 38) "
+      systemctl enable sing-box && sleep 2 && [ "$(systemctl is-active sing-box)" = 'active' ] && info " Sing-box 开启 成功" || error "Sing-box 开启 失败 "
     else
       local error "\n $(text 42) "
     fi
@@ -1870,9 +1864,9 @@ version() {
 
 # 判断当前 Sing-box 的运行状态，并对应的给菜单和动作赋值
 menu_setting() {
-  if [[ "$STATUS" =~ $(text 27)|$(text 28) ]]; then
+  if [[ "$STATUS" =~ "关闭"|"开启" ]]; then
     # 查进程号，sing-box 运行时长和内存占用
-    if [ "$STATUS" = "$(text 28)" ]; then
+    if [ "$STATUS" = "开启" ]; then
       if [ "$SYSTEM" = 'Alpine' ]; then
         PID=$(pidof sing-box | sed -n 1p)
       else
@@ -1887,17 +1881,17 @@ menu_setting() {
     NOW_START_PORT=$(awk 'NR == 1 { min = $0 } { if ($0 < min) min = $0; count++ } END {print min}' <<< "$NOW_PORTS")
     NOW_CONSECUTIVE_PORTS=$(awk 'END { print NR }' <<< "$NOW_PORTS")
     [ -s $WORK_DIR/sing-box ] && SING_BOX_VERSION="version: $($WORK_DIR/sing-box version | awk '/version/{print $NF}')"
-    [ -s $WORK_DIR/conf/02_route.json ] && { grep -q 'direct' $WORK_DIR/conf/02_route.json && RETURN_STATUS=$(text 27) || RETURN_STATUS=$(text 28); }
-    OPTION[1]="1 .  $(text 29)"
-    [ "$STATUS" = "$(text 28)" ] && OPTION[2]="2 .  $(text 27) Sing-box (sb -o)" || OPTION[2]="2 .  $(text 28) Sing-box (sb -o)"
-    OPTION[3]="3 .  $(text 30)"
-    OPTION[4]="4 .  $(text 31)"
-    OPTION[5]="5 .  $(text 32)"
-    OPTION[6]="6 .  $(text 62)"
-    OPTION[7]="7 .  $(text 33)"
+    [ -s $WORK_DIR/conf/02_route.json ] && { grep -q 'direct' $WORK_DIR/conf/02_route.json && RETURN_STATUS="关闭" || RETURN_STATUS="开启"; }
+    OPTION[1]="1 .  查看节点信息"
+    [ "$STATUS" = "开启" ] && OPTION[2]="2 .  关闭 Sing-box " || OPTION[2]="2 .  开启 Sing-box "
+    OPTION[3]="3 .  更换监听端口"
+    OPTION[4]="4 .  同步 Sing-box 至最新版本"
+    OPTION[5]="5 .  升级内核、安装BBR、DD脚本"
+    OPTION[6]="6 .  增加 / 删除协议"
+    OPTION[7]="7 .  卸载"
 
     ACTION[1]() { export_list; exit 0; }
-    [ "$STATUS" = "$(text 28)" ] && ACTION[2]() { cmd_systemctl disable sing-box; [[ "$(systemctl is-active sing-box)" =~ 'inactive'|'unknown' ]] && info " Sing-box $(text 27) $(text 37)" || error " Sing-box $(text 27) $(text 38) "; } || ACTION[2]() { cmd_systemctl enable sing-box && [ "$(systemctl is-active sing-box)" = 'active' ] && info " Sing-box $(text 28) $(text 37)" || error " Sing-box $(text 28) $(text 38) "; }
+    [ "$STATUS" = "开启" ] && ACTION[2]() { cmd_systemctl disable sing-box; [[ "$(systemctl is-active sing-box)" =~ 'inactive'|'unknown' ]] && info " Sing-box 关闭 成功" || error " Sing-box 关闭 失败 "; } || ACTION[2]() { cmd_systemctl enable sing-box && [ "$(systemctl is-active sing-box)" = 'active' ] && info " Sing-box 开启 成功" || error " Sing-box 开启 失败 "; }
     ACTION[3]() { change_start_port; exit; }
     ACTION[4]() { version; exit; }
     ACTION[5]() { bash <(wget --no-check-certificate -qO- "https://raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master/tcp.sh"); exit; }
@@ -1906,7 +1900,7 @@ menu_setting() {
 
   else
     OPTION[1]="1.  $(text 34)"
-    OPTION[2]="2.  $(text 32)"
+    OPTION[2]="2.  升级内核、安装BBR、DD脚本"
 
     ACTION[1]() { install_sing-box; export_list install; exit; }
     ACTION[2]() { bash <(wget --no-check-certificate -qO- "https://raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master/tcp.sh"); exit; }
@@ -1924,14 +1918,14 @@ menu() {
   info "\t IPv4: $WAN4 $WARPSTATUS4 $COUNTRY4  $ASNORG4 "
   info "\t IPv6: $WAN6 $WARPSTATUS6 $COUNTRY6  $ASNORG6 "
   info "\t Sing-box: $STATUS\t $SING_BOX_VERSION "
-  [ -n "$PID" ] && info "\t $(text 56): $PID "
-  [ -n "$RUNTIME" ] && info "\t $(text 57): $RUNTIME "
-  [ -n "$MEMORY_USAGE" ] && info "\t $(text 58): $MEMORY_USAGE MB"
+  [ -n "$PID" ] && info "\t 进程ID: $PID "
+  [ -n "$RUNTIME" ] && info "\t 运行时长: $RUNTIME "
+  [ -n "$MEMORY_USAGE" ] && info "\t 内存占用: $MEMORY_USAGE MB"
   [ -n "$NOW_START_PORT" ] && info "\t $(text 45) "
   echo -e "\n======================================================================================================================\n"
-  for ((b=1;b<${#OPTION[*]};b++)); do hint " ${OPTION[b]} "; done
-  hint " ${OPTION[0]} "
-  reading "\n $(text 24) " CHOOSE
+  for ((b=1;b<${#OPTION[*]};b++)); do listchoice " ${OPTION[b]} "; done
+  listchoice " ${OPTION[0]} "
+  reading "\n 请选择: " CHOOSE
 
   # 输入必须是数字且少于等于最大可选项
   if grep -qE "^[0-9]{1,2}$" <<< "$CHOOSE" && [ "$CHOOSE" -lt "${#OPTION[*]}" ]; then
