@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh ${work_path}/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.9008 Build240803"
+main_version="V1.0.9009 Build240803"
 work_path="/opt/CherryScript"
 
 main_menu_start() {
@@ -877,6 +877,7 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
       echo "14. nxtrace快速回程测试脚本"
       echo "15. nxtrace指定IP回程测试脚本"
       echo "16. ludashi2020三网线路测试"
+      echo "17. i-abc多功能测速脚本"
       echo ""
       echo "----硬件性能测试----------"
       echo "21. yabs性能测试"
@@ -959,6 +960,11 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
               curl https://raw.githubusercontent.com/ludashi2020/backtrace/main/install.sh -sSf | sh
               ;;
 
+          17)
+              clear
+              bash <(curl -sL bash.icu/speedtest)
+              ;;
+
           21)
               clear
               new_swap=1024
@@ -1019,13 +1025,34 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
 
                   install_docker
 
+                  # 设置默认值
+                  DEFAULT_CPU_CORE=1
+                  DEFAULT_CPU_UTIL="10-20"
+                  DEFAULT_MEM_UTIL=20
+                  DEFAULT_SPEEDTEST_INTERVAL=120
+
+                  # 提示用户输入CPU核心数和占用百分比，如果回车则使用默认值
+                  read -p "请输入CPU核心数 [默认: $DEFAULT_CPU_CORE]: " cpu_core
+                  cpu_core=${cpu_core:-$DEFAULT_CPU_CORE}
+
+                  read -p "请输入CPU占用百分比范围（例如10-20） [默认: $DEFAULT_CPU_UTIL]: " cpu_util
+                  cpu_util=${cpu_util:-$DEFAULT_CPU_UTIL}
+
+                  read -p "请输入内存占用百分比 [默认: $DEFAULT_MEM_UTIL]: " mem_util
+                  mem_util=${mem_util:-$DEFAULT_MEM_UTIL}
+
+                  read -p "请输入Speedtest间隔时间（秒） [默认: $DEFAULT_SPEEDTEST_INTERVAL]: " speedtest_interval
+                  speedtest_interval=${speedtest_interval:-$DEFAULT_SPEEDTEST_INTERVAL}
+
+                  # 运行Docker容器
                   docker run -itd --name=lookbusy --restart=always \
-                          -e TZ=Asia/Shanghai \
-                          -e CPU_UTIL=10-20 \
-                          -e CPU_CORE=1 \
-                          -e MEM_UTIL=15 \
-                          -e SPEEDTEST_INTERVAL=120 \
-                          fogforest/lookbusy
+                      -e TZ=Asia/Shanghai \
+                      -e CPU_UTIL="$cpu_util" \
+                      -e CPU_CORE="$cpu_core" \
+                      -e MEM_UTIL="$mem_util" \
+                      -e SPEEDTEST_INTERVAL="$speedtest_interval" \
+                      fogforest/lookbusy
+
                   ;;
                 [Nn])
 
@@ -1081,7 +1108,7 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
 
           4)
               clear
-              echo "该功能处于开发阶段，敬请期待！"
+              echo "该功能暂不支持！"
               ;;
           5)
               clear
@@ -1163,8 +1190,7 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
           1)
               clear
               read -p "请输入你的快捷按键: " kuaijiejian
-              echo "alias $kuaijiejian='~/ludo.sh'" >> ~/.bashrc
-              source ~/.bashrc
+              cp /usr/local/bin/ludo /usr/local/bin/${kuaijiejian}
               echo "快捷键已设置"
               ;;
 
@@ -1268,21 +1294,37 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
               root_use
 
               # 去掉 #Port 的注释
-              sed -i 's/#Port/Port/' /etc/ssh/sshd_config
+                while true; do
+                    clear
+                    sed -i 's/#Port/Port/' /etc/ssh/sshd_config
 
-              # 读取当前的 SSH 端口号
-              current_port=$(grep -E '^ *Port [0-9]+' /etc/ssh/sshd_config | awk '{print $2}')
+                    # 读取当前的 SSH 端口号
+                    current_port=$(grep -E '^ *Port [0-9]+' /etc/ssh/sshd_config | awk '{print $2}')
 
-              # 打印当前的 SSH 端口号
-              echo "当前的 SSH 端口号是: $current_port"
+                    # 打印当前的 SSH 端口号
+                    echo -e "当前的 SSH 端口号是:  ${huang}$current_port ${bai}"
 
-              echo "------------------------"
+                    echo "------------------------"
+                    echo "端口号范围1到65535之间的数字。（输入0退出）"
 
-              # 提示用户输入新的 SSH 端口号
-              read -p "请输入新的 SSH 端口号: " new_port
+                    # 提示用户输入新的 SSH 端口号
+                    read -p "请输入新的 SSH 端口号: " new_port
 
-              new_ssh_port
-
+                    # 判断端口号是否在有效范围内
+                    if [[ $new_port =~ ^[0-9]+$ ]]; then  # 检查输入是否为数字
+                        if [[ $new_port -ge 1 && $new_port -le 65535 ]]; then
+                            new_ssh_port
+                        elif [[ $new_port -eq 0 ]]; then
+                            break
+                        else
+                            echo "端口号无效，请输入1到65535之间的数字。"
+                            break_end
+                        fi
+                    else
+                        echo "输入无效，请输入数字。"
+                        break_end
+                    fi
+                done
               ;;
 
 
@@ -4414,15 +4456,16 @@ new_ssh_port() {
 
   # 替换 SSH 配置文件中的端口号
   sed -i "s/Port [0-9]\+/Port $new_port/g" /etc/ssh/sshd_config
-  
+  rm -rf /etc/ssh/sshd_config.d/* /etc/ssh/ssh_config.d/*
+
   # 指定新端口放通
   open_firewall_port $new_port > /dev/null 2>&1
 
   # 重启 SSH 服务
-  service sshd restart
+  restart_ssh
   echo "SSH 端口已修改为: $new_port"
 
-  clear
+  sleep 1
   #iptables_open
   #remove iptables-persistent ufw firewalld iptables-services > /dev/null 2>&1
 
