@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh ${work_path}/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.9060 Build240804"
+main_version="V1.0.9070 Build240804"
 work_path="/opt/CherryScript"
 
 main_menu_start() {
@@ -1550,7 +1550,7 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
           while true;do
                 root_use
                 ipv6_disabled=$(sysctl -n net.ipv6.conf.all.disable_ipv6)
-                result=$(wget -6 -qO- --no-check-certificate --user-agent=Mozilla --tries=2 --timeout=1 https://api.ip.sb/geoip)
+                result=$(wget -6 -qO- --no-check-certificate --user-agent=Mozilla --tries=1 --timeout=1 https://api.ip.sb/geoip)
                 echo ""
                 if [ "$ipv6_disabled" -eq 1 ]; then
                     echo "当前网络优先级设置: IPv4 优先"
@@ -3855,7 +3855,7 @@ Update_Shell(){
 	sh_new_ver=$(curl -s "https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/ludo.sh"|grep 'main_version="'|awk -F "=" '{print $NF}'|sed 's/\"//g'|head -1)
 	[[ -z ${sh_new_ver} ]] && echo -e "${Error} 检测最新版本失败 !" && break_end
 	if [[ ${sh_new_ver} != ${main_version} ]]; then
-		read -p "发现新版本 ${sh_new_ver} ，是否更新？[Y/n]" yn
+		read -p "发现新版本 ${sh_new_ver} ，是否更新？[Y/n] " yn
 		[[ -z "${yn}" ]] && yn="y"
 		if [[ ${yn} == [Yy] ]]; then
             cd ${work_path}/
