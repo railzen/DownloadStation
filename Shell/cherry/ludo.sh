@@ -4545,6 +4545,7 @@ if [[ ! $# = 0 && $1 = "dir" ]];then
     cd ${work_path}/work
     exit 0
 elif [[ ! $# = 0 && $1 = "restart" ]];then
+    #快速重启所有本脚本创建的服务，用于更新配置
     ls /etc/systemd/system | grep Cherry- | xargs systemctl restart
     exit 0
 fi
