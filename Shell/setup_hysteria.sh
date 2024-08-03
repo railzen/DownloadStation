@@ -3,7 +3,7 @@
 # -------------------------------------------------------------
 # 检查系统
 export LANG=en_US.UTF-8
-sh_ver="V1.0.2 build240803"
+sh_ver="V1.0.3 build240803"
 echoType='echo -e'
  
 Green_font_prefix="\033[32m" && Red_font_prefix="\033[31m" && Green_background_prefix="\033[42;37m" && Red_background_prefix="\033[41;37m" && Font_color_suffix="\033[0m" && Yellow_font_prefix="\033[0;33m"
@@ -152,8 +152,14 @@ while true;do
                 fi
             ;;
             2)
-                bash <(curl -fsSL https://get.hy2.sh/) --remove
-                exit 0
+                bash <(curl -fsSL https://get.hy2.sh/) --remove > /dev/null
+                rm -rf /etc/hysteria
+                userdel -r hysteria
+                rm -f /etc/systemd/system/multi-user.target.wants/hysteria-server.service
+                rm -f /etc/systemd/system/multi-user.target.wants/hysteria-server@*.service
+                systemctl daemon-reload
+                echoContent green "卸载完成！"
+                read -p "按任意键继续……" temp
             ;;
             3)
                 if [[ -e "/etc/systemd/system/hysteria-server.service" ]]; then
