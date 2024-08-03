@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # 当前脚本版本号
-VERSION='v1.0.0059 build240803'
+VERSION='v1.0.0060 build240803'
 
 function rand() {  min=$1 ; max=$(($2-$min+1)) ; num=$(date +%s%n) ; echo $(($num%$max+$min)) ; } #增加一个十位数再求余
 # 各变量默认值
@@ -37,6 +37,14 @@ asc(){
   fi
 }
 
+open_firewall_port() {
+    ufw allow $1 > /dev/null 2>&1
+    firewall-cmd --permanent --add-port=$1 > /dev/null 2>&1
+    sed -i "/COMMIT/i -A INPUT -p tcp --dport $1 -j ACCEPT" /etc/iptables/rules.v4 > /dev/null 2>&1
+    sed -i "/COMMIT/i -A INPUT -p udp --dport $1 -j ACCEPT" /etc/iptables/rules.v4 > /dev/null 2>&1
+    iptables-restore < /etc/iptables/rules.v4 > /dev/null 2>&1
+}
+
 check_root() {
   [ "$(id -u)" != 0 ] && error "\n 必须以root方式运行脚本，可以输入 sudo -i 后重新下载运行 \n"
 }
@@ -68,7 +76,7 @@ check_install() {
 }
 
 # 检测 sing-box 的状态
-check_sing-box_status(){
+check_sing_box_status(){
   case "$STATUS" in
     "未安装" )
       error "\n Sing-box 开启 失败 \n"
@@ -190,7 +198,7 @@ enter_start_port() {
 }
 
 # 定义 Sing-box 变量
-sing-box_variables() {
+sing_box_variables() {
   clear
     echo "  
 ==================================================
@@ -442,7 +450,7 @@ EOF
 }
 
 # 生成 sing-box 配置文件
-sing-box_json() {
+sing_box_json() {
   local IS_CHANGE=$1
   mkdir -p $WORK_DIR/conf $WORK_DIR/logs $WORK_DIR/subscribe
 
@@ -1036,7 +1044,7 @@ EOF
 }
 
 # Sing-box 生成守护进程文件
-sing-box_systemd() {
+sing_box_systemd() {
   SING_BOX_SERVICE="[Unit]
 Description=sing-box service
 Documentation=https://sing-box.sagernet.org
@@ -1101,19 +1109,19 @@ fetch_nodes_value() {
   [ -s $WORK_DIR/conf/*_${NODE_TAG[9]}_inbounds.json ] && local JSON=$(cat $WORK_DIR/conf/*_${NODE_TAG[9]}_inbounds.json) && NODE_NAME[20]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[9]}.*/\1/p" <<< "$JSON") && PORT_GRPC_REALITY=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && UUID[20]=$(awk -F '"' '/"uuid"/{print $4}' <<< "$JSON") && TLS_SERVER[20]=$(awk -F '"' '/"server"/{print $4}' <<< "$JSON") && REALITY_PRIVATE[20]=$(awk -F '"' '/"private_key"/{print $4}' <<< "$JSON") && REALITY_PUBLIC[20]=$(awk -F '"' '/"public_key"/{print $4}' <<< "$JSON")
 }
 
-install_sing-box() {
-  sing-box_variables
+install_sing_box() {
+  sing_box_variables
   [ ! -d /etc/systemd/system ] && mkdir -p /etc/systemd/system
   [ ! -d $WORK_DIR/logs ] && mkdir -p $WORK_DIR/logs
   ssl_certificate
   [ "$SYSTEM" = 'CentOS' ] && check_firewall_configuration
   listchoice "\n 下载 Sing-box 中，请稍等 ... " && wait
-  sing-box_json
+  sing_box_json
   echo "${L^^}" > $WORK_DIR/language
   cp $TEMP_DIR/sing-box $TEMP_DIR/jq $WORK_DIR
 
   # 生成 sing-box systemd 配置文件
-  sing-box_systemd
+  sing_box_systemd
 
 
   # 如果 Alpine 系统，放到开机自启动
@@ -1130,7 +1138,7 @@ EOF
   # 等待所有后台进程完成后,再次检测状态，运行 Sing-box
   check_install
   sleep 1
-  check_sing-box_status
+  check_sing_box_status
 }
 
 export_list() {
@@ -1742,7 +1750,7 @@ change_protocols() {
   fi
 
   # 生成各协议的 json 文件
-  sing-box_json change
+  sing_box_json change
 
   # 运行 sing-box
   systemctl start sing-box
@@ -1750,7 +1758,7 @@ change_protocols() {
   # 再次检测状态，运行 Sing-box
   check_install
 
-  check_sing-box_status
+  check_sing_box_status
 
   export_list
 }
@@ -1845,7 +1853,7 @@ menu_setting() {
     OPTION[1]="1.  安装 Sing-box 协议全家桶脚本"
     #OPTION[2]="2.  升级内核、安装BBR、DD脚本"
 
-    ACTION[1]() { install_sing-box; export_list install; exit; }
+    ACTION[1]() { install_sing_box; export_list install; exit; }
     #ACTION[2]() { bash <(wget --no-check-certificate -qO- "https://raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master/tcp.sh"); exit; }
 
   fi
