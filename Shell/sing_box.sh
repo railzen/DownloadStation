@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # 当前脚本版本号
-VERSION='v1.0.0054 (2024.08.03)'
+VERSION='v1.0.0054 build240803'
 
 function rand() {  min=$1 ; max=$(($2-$min+1)) ; num=$(date +%s%n) ; echo $(($num%$max+$min)) ; } #增加一个十位数再求余
 # 各变量默认值
@@ -59,7 +59,7 @@ check_install() {
     {
     local VERSION_LATEST=$(wget --no-check-certificate -qO- "https://api.github.com/repos/SagerNet/sing-box/releases" | awk -F '["v-]' '/tag_name/{print $5}' | sort -r | sed -n '1p')
     local ONLINE=$(wget --no-check-certificate -qO- "https://api.github.com/repos/SagerNet/sing-box/releases" | awk -F '["v]' -v var="tag_name.*$VERSION_LATEST" '$0 ~ var {print $5; exit}')
-    ONLINE=${ONLINE:-'1.9.0-rc.2'}
+    ONLINE=${ONLINE:-'1.9.3'}
     wget --no-check-certificate --continue https://github.com/SagerNet/sing-box/releases/download/v$ONLINE/sing-box-$ONLINE-linux-$SING_BOX_ARCH.tar.gz -qO- | tar xz -C $TEMP_DIR sing-box-$ONLINE-linux-$SING_BOX_ARCH/sing-box >/dev/null 2>&1
     [ -s $TEMP_DIR/sing-box-$ONLINE-linux-$SING_BOX_ARCH/sing-box ] && mv $TEMP_DIR/sing-box-$ONLINE-linux-$SING_BOX_ARCH/sing-box $TEMP_DIR
     wget --no-check-certificate --continue -qO $TEMP_DIR/jq https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-$JQ_ARCH >/dev/null 2>&1 && chmod +x $TEMP_DIR/jq >/dev/null 2>&1
@@ -193,6 +193,10 @@ enter_start_port() {
 # 定义 Sing-box 变量
 sing-box_variables() {
   clear
+    echo "  
+==================================================
+Sing-Box Server 管理脚本 $VERSION 
+=================================================="
   # 选择安装的协议，由于选项 a 为全部协议，所以选项数不是从 a 开始，而是从 b 开始，处理输入：把大写全部变为小写，把不符合的选项去掉，把重复的选项合并
   MAX_CHOOSE_PROTOCOLS=$(asc $[CONSECUTIVE_PORTS+96+1])
   if [ -z "$CHOOSE_PROTOCOLS" ]; then
@@ -200,8 +204,9 @@ sing-box_variables() {
     for e in "${!PROTOCOL_LIST[@]}"; do
       [[ "$e" =~ '6'|'7' ]] && listchoice " $(asc $[e+98]). ${PROTOCOL_LIST[e]} (必须在 Cloudflare 解析自有域名) " || listchoice " $(asc $[e+98]). ${PROTOCOL_LIST[e]} "
     done
-    echo "======================================================================================================================"
-    echo " 0.退出"
+    echo -e "\n=================================================="
+    echo -e " 0.退出"
+    echo -e "==================================================\n"
     reading "\n 请选择: " CHOOSE_PROTOCOLS
   fi
   
@@ -1797,7 +1802,7 @@ version() {
 
 echo_system_status()
 {
-  echo -e "======================================================================================================================\n"
+  echo -e "==================================================\n"
   info " 脚本版本: $VERSION\n 系统信息:\n\t 当前操作系统: $SYS\n\t 内核: $(uname -r)\n\t 处理器架构: $SING_BOX_ARCH\n\t 虚拟化: $VIRT "
   info "\t IPv4: $WAN4 $COUNTRY4  $ASNORG4 "
   info "\t IPv6: $WAN6 $COUNTRY6  $ASNORG6 "
@@ -1806,7 +1811,7 @@ echo_system_status()
   [ -n "$RUNTIME" ] && info "\t 运行时长: $RUNTIME "
   [ -n "$MEMORY_USAGE" ] && info "\t 内存占用: $MEMORY_USAGE MB"
   [ -n "$NOW_START_PORT" ] && info "\t 使用端口: ${NOW_START_PORT} - $((NOW_START_PORT+NOW_CONSECUTIVE_PORTS-1)) "
-  echo -e "\n======================================================================================================================\n"
+  echo -e "\n==================================================\n"
 }
 # 判断当前 Sing-box 的运行状态，并对应的给菜单和动作赋值
 menu_setting() {
@@ -1859,7 +1864,11 @@ menu_setting() {
 
 menu() {
   clear
-
+  echo "  
+==================================================
+Sing-Box Server 管理脚本 $VERSION 
+==================================================
+"
   #只有一个选项，那就直接进吧
   if [[ "${#OPTION[*]}" == "2" ]]; then
       ACTION[1]
