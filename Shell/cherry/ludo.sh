@@ -12,7 +12,7 @@ echo                "  / ____| |  | |  ____|  __ \|  __ \ \   / /"
 echo                " | |    | |__| | |__  | |__) | |__) \ \_/ / "
 echo                " | |    |  __  |  __| |  _  /|  _  / \   /  "
 echo                " | |____| |  | | |____| | \ \| | \ \  | |   "
-echo -e             "  \_____|_|  |_|______|_|  \_\_|  \_\ |_|   \n"
+echo -e             "  \_____|_|  |_|______|_|  \_\_|  \_\ |_|   ${White}\n"
 
 echo -e "${LightBlue}Cherry Script $main_version(Support for Ubuntu/Debian/CentOS)${White}"
 echo -e "${LightBlue}Personal use, unauthorized use prohibited!${White}"
