@@ -21,10 +21,9 @@ trap "rm -rf $TEMP_DIR >/dev/null 2>&1 ; echo -e '\n' ;exit 1" INT QUIT TERM EXI
 mkdir -p $TEMP_DIR
 
 # 自定义字体彩色，read 函数
-warning() { echo -e "\033[31m\033[01m$*\033[0m"; }  # 红色
 error() { echo -e "\033[31m\033[01m$*\033[0m" && exit 1; } # 红色
+warning() { echo -e "\033[33m\033[01m$*\033[0m"; }   # 黄色
 info() { echo -e "\033[32m\033[01m$*\033[0m"; }   # 绿色
-hint() { echo -e "\033[33m\033[01m$*\033[0m"; }   # 黄色
 listchoice() { echo -e "$*"; }
 reading() { read -rp "$(info "$1")" "$2"; }
 
