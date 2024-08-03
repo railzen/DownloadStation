@@ -1,19 +1,18 @@
 #!/bin/bash
 #cp -f ./ludo.sh ${work_path}/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.9070 Build240804"
+main_version="V1.0.9071 Build240804"
 work_path="/opt/CherryScript"
 
 main_menu_start() {
 while true; do
 clear
 echo -e "${LightBlue}   _____ _    _ ______ _____  _______     __"
-               echo "  / ____| |  | |  ____|  __ \|  __ \ \   / /"
-               echo " | |    | |__| | |__  | |__) | |__) \ \_/ / "
-               echo " | |    |  __  |  __| |  _  /|  _  / \   /  "
-               echo " | |____| |  | | |____| | \ \| | \ \  | |   "
-               echo "  \_____|_|  |_|______|_|  \_\_|  \_\ |_|   "
-echo -e "                                ${White}"
+echo                "  / ____| |  | |  ____|  __ \|  __ \ \   / /"
+echo                " | |    | |__| | |__  | |__) | |__) \ \_/ / "
+echo                " | |    |  __  |  __| |  _  /|  _  / \   /  "
+echo                " | |____| |  | | |____| | \ \| | \ \  | |   "
+echo -e             "  \_____|_|  |_|______|_|  \_\_|  \_\ |_|   \n"
 
 echo -e "${LightBlue}Cherry Script $main_version(Support for Ubuntu/Debian/CentOS)${White}"
 echo -e "${LightBlue}Personal use, unauthorized use prohibited!${White}"
