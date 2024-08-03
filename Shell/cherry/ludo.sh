@@ -7,17 +7,17 @@ work_path="/opt/CherryScript"
 main_menu_start() {
 while true; do
 clear
-echo -e "\033[96m   _____ _    _ ______ _____  _______     __"
-echo "  / ____| |  | |  ____|  __ \|  __ \ \   / /"
-echo " | |    | |__| | |__  | |__) | |__) \ \_/ / "
-echo " | |    |  __  |  __| |  _  /|  _  / \   /  "
-echo " | |____| |  | | |____| | \ \| | \ \  | |   "
-echo "  \_____|_|  |_|______|_|  \_\_|  \_\ |_|   "
-echo "                                "
+echo -e "${LightBlue}   _____ _    _ ______ _____  _______     __"
+               echo "  / ____| |  | |  ____|  __ \|  __ \ \   / /"
+               echo " | |    | |__| | |__  | |__) | |__) \ \_/ / "
+               echo " | |    |  __  |  __| |  _  /|  _  / \   /  "
+               echo " | |____| |  | | |____| | \ \| | \ \  | |   "
+               echo "  \_____|_|  |_|______|_|  \_\_|  \_\ |_|   "
+echo -e "                                ${White}"
 
-echo -e "\033[96mCherry Script $main_version(Support for Ubuntu/Debian/CentOS)\033[0m"
-echo -e "\033[96mPersonal use, unauthorized use prohibited!\033[0m"
-echo -e "\033[96m-- Press \033[93mludo\033[96m to start script --\033[0m"
+echo -e "${LightBlue}Cherry Script $main_version(Support for Ubuntu/Debian/CentOS)${White}"
+echo -e "${LightBlue}Personal use, unauthorized use prohibited!${White}"
+echo -e "${LightBlue}-- Press ${DarkYellow}ludo${LightBlue} to start script --${White}"
 echo "------------------------"
 echo "1. 系统信息查询"
 echo "2. 系统更新"
@@ -1547,74 +1547,86 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
 
 
           10)
-            root_use
-            ipv6_disabled=$(sysctl -n net.ipv6.conf.all.disable_ipv6)
+          while true;do
+                root_use
+                ipv6_disabled=$(sysctl -n net.ipv6.conf.all.disable_ipv6)
+                result=$(curl -6 -s ip.sb)
+                echo ""
+                if [ "$ipv6_disabled" -eq 1 ]; then
+                    echo "当前网络优先级设置: IPv4 优先"
+                else
+                    echo "当前网络优先级设置: IPv6 优先"
+                fi
+              
+                if [ -n "$result" ]; then
+                    echo "当前IPV6可用性: 可用"
+                else
+                    echo "当前IPV6可用性: 不可用"
+                fi
 
-            echo ""
-            if [ "$ipv6_disabled" -eq 1 ]; then
-                echo "当前网络优先级设置: IPv4 优先"
-            else
-                echo "当前网络优先级设置: IPv6 优先"
-            fi
-            echo "------------------------"
-            echo "切换的网络优先级"
-            echo "------------------------"
-            echo "1. IPv4 优先          2. IPv6 优先  "
-            echo "3. 启用 IPv6          3. 禁用 IPv6  "
-            echo "5. 还原 网络(IPv4/IPv6) 默认配置     "
-            echo "6. 还原 IPv6(启用/禁用) 默认配置      "
-            echo "------------------------"
-            echo "0. 返回主菜单"
-            echo "------------------------"
-            read -p "选择优先的网络: " choice
+                echo "------------------------"
+                echo "切换的网络优先级"
+                echo "------------------------"
+                echo "1. IPv4 优先          2. IPv6 优先  "
+                echo "3. 启用 IPv6          4. 禁用 IPv6  "
+                echo "5. 还原 网络(IPv4/IPv6) 默认配置     "
+                echo "6. 还原 IPv6(启用/禁用) 默认配置      "
+                echo "------------------------"
+                echo "0. 返回主菜单"
+                echo "------------------------"
+                read -p "选择优先的网络: " choice
 
-            case $choice in
-                1)
-                    sysctl -w net.ipv6.conf.all.disable_ipv6=1 > /dev/null 2>&1
-                    restore_ip46
-                    prefer_ipv4
-                    echo "已切换为 IPv4 优先,可能需要重启！"
+                case $choice in
+                    1)
+                        sysctl -w net.ipv6.conf.all.disable_ipv6=1 > /dev/null 2>&1
+                        restore_ip46
+                        prefer_ipv4
+                        echo "已切换为 IPv4 优先,可能需要重启！"
+                        echo
+                        ;;
+
+                    2)
+                        sysctl -w net.ipv6.conf.all.disable_ipv6=0 > /dev/null 2>&1
+                        restore_ip46
+                        prefer_ipv6
+                        echo "已切换为 IPv6 优先,可能需要重启！"
+                        echo
+                        ;;
+                        
+                    3)
+                        openipv6 > /dev/null 2>&1
+                        restore_ipv6
+                        enable_ipv6
+                        echo "已启用 IPv6,可能需要重启！"
+                        echo
                     ;;
 
-                2)
-                    sysctl -w net.ipv6.conf.all.disable_ipv6=0 > /dev/null 2>&1
-                    restore_ip46
-                    prefer_ipv6
-                    echo "已切换为 IPv6 优先,可能需要重启！"
-                    ;;
-                    
-                3)
-                    openipv6 > /dev/null 2>&1
-                    restore_ipv6
-                    enable_ipv6
-                    echo "已启用 IPv6,可能需要重启！"
-                ;;
-
-                4)
-                    closeipv6 > /dev/null 2>&1
-                    restore_ipv6
-                    disable_ipv6
-                    echo "已禁用 IPv6,可能需要重启！"
-                ;;
-
-                5)
-                    restore_ip46 'info'
-                ;;
-
-                6)
-                    restore_ipv6 'info'
-                ;;
-
-                0)
-                    back_main
-                    ;;
-                *)
-                    echo "无效的选择"
+                    4)
+                        closeipv6 > /dev/null 2>&1
+                        restore_ipv6
+                        disable_ipv6
+                        echo "已禁用 IPv6,可能需要重启！"
+                        echo
                     ;;
 
-            esac
-            ;;
+                    5)
+                        restore_ip46 'info'
+                    ;;
 
+                    6)
+                        restore_ipv6 'info'
+                    ;;
+
+                    0)
+                        back_main
+                        ;;
+                    *)
+                        echo "无效的选择"
+                        ;;
+
+                esac
+                ;;
+            done
           11)
             clear
             ss -tulnape
@@ -3818,7 +3830,7 @@ check_ip46() {
 # = enable/disable IPv6
 restore_ipv6() {
   sed -i "/$MARK/d" $SYSCTLCONF
-  if [[ "$@" = 'info' ]]; then reload_sysctl;restart_network;echo -e "${Green}已还原为默认配置${White}";check_ipv6; fi
+  if [[ "$@" = 'info' ]]; then reload_sysctl;restart_network;echo -e "${Green}已还原为默认配置${White}"; fi
 }
 interfaces=("all" "default");
 # interfaces+=$(ls /sys/class/net | grep -E '^(eth.*|lo)$')
@@ -3829,24 +3841,14 @@ enable_ipv6() {
   done;
   reload_sysctl
   restart_network
-  check_ipv6
 }
 disable_ipv6() {
   for interface in "${interfaces[@]}"; do
     echo "net.ipv6.conf.${interface}.disable_ipv6=1 $MARK" >>$SYSCTLCONF
   done;
   reload_sysctl
-  check_ipv6
 }
-check_ipv6() {
-  echo -e "${Green}检测IPv6 启用/禁用:${White}"
-  result=$(curl -6 -s ip.sb)
-  if [ -n "$result" ]; then
-    echo "IPv6 is enabled. $result"
-  else
-    echo "IPv6 is disabled."
-  fi
-}
+
 # 结束IPV6优先级的函数部分[/TAG279]
 Update_Shell(){
 	echo -e "当前版本为 ${main_version} ，开始检测最新版本..."
@@ -4660,7 +4662,7 @@ elif [[ ! $# = 0 && $1 = "restart" ]];then
     exit 0
 fi
 
-Yellow='\033[33m'; White='\033[0m'; Green='\033[0;32m'; Blue='\033[0;34m'; Red='\033[31m'; Gray='\e[37m'
+Yellow='\033[33m'; White='\033[0m'; Green='\033[0;32m'; Blue='\033[0;34m'; Red='\033[31m'; Gray='\e[37m'; LightBlue='\033[96m'; DarkYellow='\033[93m'
 
 SYSCTLCONF=/etc/sysctl.conf
 GAICONF=/etc/gai.conf
