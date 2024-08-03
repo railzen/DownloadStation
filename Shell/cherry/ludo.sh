@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh ${work_path}/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.9005 Build240803"
+main_version="V1.0.9006 Build240803"
 work_path="/opt/CherryScript"
 
 main_menu_start() {
@@ -31,9 +31,9 @@ echo "9. 甲骨文云脚本合集 ▶ "
 echo "10. 安装Snell V4 "
 echo "11. 安装Hysteria2 "
 echo "12. 安装SingBox脚本 ▶ "
-echo "13. 安装3X-UI "
-echo "14. 系统工具 ▶ "
-echo "15. 面板工具 ▶ "
+echo "13. 系统工具 ▶ "
+echo "14. 面板工具 ▶ "
+echo "15. 安装3X-UI "
 echo "------------------------"
 echo "99. 脚本更新"
 echo "------------------------"
@@ -1122,19 +1122,6 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
     ;;
 
   13)
-    clear
-    #询问用户是否要安装3XUI
-    read -p "是否要安装3X-UI最新版？(y/n): " choice
-    if [ "$choice" == "y" ]; then
-        clear
-        install net-tools
-        bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
-    else
-        back_main
-    fi
-    ;;
-
-  14)
     while true; do
       clear
       echo "▶ 系统工具"
@@ -2684,7 +2671,7 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
     done
     ;;
 
-  15)
+  14)
     while true; do
       clear
       echo "▶ 面板工具"
@@ -3721,6 +3708,19 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
       break_end
 
     done
+    ;;
+
+  15)
+    clear
+    #询问用户是否要安装3XUI
+    read -p "是否要安装3X-UI最新版？(y/n): " choice
+    if [ "$choice" == "y" ]; then
+        clear
+        install net-tools
+        bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
+    else
+        back_main
+    fi
     ;;
 
  99)
