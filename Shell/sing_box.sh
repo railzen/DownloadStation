@@ -26,8 +26,6 @@ C[4]="UUID 应为36位字符,请重新输入 \(剩余\${UUID_ERROR_TIME}次\):"
 C[6]="当前操作是 \$SYS\\\n 不支持 \$SYSTEM \${MAJOR[int]} 以下系统"
 C[7]="安装依赖列表:"
 C[8]="所有依赖已存在，不需要额外安装"
-C[9]="升级请按 [y]，默认不升级:"
-C[10]="\(4/6\) 请输入 VPS IP \(默认为: \${SERVER_IP_DEFAULT}\):"
 C[12]="\(5/6\) 请输入 UUID \(默认为 \${UUID_DEFAULT}\):"
 C[13]="\(6/6\) 请输入节点名称 \(默认为 \${NODE_NAME_DEFAULT}\):"
 C[14]="节点名称只允许英文大小写及数字字符，请重新输入 \(剩余\${a}次\):"
@@ -37,22 +35,14 @@ C[17]="脚本版本"
 C[18]="功能新增"
 C[19]="系统信息"
 C[20]="当前操作系统"
-C[21]="内核"
-C[22]="处理器架构"
 C[23]="虚拟化"
-C[25]="当前架构 \$(uname -m) 暂不支持"
 C[26]="未安装"
-C[34]="安装 Sing-box 协议全家桶脚本"
-C[35]="退出"
 C[36]="请输入正确数字"
-C[39]="Sing-box 未安装"
 C[40]="Sing-box 本地版本: \$LOCAL\\\t 最新版本: \$ONLINE"
 C[41]="不需要升级"
 C[42]="下载最新版本 Sing-box 失败，脚本退出"
 C[44]="正在使用中的端口: \${IN_USED[*]}"
 C[45]="使用端口: \${NOW_START_PORT} - \$((NOW_START_PORT+NOW_CONSECUTIVE_PORTS-1))"
-C[46]="检测到 warp / warp-go 正在运行，请输入确认的服务器 IP:"
-C[47]="没有 server ip，脚本退出"
 C[48]="ShadowTLS - 复制上面两条 Neko links 进去，并按顺序手动设置链式代理，详细教程: https://github.com/fscarmen/sing-box/blob/main/README.md#sekobox-%E8%AE%BE%E7%BD%AE-shadowtls-%E6%96%B9%E6%B3%95"
 C[50]="请输入 \$TYPE 域名:"
 C[51]="请选择或输入 cdn，要求支持 http:"
@@ -72,16 +62,6 @@ C[71]="创建快捷 [ sb ] 指令成功!"
 C[72]="各客户端配置文件路径: $WORK_DIR/subscribe/\n 完整模板可参照:\n https://t.me/ztvps/100\n https://github.com/chika0801/sing-box-examples/tree/main/Tun"
 C[73]="没有协议剩下，如确定请重新执行 [ sb -u ] 卸载所有"
 C[74]="保留协议"
-C[75]="新增协议"
-C[76]="安装 TCP brutal"
-C[77]="已安装 sing-box ，脚本退出"
-C[78]="[ $ERROR_PARAMETER ] 参数错误，脚本退出"
-C[79]="\(3/6\) 输出订阅二维码和 http 服务，需要安装依赖 nginx\\\n 如不需要，请输入 [n]\\\n 如需要请输入用于订阅服务的 nginx 端口号，必须是 \${MIN_PORT} - \${MAX_PORT} \(默认为: \${PORT_NGINX_DEFAULT}\):"
-C[80]="订阅"
-C[81]="自适应 Clash / V2rayN / NekoBox / ShadowRocket / SFI / SFA / SFM 客户端"
-C[82]="模版"
-C[83]="如要卸载 Nginx 请按 [y]，默认不卸载:"
-C[84]="设置 SElinux: enforcing --> disabled"
 
 # 自定义字体彩色，read 函数
 warning() { echo -e "\033[31m\033[01m$*\033[0m"; }  # 红色
@@ -90,7 +70,6 @@ info() { echo -e "\033[32m\033[01m$*\033[0m"; }   # 绿色
 listchoice() { echo -e "\033[33m\033[01m$*\033[0m"; }   # 黄色
 listchoice() { echo -e "$*"; }
 reading() { read -rp "$(info "$1")" "$2"; }
-text() { grep -q '\$' <<< "${E[$*]}" && eval echo "\$(eval echo "\${${L}[$*]}")" || eval echo "\${${L}[$*]}"; }
 
 
 # 字母与数字的 ASCII 码值转换
@@ -112,14 +91,14 @@ check_arch() {
     aarch64|arm64 ) SING_BOX_ARCH=arm64; JQ_ARCH=arm64; QRENCODE_ARCH=arm64 ;;
     x86_64|amd64 ) [[ "$(awk -F ':' '/flags/{print $2; exit}' /proc/cpuinfo)" =~ avx2 ]] && SING_BOX_ARCH=amd64v3 || SING_BOX_ARCH=amd64; JQ_ARCH=amd64; QRENCODE_ARCH=amd64 ;;
     armv7l ) SING_BOX_ARCH=armv7; JQ_ARCH=armhf; QRENCODE_ARCH=arm ;;
-    * ) error " $(text 25) "
+    * ) error " 当前架构 \$(uname -m) 暂不支持 "
   esac
 }
 
 # 查安装及运行状态；状态码: 26 未安装， 27 已安装未运行， 28 运行中
 check_install() {
-  STATUS=$(text 26) && [ -s /etc/systemd/system/sing-box.service ] && STATUS="关闭" && [ "$(systemctl is-active sing-box)" = 'active' ] && STATUS="开启"
-  if [[ $STATUS = "$(text 26)" ]] && [ ! -s $WORK_DIR/sing-box ]; then
+  STATUS="未安装" && [ -s /etc/systemd/system/sing-box.service ] && STATUS="关闭" && [ "$(systemctl is-active sing-box)" = 'active' ] && STATUS="开启"
+  if [[ $STATUS = "未安装" ]] && [ ! -s $WORK_DIR/sing-box ]; then
     {
     local VERSION_LATEST=$(wget --no-check-certificate -qO- "https://api.github.com/repos/SagerNet/sing-box/releases" | awk -F '["v-]' '/tag_name/{print $5}' | sort -r | sed -n '1p')
     local ONLINE=$(wget --no-check-certificate -qO- "https://api.github.com/repos/SagerNet/sing-box/releases" | awk -F '["v]' -v var="tag_name.*$VERSION_LATEST" '$0 ~ var {print $5; exit}')
@@ -135,7 +114,7 @@ check_install() {
 # 检测 sing-box 的状态
 check_sing-box_status(){
   case "$STATUS" in
-    "$(text 26)" )
+    "未安装" )
       error "\n Sing-box 开启 失败 \n"
       ;;
     "关闭" )
@@ -213,7 +192,7 @@ check_system_info() {
 
   # 先排除 EXCLUDE 里包括的特定系统，其他系统需要作大发行版本的比较
   for ex in "${EXCLUDE[@]}"; do [[ ! "{$SYS,,}"  =~ $ex ]]; done &&
-  [[ "$(echo "$SYS" | sed "s/[^0-9.]//g" | cut -d. -f1)" -lt "${MAJOR[int]}" ]] && error " $(text 6) "
+  [[ "$(echo "$SYS" | sed "s/[^0-9.]//g" | cut -d. -f1)" -lt "${MAJOR[int]}" ]] && error " 当前操作是 \$SYS\\\n 不支持 $SYSTEM ${MAJOR[int]} 以下系统 "
 
   # 针对部分系统作特殊处理
   [ "$SYSTEM" = 'CentOS' ] && IS_CENTOS="CentOS$(echo "$SYS" | sed "s/[^0-9.]//g" | cut -d. -f1)"
@@ -240,7 +219,7 @@ enter_start_port() {
     [ "$PORT_ERROR_TIME" -lt 6 ] && unset IN_USED START_PORT
     (( PORT_ERROR_TIME-- )) || true
     if [ "$PORT_ERROR_TIME" = 0 ]; then
-      error "\n $(text 3) \n"
+      error "\n 输入错误达5次,脚本退出 \n"
     else
       [ -z "$START_PORT" ] && info "\n (2/6) 请输入开始的端口号，必须是 ${MIN_PORT} - ${MAX_PORT}，需要连续${NUM}个空闲的端口 (默认为: ${START_PORT_DEFAULT}): "&& read START_PORT
     fi
@@ -249,7 +228,7 @@ enter_start_port() {
       for port in $(eval echo {$START_PORT..$[START_PORT+NUM-1]}); do
       ss -nltup | grep -q ":$port" && IN_USED+=("$port")
       done
-      [ "${#IN_USED[*]}" -eq 0 ] && break || warning "\n $(text 44) \n"
+      [ "${#IN_USED[*]}" -eq 0 ] && break || warning "\n 正在使用中的端口: ${IN_USED[*]} \n"
     fi
   done
 }
@@ -284,8 +263,8 @@ sing-box_variables() {
     local a=6
     until [ -n "$SERVER_IP" ]; do
       ((a--)) || true
-      [ "$a" = 0 ] && error "\n $(text 3) \n"
-      reading "\n $(text 46) " SERVER_IP
+      [ "$a" = 0 ] && error "\n 输入错误达5次,脚本退出 \n"
+      reading "\n 检测到 warp / warp-go 正在运行，请输入确认的服务器 IP: " SERVER_IP
     done
     if [[ "$SERVER_IP" =~ : ]]; then
       WARP_ENDPOINT=2606:4700:d0::a29f:c101
@@ -309,24 +288,23 @@ sing-box_variables() {
 
   # 显示选择协议及其次序，输入开始端口号
   if [ -z "$START_PORT" ]; then
-    listchoice "\n $(text 60) "
+    listchoice "\n 选择的协议及端口次序如下: "
     for w in "${!INSTALL_PROTOCOLS[@]}"; do
       [ "$w" -ge 9 ] && listchoice " $[w+1]. ${PROTOCOL_LIST[$(($(asc ${INSTALL_PROTOCOLS[w]}) - 98))]} " || listchoice " $[w+1] . ${PROTOCOL_LIST[$(($(asc ${INSTALL_PROTOCOLS[w]}) - 98))]} "
     done
     enter_start_port ${#INSTALL_PROTOCOLS[@]}
   fi
-
   # 输入服务器 IP,默认为检测到的服务器 IP，如果全部为空，则提示并退出脚本
-  [ -z "$SERVER_IP" ] && reading "\n $(text 10) " SERVER_IP
+  [ -z "$SERVER_IP" ] && reading "\n (4/6) 请输入 VPS IP (默认为: ${SERVER_IP_DEFAULT}): " SERVER_IP
   SERVER_IP=${SERVER_IP:-"$SERVER_IP_DEFAULT"} && WS_SERVER_IP_SHOW=$SERVER_IP
-  [ -z "$SERVER_IP" ] && error " $(text 47) "
+  [ -z "$SERVER_IP" ] && error " 没有 server ip，脚本退出 "
 
   # 如选择有 h. vmess + ws 或 i. vless + ws 时，先检测是否有支持的 http 端口可用，如有则要求输入域名和 cdn
   if [[ "${INSTALL_PROTOCOLS[@]}" =~ 'h' ]]; then
     local DOMAIN_ERROR_TIME=5
     until [ -n "$VMESS_HOST_DOMAIN" ]; do
       (( DOMAIN_ERROR_TIME-- )) || true
-      [ "$DOMAIN_ERROR_TIME" != 0 ] && TYPE=VMESS && reading "\n $(text 50) " VMESS_HOST_DOMAIN || error "\n $(text 3) \n"
+      [ "$DOMAIN_ERROR_TIME" != 0 ] && TYPE=VMESS && reading "\n 请输入 $TYPE 域名: " VMESS_HOST_DOMAIN || error "\n 输入错误达5次,脚本退出 \n"
     done
   fi
 
@@ -334,17 +312,17 @@ sing-box_variables() {
     local DOMAIN_ERROR_TIME=5
     until [ -n "$VLESS_HOST_DOMAIN" ]; do
       (( DOMAIN_ERROR_TIME-- )) || true
-      [ "$DOMAIN_ERROR_TIME" != 0 ] && TYPE=VLESS && reading "\n $(text 50) " VLESS_HOST_DOMAIN || error "\n $(text 3) \n"
+      [ "$DOMAIN_ERROR_TIME" != 0 ] && TYPE=VLESS && reading "\n 请输入 $TYPE 域名: " VLESS_HOST_DOMAIN || error "\n 输入错误达5次,脚本退出 \n"
     done
   fi
 
   # 输入 UUID ，错误超过 5 次将会退出
   UUID_DEFAULT=$(cat /proc/sys/kernel/random/uuid)
-  [ -z "$UUID_CONFIRM" ] && reading "\n $(text 12) " UUID_CONFIRM
+  [ -z "$UUID_CONFIRM" ] && reading "\n (5/6) 请输入 UUID (默认为 ${UUID_DEFAULT}): " UUID_CONFIRM
   local UUID_ERROR_TIME=5
   until [[ -z "$UUID_CONFIRM" || "${UUID_CONFIRM,,}" =~ ^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$ ]]; do
     (( UUID_ERROR_TIME-- )) || true
-    [ "$UUID_ERROR_TIME" = 0 ] && error "\n $(text 3) \n" || reading "\n $(text 4) \n" UUID_CONFIRM
+    [ "$UUID_ERROR_TIME" = 0 ] && error "\n 输入错误达5次,脚本退出 \n" || reading "\n UUID 应为36位字符,请重新输入 \(剩余${UUID_ERROR_TIME}次\): \n" UUID_CONFIRM
   done
   UUID_CONFIRM=${UUID_CONFIRM:-"$UUID_DEFAULT"}
 
@@ -357,7 +335,7 @@ sing-box_variables() {
     else
       NODE_NAME_DEFAULT="Sing-Box"
     fi
-    reading "\n $(text 13) " NODE_NAME_CONFIRM
+    reading "\n (6/6) 请输入节点名称 (默认为 ${NODE_NAME_DEFAULT}): " NODE_NAME_CONFIRM
     NODE_NAME_CONFIRM="${NODE_NAME_CONFIRM:-"$NODE_NAME_DEFAULT"}"
   fi
 }
@@ -373,7 +351,7 @@ check_dependencies() {
       [ ! $(type -p ${DEPS_CHECK[g]}) ] && DEPS_ALPINE+=(${DEPS_INSTALL[g]})
     done
     if [ "${#DEPS_ALPINE[@]}" -ge 1 ]; then
-      info "\n $(text 7) $(sed "s/ /,&/g" <<< ${DEPS_ALPINE[@]}) \n"
+      info "\n 安装依赖列表: $(sed "s/ /,&/g" <<< ${DEPS_ALPINE[@]}) \n"
       ${PACKAGE_UPDATE[int]} >/dev/null 2>&1
       ${PACKAGE_INSTALL[int]} >/dev/null 2>&1
       ${DEPS_ALPINE[@]} >/dev/null 2>&1
@@ -390,11 +368,11 @@ check_dependencies() {
     [ ! $(type -p ${DEPS_CHECK[g]}) ] && DEPS+=(${DEPS_INSTALL[g]})
   done
   if [ "${#DEPS[@]}" -ge 1 ]; then
-    info "\n $(text 7) $(sed "s/ /,&/g" <<< ${DEPS[@]}) \n"
+    info "\n 安装依赖列表: $(sed "s/ /,&/g" <<< ${DEPS[@]}) \n"
     [ "$SYSTEM" != 'CentOS' ] && ${PACKAGE_UPDATE[int]} >/dev/null 2>&1
     ${PACKAGE_INSTALL[int]} ${DEPS[@]} >/dev/null 2>&1
   else
-    info "\n $(text 8) \n"
+    info "\n 所有依赖已存在，不需要额外安装 \n"
   fi
 }
 
@@ -407,7 +385,7 @@ ssl_certificate() {
 # 处理防火墙规则
 check_firewall_configuration() {
   if [[ -s /etc/selinux/config && $(type -p getenforce) && $(getenforce) = 'Enforcing' ]]; then
-    listchoice "\n $(text 84) "
+    listchoice "\n 设置 SElinux: enforcing --> disabled "
     setenforce 0
     sed -i 's/^SELINUX=.*/# &/; /SELINUX=/a\SELINUX=disabled' /etc/selinux/config
   fi
@@ -1168,7 +1146,7 @@ install_sing-box() {
   [ ! -d $WORK_DIR/logs ] && mkdir -p $WORK_DIR/logs
   ssl_certificate
   [ "$SYSTEM" = 'CentOS' ] && check_firewall_configuration
-  listchoice "\n $(text 2) " && wait
+  listchoice "\n 下载 Sing-box 中，请稍等 ... " && wait
   sing-box_json
   echo "${L^^}" > $WORK_DIR/language
   cp $TEMP_DIR/sing-box $TEMP_DIR/jq $WORK_DIR
@@ -1244,14 +1222,14 @@ export_list() {
   local CLASH_SUBSCRIBE+="
   $CLASH_VMESS_WS
 
-  # $(text 52)
+  # 请在 Cloudflare 绑定 \[\${WS_SERVER_IP_SHOW}] 的域名为 \[\${TYPE_HOST_DOMAIN}], 并设置 origin rule 为 \[\${TYPE_PORT_WS}]
 "
   [ -n "$PORT_VLESS_WS" ] && local CLASH_VLESS_WS="- {name: \"${NODE_NAME[18]} ${NODE_TAG[7]}\", type: vless, server: ${CDN[18]}, port: 443, uuid: ${UUID[18]}, udp: true, tls: true, servername: $VLESS_HOST_DOMAIN, network: ws, skip-cert-verify: true, ws-opts: { path: \"/$VLESS_WS_PATH\", headers: {Host: $VLESS_HOST_DOMAIN}, max-early-data: 2048, early-data-header-name: Sec-WebSocket-Protocol }, smux: { enabled: true, protocol: 'h2mux', padding: true, max-connections: '8', min-streams: '16', statistic: true, only-tcp: false } }" &&
   local WS_SERVER_IP_SHOW=${WS_SERVER_IP[18]} && local TYPE_HOST_DOMAIN=$VLESS_HOST_DOMAIN && local TYPE_PORT_WS=$PORT_VLESS_WS &&
   local CLASH_SUBSCRIBE+="
   $CLASH_VLESS_WS
 
-  # $(text 52)
+  # 请在 Cloudflare 绑定 \[\${WS_SERVER_IP_SHOW}] 的域名为 \[\${TYPE_HOST_DOMAIN}], 并设置 origin rule 为 \[\${TYPE_PORT_WS}]
 "
   # Clash 的 H2 传输层未实现多路复用功能，在 Clash.Meta 中更建议使用 gRPC 协议，故不输出相关配置。 https://wiki.metacubex.one/config/proxies/vless/
   [ -n "$PORT_H2_REALITY" ]
@@ -1300,13 +1278,13 @@ trojan://$TROJAN_PASSWORD@${SERVER_IP_1}:$PORT_TROJAN?allowInsecure=1#${NODE_NAM
 ----------------------------
 vmess://$(echo -n "none:${UUID[17]}@${CDN[17]}:80" | base64 -w0)?remarks=${NODE_NAME[17]}%20${NODE_TAG[6]}&obfsParam=$VMESS_HOST_DOMAIN&path=/$VMESS_WS_PATH&obfs=websocket&alterId=0
 
-# $(text 52)
+# 请在 Cloudflare 绑定 \[\${WS_SERVER_IP_SHOW}] 的域名为 \[\${TYPE_HOST_DOMAIN}], 并设置 origin rule 为 \[\${TYPE_PORT_WS}]
 "
   [ -n "$PORT_VLESS_WS" ] && WS_SERVER_IP_SHOW=${WS_SERVER_IP[18]} && TYPE_HOST_DOMAIN=$VLESS_HOST_DOMAIN && TYPE_PORT_WS=$PORT_VLESS_WS && local SHADOWROCKET_SUBSCRIBE+="
 ----------------------------
 vless://$(echo -n "auto:${UUID[18]}@${CDN[18]}:443" | base64 -w0)?remarks=${NODE_NAME[18]}%20${NODE_TAG[7]}&obfsParam=$VLESS_HOST_DOMAIN&path=/$VLESS_WS_PATH?ed=2048&obfs=websocket&tls=1&peer=$VLESS_HOST_DOMAIN&allowInsecure=1
 
-# $(text 52)
+# 请在 Cloudflare 绑定 \[\${WS_SERVER_IP_SHOW}] 的域名为 \[\${TYPE_HOST_DOMAIN}], 并设置 origin rule 为 \[\${TYPE_PORT_WS}]
 "
   [ -n "$PORT_H2_REALITY" ] && local SHADOWROCKET_SUBSCRIBE+="
 ----------------------------
@@ -1330,11 +1308,11 @@ hysteria2://${UUID[12]}@${SERVER_IP_1}:${PORT_HYSTERIA2}/?alpn=h3&insecure=1#${N
 ----------------------------
 tuic://${UUID[13]}:${TUIC_PASSWORD}@${SERVER_IP_1}:${PORT_TUIC}?alpn=h3&congestion_control=$TUIC_CONGESTION_CONTROL#${NODE_NAME[13]// /%20}%20${NODE_TAG[2]}
 
-# $(text 70)"
+# 请把 tls 里的 inSecure 设置为 true"
 
   [ -n "$PORT_SHADOWTLS" ] && local V2RAYN_SUBSCRIBE+="
 ----------------------------
-# $(text 54)
+# ShadowTLS 配置文件内容，需要更新 sing_box 内核
 
 {
   \"log\":{
@@ -1394,19 +1372,19 @@ ss://$(echo -n "${SHADOWSOCKS_METHOD}:${UUID[15]}@${SERVER_IP_1}:$PORT_SHADOWSOC
 ----------------------------
 trojan://$TROJAN_PASSWORD@${SERVER_IP_1}:$PORT_TROJAN?security=tls&type=tcp&headerType=none#${NODE_NAME[16]// /%20}%20${NODE_TAG[5]}
 
-# $(text 70)"
+# 请把 tls 里的 inSecure 设置为 true"
 
   [ -n "$PORT_VMESS_WS" ] && WS_SERVER_IP_SHOW=${WS_SERVER_IP[17]} && TYPE_HOST_DOMAIN=$VMESS_HOST_DOMAIN && TYPE_PORT_WS=$PORT_VMESS_WS && local V2RAYN_SUBSCRIBE+="
 ----------------------------
 vmess://$(echo -n "{ \"v\": \"2\", \"ps\": \"${NODE_NAME[17]} ${NODE_TAG[6]}\", \"add\": \"${CDN[18]}\", \"port\": \"80\", \"id\": \"${UUID[18]}\", \"aid\": \"0\", \"scy\": \"none\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"$VMESS_HOST_DOMAIN\", \"path\": \"/$VMESS_WS_PATH\", \"tls\": \"\", \"sni\": \"\", \"alpn\": \"\" }" | base64 -w0)
 
-# $(text 52)"
+# 请在 Cloudflare 绑定 \[\${WS_SERVER_IP_SHOW}] 的域名为 \[\${TYPE_HOST_DOMAIN}], 并设置 origin rule 为 \[\${TYPE_PORT_WS}]"
 
   [ -n "$PORT_VLESS_WS" ] && WS_SERVER_IP_SHOW=${WS_SERVER_IP[18]} && TYPE_HOST_DOMAIN=$VLESS_HOST_DOMAIN && TYPE_PORT_WS=$PORT_VLESS_WS && local V2RAYN_SUBSCRIBE+="
 ----------------------------
 vless://${UUID[18]}@${CDN[18]}:443?encryption=none&security=tls&sni=$VLESS_HOST_DOMAIN&type=ws&host=$VLESS_HOST_DOMAIN&path=%2F$VLESS_WS_PATH%3Fed%3D2048#${NODE_NAME[18]// /%20}%20${NODE_TAG[7]}
 
-# $(text 52)"
+# 请在 Cloudflare 绑定 \[\${WS_SERVER_IP_SHOW}] 的域名为 \[\${TYPE_HOST_DOMAIN}], 并设置 origin rule 为 \[\${TYPE_PORT_WS}]"
 
   [ -n "$PORT_H2_REALITY" ] && local V2RAYN_SUBSCRIBE+="
 ----------------------------
@@ -1449,13 +1427,13 @@ trojan://$TROJAN_PASSWORD@${SERVER_IP_1}:$PORT_TROJAN?security=tls&allowInsecure
 ----------------------------
 vmess://$(echo -n "{\"add\":\"${CDN[17]}\",\"aid\":\"0\",\"host\":\"$VMESS_HOST_DOMAIN\",\"id\":\"${UUID[17]}\",\"net\":\"ws\",\"path\":\"/$VMESS_WS_PATH\",\"port\":\"80\",\"ps\":\"${NODE_NAME[17]} ${NODE_TAG[6]}\",\"scy\":\"none\",\"sni\":\"\",\"tls\":\"\",\"type\":\"\",\"v\":\"2\"}" | base64 -w0)
 
-# $(text 52)"
+# 请在 Cloudflare 绑定 \[\${WS_SERVER_IP_SHOW}] 的域名为 \[\${TYPE_HOST_DOMAIN}], 并设置 origin rule 为 \[\${TYPE_PORT_WS}]"
 
   [ -n "$PORT_VLESS_WS" ] && WS_SERVER_IP_SHOW=${WS_SERVER_IP[18]} && TYPE_HOST_DOMAIN=$VLESS_HOST_DOMAIN && TYPE_PORT_WS=$PORT_VLESS_WS && local NEKOBOX_SUBSCRIBE+="
 ----------------------------
 vless://${UUID[18]}@${CDN[18]}:443?security=tls&sni=$VLESS_HOST_DOMAIN&type=ws&path=/$VLESS_WS_PATH?ed%3D2048&host=$VLESS_HOST_DOMAIN&encryption=none#${NODE_NAME[18]}%20${NODE_TAG[7]}
 
-# $(text 52)"
+# 请在 Cloudflare 绑定 \[\${WS_SERVER_IP_SHOW}] 的域名为 \[\${TYPE_HOST_DOMAIN}], 并设置 origin rule 为 \[\${TYPE_PORT_WS}]"
 
   [ -n "$PORT_H2_REALITY" ] && local NEKOBOX_SUBSCRIBE+="
 ----------------------------
@@ -1503,7 +1481,7 @@ vless://${UUID[20]}@${SERVER_IP_1}:${PORT_GRPC_REALITY}?security=reality&sni=${T
   local TYPE_HOST_DOMAIN=$VMESS_HOST_DOMAIN &&
   local TYPE_PORT_WS=$PORT_VMESS_WS &&
   local PROMPT+="
-  # $(text 52)" &&
+  # 请在 Cloudflare 绑定 \[\${WS_SERVER_IP_SHOW}] 的域名为 \[\${TYPE_HOST_DOMAIN}], 并设置 origin rule 为 \[\${TYPE_PORT_WS}]" &&
   local INBOUND_REPLACE+=" { \"type\": \"vmess\", \"tag\": \"${NODE_NAME[17]} ${NODE_TAG[6]}\", \"server\":\"${CDN[17]}\", \"server_port\":80, \"uuid\":\"${UUID[17]}\", \"transport\": { \"type\":\"ws\", \"path\":\"/$VMESS_WS_PATH\", \"headers\": { \"Host\": \"$VMESS_HOST_DOMAIN\" } }, \"multiplex\": { \"enabled\":true, \"protocol\":\"h2mux\", \"max_streams\":16, \"padding\": true, \"brutal\":{ \"enabled\":true, \"up_mbps\":1000, \"down_mbps\":1000 } } }," && local NODE_REPLACE+="\"${NODE_NAME[17]} ${NODE_TAG[6]}\","
 
   [ -n "$PORT_VLESS_WS" ] &&
@@ -1511,7 +1489,7 @@ vless://${UUID[20]}@${SERVER_IP_1}:${PORT_GRPC_REALITY}?security=reality&sni=${T
   local TYPE_HOST_DOMAIN=$VLESS_HOST_DOMAIN &&
   local TYPE_PORT_WS=$PORT_VLESS_WS &&
   local PROMPT+="
-  # $(text 52)" &&
+  # 请在 Cloudflare 绑定 \[\${WS_SERVER_IP_SHOW}] 的域名为 \[\${TYPE_HOST_DOMAIN}], 并设置 origin rule 为 \[\${TYPE_PORT_WS}]" &&
   local INBOUND_REPLACE+=" { \"type\": \"vless\", \"tag\": \"${NODE_NAME[18]} ${NODE_TAG[7]}\", \"server\":\"${CDN[18]}\", \"server_port\":443, \"uuid\":\"${UUID[18]}\", \"tls\": { \"enabled\":true, \"server_name\":\"$VLESS_HOST_DOMAIN\", \"utls\": { \"enabled\":true, \"fingerprint\":\"chrome\" } }, \"transport\": { \"type\":\"ws\", \"path\":\"/$VLESS_WS_PATH\", \"headers\": { \"Host\": \"$VLESS_HOST_DOMAIN\" }, \"max_early_data\":2048, \"early_data_header_name\":\"Sec-WebSocket-Protocol\" }, \"multiplex\": { \"enabled\":true, \"protocol\":\"h2mux\", \"max_streams\":16, \"padding\": true, \"brutal\":{ \"enabled\":true, \"up_mbps\":1000, \"down_mbps\":1000 } } }," &&
   local NODE_REPLACE+="\"${NODE_NAME[18]} ${NODE_TAG[7]}\","
 
@@ -1586,7 +1564,7 @@ $(info "$(echo "{ \"outbounds\":[ ${INBOUND_REPLACE%,} ] }" | $WORK_DIR/jq)
 
 ${PROMPT}
 
-  $(text 72)")
+  各客户端配置文件路径: $WORK_DIR/subscribe/\n 完整模板可参照:\n https://t.me/ztvps/100\n https://github.com/chika0801/sing-box-examples/tree/main/Tun")
 "
 
   # 生成并显示节点信息
@@ -1614,20 +1592,20 @@ change_start_port() {
 # 增加或删除协议
 change_protocols() {
   check_install
-  [ "$STATUS" = "$(text 26)" ] && error "\n Sing-box $(text 26) "
+  [ "$STATUS" = "未安装" ] && error "\n Sing-box 未安装 "
 
   # 查找已安装的协议，并遍历其在所有协议列表中的名称，获取协议名后存放在 EXISTED_PROTOCOLS; 没有的协议存放在 NOT_EXISTED_PROTOCOLS
   INSTALLED_PROTOCOLS_LIST=$(awk -F '"' '/"tag":/{print $4}' $WORK_DIR/conf/*_inbounds.json | grep -v 'shadowtls-in' | awk '{print $NF}')
   for f in ${!NODE_TAG[@]}; do [[ $INSTALLED_PROTOCOLS_LIST =~ "${NODE_TAG[f]}" ]] && EXISTED_PROTOCOLS+=("${PROTOCOL_LIST[f]}") || NOT_EXISTED_PROTOCOLS+=("${PROTOCOL_LIST[f]}"); done
 
   # 列出已安装协议
-  listchoice "\n $(text 63) (${#EXISTED_PROTOCOLS[@]})"
+  listchoice "\n (1/3) 已安装的协议 (${#EXISTED_PROTOCOLS[@]})"
   for h in "${!EXISTED_PROTOCOLS[@]}"; do
     listchoice " $(asc $[h+97]). ${EXISTED_PROTOCOLS[h]} "
   done
 
   # 从已安装的协议中选择需要删除的协议名，并存放在 REMOVE_PROTOCOLS，把保存的协议的协议存放在 KEEP_PROTOCOLS
-  reading "\n $(text 64) " REMOVE_SELECT
+  reading "\n 请选择需要删除的协议（可以多选）: " REMOVE_SELECT
   # 统一为小写，去掉重复选项，处理不在可选列表里的选项，把特殊符号处理
   REMOVE_SELECT=$(sed "s/[^a-$(asc $[${#EXISTED_PROTOCOLS[@]} + 96])]//g" <<< "${REMOVE_SELECT,,}" | awk 'BEGIN{RS=""; FS=""}{delete seen; output=""; for(i=1; i<=NF; i++){ if(!seen[$i]++){ output=output $i } } print output}')
 
@@ -1641,11 +1619,11 @@ change_protocols() {
 
   # 如有未安装的协议，列表显示并选择安装，把增加的协议存在放在 ADD_PROTOCOLS
   if [ "${#NOT_EXISTED_PROTOCOLS[@]}" -gt 0 ]; then
-    listchoice "\n $(text 65) (${#NOT_EXISTED_PROTOCOLS[@]}) "
+    listchoice "\n (2/3) 未安装的协议 (${#NOT_EXISTED_PROTOCOLS[@]}) "
     for i in "${!NOT_EXISTED_PROTOCOLS[@]}"; do
       listchoice " $(asc $[i+97]). ${NOT_EXISTED_PROTOCOLS[i]} "
     done
-    reading "\n $(text 66) " ADD_SELECT
+    reading "\n 请选择需要增加的协议（可以多选）: " ADD_SELECT
     # 统一为小写，去掉重复选项，处理不在可选列表里的选项，把特殊符号处理
     ADD_SELECT=$(sed "s/[^a-$(asc $[${#NOT_EXISTED_PROTOCOLS[@]} + 96])]//g" <<< "${ADD_SELECT,,}" | awk 'BEGIN{RS=""; FS=""}{delete seen; output=""; for(i=1; i<=NF; i++){ if(!seen[$i]++){ output=output $i } } print output}')
 
@@ -1656,21 +1634,21 @@ change_protocols() {
 
   # 重新安装 = 保留 + 新增，如数量为 0 ，则触发卸载
   REINSTALL_PROTOCOLS=("${KEEP_PROTOCOLS[@]}" "${ADD_PROTOCOLS[@]}")
-  [ "${#REINSTALL_PROTOCOLS[@]}" = 0 ] && error "\n $(text 73) "
+  [ "${#REINSTALL_PROTOCOLS[@]}" = 0 ] && error "\n 没有协议剩下，如确定请重新执行卸载所有 "
 
   # 显示重新安装的协议列表，并确认是否正确
-  listchoice "\n $(text 67) (${#REINSTALL_PROTOCOLS[@]}) "
-  [ "${#KEEP_PROTOCOLS[@]}" -gt 0 ] && listchoice "\n $(text 74) (${#KEEP_PROTOCOLS[@]}) "
+  listchoice "\n (3/3) 确认重装的所有协议 (${#REINSTALL_PROTOCOLS[@]}) "
+  [ "${#KEEP_PROTOCOLS[@]}" -gt 0 ] && listchoice "\n 保留协议 (${#KEEP_PROTOCOLS[@]}) "
   for r in "${!KEEP_PROTOCOLS[@]}"; do
     listchoice " $[r+1]. ${KEEP_PROTOCOLS[r]} "
   done
 
-  [ "${#ADD_PROTOCOLS[@]}" -gt 0 ] && listchoice "\n $(text 75) (${#ADD_PROTOCOLS[@]}) "
+  [ "${#ADD_PROTOCOLS[@]}" -gt 0 ] && listchoice "\n 新增协议 (${#ADD_PROTOCOLS[@]}) "
   for r in "${!ADD_PROTOCOLS[@]}"; do
     listchoice " $[r+1]. ${ADD_PROTOCOLS[r]} "
   done
 
-  reading "\n $(text 68) " CONFIRM
+  reading "\n 如有错误请按 [n]，其他键继续: " CONFIRM
   [ "${CONFIRM,,}" = 'n' ] && exit 0
 
   # 把确认安装的协议遍历所有协议列表的数组，找出其下标并变为英文小写的形式
@@ -1769,7 +1747,7 @@ change_protocols() {
     local DOMAIN_ERROR_TIME=5
     until [ -n "$VMESS_HOST_DOMAIN" ]; do
       (( DOMAIN_ERROR_TIME-- )) || true
-      [ "$DOMAIN_ERROR_TIME" != 0 ] && TYPE=VMESS && reading "\n $(text 50) " VMESS_HOST_DOMAIN || error "\n $(text 3) \n"
+      [ "$DOMAIN_ERROR_TIME" != 0 ] && TYPE=VMESS && reading "\n 请输入 $TYPE 域名: " VMESS_HOST_DOMAIN || error "\n 输入错误达5次,脚本退出 \n"
     done
     POSITION=$(awk -v target=$CHECK_PROTOCOLS '{ for(i=1; i<=NF; i++) if($i == target) { print i-1; break } }' <<< "${INSTALL_PROTOCOLS[*]}")
     PORT_VMESS_WS=${REINSTALL_PORTS[POSITION]}
@@ -1781,7 +1759,7 @@ change_protocols() {
     local DOMAIN_ERROR_TIME=5
     until [ -n "$VLESS_HOST_DOMAIN" ]; do
       (( DOMAIN_ERROR_TIME-- )) || true
-      [ "$DOMAIN_ERROR_TIME" != 0 ] && TYPE=VLESS && reading "\n $(text 50) " VLESS_HOST_DOMAIN || error "\n $(text 3) \n"
+      [ "$DOMAIN_ERROR_TIME" != 0 ] && TYPE=VLESS && reading "\n 请输入 $TYPE 域名: " VLESS_HOST_DOMAIN || error "\n 输入错误达5次,脚本退出 \n"
     done
     POSITION=$(awk -v target=$CHECK_PROTOCOLS '{ for(i=1; i<=NF; i++) if($i == target) { print i-1; break } }' <<< "${INSTALL_PROTOCOLS[*]}")
     PORT_VLESS_WS=${REINSTALL_PORTS[POSITION]}
@@ -1825,9 +1803,9 @@ uninstall() {
     fi
     sleep 1
     rm -rf $WORK_DIR $TEMP_DIR /etc/systemd/system/sing-box.service /usr/bin/sb
-    info "\n $(text 16) \n"
+    info "\n Sing-box 已彻底卸载 \n"
   else
-    error "\n $(text 15) \n"
+    error "\n Sing-box 脚本还没有安装 \n"
   fi
 
   # 如果 Alpine 系统，删除开机自启动和python3版systemd
@@ -1843,8 +1821,8 @@ version() {
   local VERSION_LATEST=$(wget --no-check-certificate -qO- "https://api.github.com/repos/SagerNet/sing-box/releases" | awk -F '["v-]' '/tag_name/{print $5}' | sort -r | sed -n '1p')
   local ONLINE=$(wget --no-check-certificate -qO- "https://api.github.com/repos/SagerNet/sing-box/releases" | awk -F '["v]' -v var="tag_name.*$VERSION_LATEST" '$0 ~ var {print $5; exit}')
   local LOCAL=$($WORK_DIR/sing-box version | awk '/version/{print $NF}')
-  info "\n $(text 40) "
-  [[ -n "$ONLINE" && "$ONLINE" != "$LOCAL" ]] && reading "\n $(text 9) " UPDATE || info " $(text 41) "
+  info "\n Sing-box 本地版本: $LOCAL\t 最新版本: $ONLINE "
+  [[ -n "$ONLINE" && "$ONLINE" != "$LOCAL" ]] && reading "\n 升级请按 [y]，默认不升级: " UPDATE || info " 不需要升级 "
 
   if [ "${UPDATE,,}" = 'y' ]; then
     check_system_info
@@ -1855,7 +1833,7 @@ version() {
       chmod +x $TEMP_DIR/sing-box-$ONLINE-linux-$SING_BOX_ARCH/sing-box && mv $TEMP_DIR/sing-box-$ONLINE-linux-$SING_BOX_ARCH/sing-box $WORK_DIR/sing-box
       systemctl enable sing-box && sleep 2 && [ "$(systemctl is-active sing-box)" = 'active' ] && info " Sing-box 开启 成功" || error "Sing-box 开启 失败 "
     else
-      local error "\n $(text 42) "
+      local error "\n 下载最新版本 Sing-box 失败，脚本退出 "
     fi
   fi
 }
@@ -1863,14 +1841,14 @@ version() {
 echo_system_status()
 {
   echo -e "======================================================================================================================\n"
-  info " $(text 17): $VERSION\n $(text 19):\n\t $(text 20): $SYS\n\t $(text 21): $(uname -r)\n\t $(text 22): $SING_BOX_ARCH\n\t $(text 23): $VIRT "
+  info " 脚本版本: $VERSION\n 系统信息:\n\t 当前操作系统: $SYS\n\t 内核: $(uname -r)\n\t 处理器架构: $SING_BOX_ARCH\n\t 虚拟化: $VIRT "
   info "\t IPv4: $WAN4 $COUNTRY4  $ASNORG4 "
   info "\t IPv6: $WAN6 $COUNTRY6  $ASNORG6 "
   info "\t Sing-box: $STATUS\t $SING_BOX_VERSION "
   [ -n "$PID" ] && info "\t 进程ID: $PID "
   [ -n "$RUNTIME" ] && info "\t 运行时长: $RUNTIME "
   [ -n "$MEMORY_USAGE" ] && info "\t 内存占用: $MEMORY_USAGE MB"
-  [ -n "$NOW_START_PORT" ] && info "\t $(text 45) "
+  [ -n "$NOW_START_PORT" ] && info "\t 使用端口: ${NOW_START_PORT} - $((NOW_START_PORT+NOW_CONSECUTIVE_PORTS-1)) "
   echo -e "\n======================================================================================================================\n"
 }
 # 判断当前 Sing-box 的运行状态，并对应的给菜单和动作赋值
@@ -1910,7 +1888,7 @@ menu_setting() {
     ACTION[7]() { uninstall; exit; }
 
   else
-    OPTION[1]="1.  $(text 34)"
+    OPTION[1]="1.  安装 Sing-box 协议全家桶脚本"
     #OPTION[2]="2.  升级内核、安装BBR、DD脚本"
 
     ACTION[1]() { install_sing-box; export_list install; exit; }
@@ -1918,7 +1896,7 @@ menu_setting() {
 
   fi
 
-  [ "${#OPTION[@]}" -ge '10' ] && OPTION[0]="0 .  $(text 35)" || OPTION[0]="0.  $(text 35)"
+  [ "${#OPTION[@]}" -ge '10' ] && OPTION[0]="0 .  退出" || OPTION[0]="0.  退出"
   ACTION[0]() { exit; }
 }
 
@@ -1944,7 +1922,7 @@ menu() {
   if grep -qE "^[0-9]{1,2}$" <<< "$CHOOSE" && [ "$CHOOSE" -lt "${#OPTION[*]}" ]; then
     check_system_ip && ACTION[$CHOOSE]
   else
-    warning " $(text 36) [0-$((${#OPTION[*]}-1))] " && sleep 1 && menu
+    warning " 请输入正确数字 [0-$((${#OPTION[*]}-1))] " && sleep 1 && menu
   fi
 }
 
