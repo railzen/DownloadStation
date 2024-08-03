@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh ${work_path}/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.9075 Build240804"
+main_version="V1.0.9100 Build240804"
 work_path="/opt/CherryScript"
 
 main_menu_start() {
@@ -16,7 +16,7 @@ echo -e             "  \_____|_|  |_|______|_|  \_\_|  \_\ |_|   ${White}\n"
 
 echo -e "${LightBlue}Cherry Script $main_version(Support for Ubuntu/Debian/CentOS)${White}"
 echo -e "${LightBlue}Personal use, unauthorized use prohibited!${White}"
-echo -e "${LightBlue}-- Press ${DarkYellow}ludo${LightBlue} to start script --${White}"
+echo -e "${LightBlue}----- Press ${DarkYellow}ludo${LightBlue} to start script -----${White}"
 echo "------------------------"
 echo "1. 系统信息查询"
 echo "2. 系统更新"
