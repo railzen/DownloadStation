@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh ${work_path}/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.9050 Build240804"
+main_version="V1.0.9060 Build240804"
 work_path="/opt/CherryScript"
 
 main_menu_start() {
@@ -1550,7 +1550,7 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
           while true;do
                 root_use
                 ipv6_disabled=$(sysctl -n net.ipv6.conf.all.disable_ipv6)
-                result=$(curl -6 -s ip.sb)
+                result=$(wget -6 -qO- --no-check-certificate --user-agent=Mozilla --tries=2 --timeout=1 https://api.ip.sb/geoip)
                 echo ""
                 if [ "$ipv6_disabled" -eq 1 ]; then
                     echo "当前网络优先级设置: IPv4 优先"
