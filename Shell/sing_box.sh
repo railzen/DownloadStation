@@ -199,7 +199,8 @@ enter_start_port() {
 
 # 定义 Sing-box 变量
 sing_box_variables() {
-  clear
+while true; do
+    clear
     echo "  
 ==================================================
 Sing-Box Server 管理脚本 $VERSION 
@@ -217,15 +218,16 @@ Sing-Box Server 管理脚本 $VERSION
     reading "\n 请选择: " CHOOSE_PROTOCOLS
   fi
   
-  if [[ "${CHOOSE_PROTOCOLS}" == "a" ]]; then
-      reading "\n 按任意键退出程序" CHOOSE_PROTOCOLS
-      exit
-  elif [[ "${CHOOSE_PROTOCOLS}" == "A" ]]; then
-      reading "\n 按任意键退出程序" CHOOSE_PROTOCOLS
-      exit
-  elif [[ "${CHOOSE_PROTOCOLS}" == "0" ]]; then
-      exit
-  fi
+  if [[ "${CHOOSE_PROTOCOLS}" == "0" ]]; then
+      exit 0
+  elif [[ ! "${CHOOSE_PROTOCOLS,,}" =~ [b-$MAX_CHOOSE_PROTOCOLS] ]]; then
+      warning "\n 输入错误，请重新输入"
+      unset CHOOSE_PROTOCOLS
+      sleep 0.5
+  else
+      break;
+  fi 
+done
 
   check_system_ip
   if grep -qi 'cloudflare' <<< "$ASNORG4$ASNORG6"; then
@@ -251,7 +253,7 @@ Sing-Box Server 管理脚本 $VERSION
     WARP_ENDPOINT=2606:4700:d0::a29f:c101
     DOMAIN_STRATEG=prefer_ipv6
   fi
-
+ 
   # 对选择协议的输入处理逻辑：先把所有的大写转为小写，并把所有没有去选项剔除掉，最后按输入的次序排序。如果选项为 a(all) 和其他选项并存，将会忽略 a，如 abc 则会处理为 bc
   [[ ! "${CHOOSE_PROTOCOLS,,}" =~ [b-$MAX_CHOOSE_PROTOCOLS] ]] && INSTALL_PROTOCOLS=($(eval echo {b..$MAX_CHOOSE_PROTOCOLS})) || INSTALL_PROTOCOLS=($(grep -o . <<< "$CHOOSE_PROTOCOLS" | sed "/[^b-$MAX_CHOOSE_PROTOCOLS]/d" | awk '!seen[$0]++'))
 
@@ -1885,15 +1887,14 @@ Sing-Box Server 管理脚本 $VERSION
 
   for ((b=1;b<${#OPTION[*]};b++)); do listchoice " ${OPTION[b]} "; done
   listchoice " ${OPTION[0]} "
+    echo "  
+=================================================="
   reading "\n 请选择: " CHOOSE
 
   # 选项为0直接退出
   if [[ "${CHOOSE}" == "0" ]]; then
       exit
-  fi
-
-  # 输入必须是数字且少于等于最大可选项
-  if grep -qE "^[0-9]{1,2}$" <<< "$CHOOSE" && [ "$CHOOSE" -lt "${#OPTION[*]}" ]; then
+  elif grep -qE "^[0-9]{1,2}$" <<< "$CHOOSE" && [ "$CHOOSE" -lt "${#OPTION[*]}" ]; then   # 输入必须是数字且少于等于最大可选项
     check_system_ip
     ACTION[$CHOOSE]
   else
