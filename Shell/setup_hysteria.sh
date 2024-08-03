@@ -3,7 +3,7 @@
 # -------------------------------------------------------------
 # 检查系统
 export LANG=en_US.UTF-8
-sh_ver="V1.0.3 build240803"
+sh_ver="V1.0.5 build240803"
 echoType='echo -e'
  
 Green_font_prefix="\033[32m" && Red_font_prefix="\033[31m" && Green_background_prefix="\033[42;37m" && Red_background_prefix="\033[41;37m" && Font_color_suffix="\033[0m" && Yellow_font_prefix="\033[0;33m"
@@ -138,7 +138,7 @@ while true;do
             echo -e " 当前状态: ${Red_font_prefix}未安装${Font_color_suffix}"
         fi
         echo
-        read -e -p " 请输入数字[0-9]:" num
+        read -e -p " 请输入数字[0-3]:" num
         case "$num" in
             1)
                 echo
@@ -148,7 +148,10 @@ while true;do
                     setup_hysteria
                     read -p "按任意键继续……" temp
                 elif [[ "${selectStart}" == "y" ]]; then
+                    setup_hysteria
                     read -p "按任意键继续……" temp
+                else
+                    read -p "取消操作, 按任意键继续……" temp
                 fi
             ;;
             2)
@@ -181,6 +184,7 @@ while true;do
             ;;
             *)
             echo "请输入正确数字${Yellow_font_prefix}[0-9]${Font_color_suffix}"
+            sleep 0.3
             ;;
         esac
 done
