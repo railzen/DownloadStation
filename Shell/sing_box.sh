@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # 当前脚本版本号
-VERSION='v1.0.0052 (2024.08.02)'
+VERSION='v1.0.0053 (2024.08.03)'
 
 # 各变量默认值
 TEMP_DIR='/tmp/sing-box'
@@ -23,8 +23,7 @@ C[1]="增加两个的无交互安装模式: 1. 传参；2.kv 文件，详细参�
 C[2]="下载 Sing-box 中，请稍等 ..."
 C[3]="输入错误达5次,脚本退出"
 C[4]="UUID 应为36位字符,请重新输入 \(剩余\${UUID_ERROR_TIME}次\):"
-C[5]="本脚本只支持 Debian、Ubuntu、CentOS、Alpine、Fedora 或 Arch 系统,问题反馈:[https://github.com/fscarmen/sing-box/issues]"
-C[6]="当前操作是 \$SYS\\\n 不支持 \$SYSTEM \${MAJOR[int]} 以下系统,问题反馈:[https://github.com/fscarmen/sing-box/issues]"
+C[6]="当前操作是 \$SYS\\\n 不支持 \$SYSTEM \${MAJOR[int]} 以下系统"
 C[7]="安装依赖列表:"
 C[8]="所有依赖已存在，不需要额外安装"
 C[9]="升级请按 [y]，默认不升级:"
@@ -43,7 +42,7 @@ C[21]="内核"
 C[22]="处理器架构"
 C[23]="虚拟化"
 C[24]="请选择:"
-C[25]="当前架构 \$(uname -m) 暂不支持,问题反馈:[https://github.com/fscarmen/sing-box/issues]"
+C[25]="当前架构 \$(uname -m) 暂不支持"
 C[26]="未安装"
 C[27]="关闭"
 C[28]="开启"
@@ -116,13 +115,6 @@ translate() {
   [ -n "$@" ] && EN="$@"
   ZH=$(wget --no-check-certificate -qO- --tries=1 --timeout=2 "https://translate.google.com/translate_a/t?client=any_client_id_works&sl=en&tl=zh&q=${EN//[[:space:]]/%20}" 2>/dev/null)
   [[ "$ZH" =~ ^\[\".+\"\]$ ]] && awk -F '"' '{print $2}' <<< "$ZH"
-}
-
-# 检测是否解锁 chatGPT，以决定是否使用 warp 链式代理或者是 direct out
-check_chatgpt() {
-  local CHECK_STACK=$1
-  local SUPPORT_COUNTRY=(AL DZ AD AO AG AR AM AU AT AZ BS BD BB BE BZ BJ BT BO BA BW BR BN BG BF CV CA CL CO KM CG CR CI HR CY CZ DK DJ DM DO EC SV EE FJ FI FR GA GM GE DE GH GR GD GT GN GW GY HT VA HN HU IS IN ID IQ IE IL IT JM JP JO KZ KE KI KW KG LV LB LS LR LI LT LU MG MW MY MV ML MT MH MR MU MX FM MD MC MN ME MA MZ MM NA NR NP NL NZ NI NE NG MK NO OM PK PW PS PA PG PY PE PH PL PT QA RO RW KN LC VC WS SM ST SN RS SC SL SG SK SI SB ZA KR ES LK SR SE CH TW TZ TH TL TG TO TT TN TR TV UG UA AE GB US UY VU ZM)
-  [[ "${SUPPORT_COUNTRY[@]}" =~ $(wget --no-check-certificate -$CHECK_STACK -qO- --tries=3 --timeout=2 https://chat.openai.com/cdn-cgi/trace | awk -F '=' '/loc/{print $2}') ]] && echo 'unlock' || echo 'ban'
 }
 
 # 脚本当天及累计运行次数统计
@@ -247,7 +239,7 @@ check_system_info() {
 
   # 针对各厂商的订制系统
   if [ -z "$SYSTEM" ]; then
-    [ $(type -p yum) ] && int=2 && SYSTEM='CentOS' || error " $(text 5) "
+    [ $(type -p yum) ] && int=2 && SYSTEM='CentOS' || error "本脚本只支持 Debian、Ubuntu、CentOS、Alpine、Fedora 或 Arch 系统"
   fi
 
   # 先排除 EXCLUDE 里包括的特定系统，其他系统需要作大发行版本的比较
@@ -320,10 +312,6 @@ sing-box_variables() {
     WARP_ENDPOINT=2606:4700:d0::a29f:c101
     DOMAIN_STRATEG=prefer_ipv6
   fi
-
-  # 检测是否解锁 chatGPT
-  CHAT_GPT_OUT_V4=warp-IPv4-out; CHAT_GPT_OUT_V6=warp-IPv6-out;
-  [ "$(check_chatgpt ${DOMAIN_STRATEG: -1})" = 'unlock' ] && CHAT_GPT_OUT_V4=direct && CHAT_GPT_OUT_V6=direct
 
   # 选择安装的协议，由于选项 a 为全部协议，所以选项数不是从 a 开始，而是从 b 开始，处理输入：把大写全部变为小写，把不符合的选项去掉，把重复的选项合并
   MAX_CHOOSE_PROTOCOLS=$(asc $[CONSECUTIVE_PORTS+96+1])
@@ -619,11 +607,11 @@ EOF
         "rules":[
             {
                 "domain":"api.openai.com",
-                "outbound":"$CHAT_GPT_OUT_V4"
+                "outbound":"direct"
             },
             {
                 "rule_set":"geosite-openai",
-                "outbound":"$CHAT_GPT_OUT_V6"
+                "outbound":"direct"
             }
         ]
     }
