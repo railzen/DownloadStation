@@ -188,10 +188,6 @@ case $choice in
       echo "21. cmatrix 黑客帝国屏保"
       echo "22. sl 跑火车屏保"
       echo "------------------------"
-      echo "26. 俄罗斯方块小游戏"
-      echo "27. 贪吃蛇小游戏"
-      echo "28. 太空入侵者小游戏"
-      echo "------------------------"
       echo "31. 全部安装"
       echo "32. 全部卸载"
       echo "------------------------"
@@ -389,34 +385,15 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
               clear
               /usr/games/sl
               ;;
-            26)
-              clear
-              install bastet
-              clear
-              /usr/games/bastet
-              ;;
-            27)
-              clear
-              install nsnake
-              clear
-              /usr/games/nsnake
-              ;;
-            28)
-              clear
-              install ninvaders
-              clear
-              /usr/games/ninvaders
-
-              ;;
 
           31)
               clear
-              install curl wget sudo socat htop iftop unzip tar tmux ffmpeg btop ranger gdu fzf cmatrix sl bastet nsnake ninvaders
+              install curl wget sudo socat htop iftop unzip tar tmux ffmpeg btop ranger gdu fzf vim
               ;;
 
           32)
               clear
-              remove htop iftop unzip tmux ffmpeg btop ranger gdu fzf cmatrix sl bastet nsnake ninvaders
+              remove htop iftop unzip tmux ffmpeg btop ranger gdu fzf vim
               ;;
 
           41)
@@ -508,7 +485,7 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
       echo "------------------------"
       echo "7. 清理无用的docker容器和镜像网络数据卷"
       echo "------------------------"
-      echo "8. 卸载Dcoker环境"
+      echo "20. 卸载Docker环境"
       echo "------------------------"
       echo "0. 返回主菜单"
       echo "------------------------"
@@ -823,13 +800,13 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
                   ;;
               esac
               ;;
-          8)
+          20)
               clear
               read -p "$(echo -e "${Red}确定卸载docker环境吗？(Y/N): ${White}")" choice
               case "$choice" in
                 [Yy])
                   docker rm $(docker ps -a -q) && docker rmi $(docker images -q) && docker network prune
-                  remove docker docker-ce docker-compose > /dev/null 2>&1
+                  remove docker docker-ce docker-compose docker-ce-cli containerd.io > /dev/null 2>&1
                   ;;
                 [Nn])
                   ;;
