@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # 当前脚本版本号
-VERSION='v1.0.0054 build240803'
+VERSION='v1.0.0055 build240803'
 
 function rand() {  min=$1 ; max=$(($2-$min+1)) ; num=$(date +%s%n) ; echo $(($num%$max+$min)) ; } #增加一个十位数再求余
 # 各变量默认值
@@ -1833,13 +1833,13 @@ menu_setting() {
     NOW_CONSECUTIVE_PORTS=$(awk 'END { print NR }' <<< "$NOW_PORTS")
     [ -s $WORK_DIR/sing-box ] && SING_BOX_VERSION="version: $($WORK_DIR/sing-box version | awk '/version/{print $NF}')"
     [ -s $WORK_DIR/conf/02_route.json ] && { grep -q 'direct' $WORK_DIR/conf/02_route.json && RETURN_STATUS="关闭" || RETURN_STATUS="开启"; }
-    OPTION[1]="1 .  查看节点信息"
-    [ "$STATUS" = "开启" ] && OPTION[2]="2 .  关闭 Sing-box " || OPTION[2]="2 .  开启 Sing-box "
-    OPTION[3]="3 .  更换监听端口"
-    OPTION[4]="4 .  同步 Sing-box 至最新版本"
-    OPTION[5]="5 .  升级内核、安装BBR、DD脚本"
-    OPTION[6]="6 .  增加 / 删除协议"
-    OPTION[7]="7 .  卸载"
+    OPTION[1]="1.  查看节点信息"
+    [ "$STATUS" = "开启" ] && OPTION[2]="2.  关闭 Sing-box " || OPTION[2]="2.  开启 Sing-box "
+    OPTION[3]="3.  更换监听端口"
+    OPTION[4]="4.  同步 Sing-box 至最新版本"
+    OPTION[5]="5.  升级内核、安装BBR、DD脚本"
+    OPTION[6]="6.  增加 / 删除协议"
+    OPTION[7]="7.  卸载"
 
     ACTION[1]() { export_list; exit 0; }
     [ "$STATUS" = "开启" ] && ACTION[2]() { cmd_systemctl disable sing-box; [[ "$(systemctl is-active sing-box)" =~ 'inactive'|'unknown' ]] && info " Sing-box 关闭 成功" || error " Sing-box 关闭 失败 "; } || ACTION[2]() { cmd_systemctl enable sing-box && [ "$(systemctl is-active sing-box)" = 'active' ] && info " Sing-box 开启 成功" || error " Sing-box 开启 失败 "; }
@@ -1858,7 +1858,7 @@ menu_setting() {
 
   fi
 
-  [ "${#OPTION[@]}" -ge '10' ] && OPTION[0]="0 .  退出" || OPTION[0]="0.  退出"
+  OPTION[0]="0.  退出"
   ACTION[0]() { exit; }
 }
 
@@ -1886,7 +1886,8 @@ Sing-Box Server 管理脚本 $VERSION
 
   # 输入必须是数字且少于等于最大可选项
   if grep -qE "^[0-9]{1,2}$" <<< "$CHOOSE" && [ "$CHOOSE" -lt "${#OPTION[*]}" ]; then
-    check_system_ip && ACTION[$CHOOSE]
+    check_system_ip
+    ACTION[$CHOOSE]
   else
     warning " 请输入正确数字 [0-$((${#OPTION[*]}-1))] " && sleep 1 && menu
   fi
