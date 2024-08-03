@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # 当前脚本版本号
-VERSION='v1.0.0062 build240803'
+VERSION='v1.0.0063 build240803'
 
 function rand() {  min=$1 ; max=$(($2-$min+1)) ; num=$(date +%s%n) ; echo $(($num%$max+$min)) ; } #增加一个十位数再求余
 # 各变量默认值
@@ -168,11 +168,6 @@ check_system_ip() {
   WAN4=$(expr "$IP4" : '.*query\":[ ]*\"\([^"]*\).*') &&
   COUNTRY4=$(expr "$IP4" : '.*country\":[ ]*\"\([^"]*\).*') &&
   ASNORG4=$(expr "$IP4" : '.*isp\":[ ]*\"\([^"]*\).*')
-
-  IP6=$(wget -6 -qO- --no-check-certificate --user-agent=Mozilla --tries=2 --timeout=1 https://api.ip.sb/geoip) &&
-  WAN6=$(expr "$IP6" : '.*ip\":[ ]*\"\([^"]*\).*') &&
-  COUNTRY6=$(expr "$IP6" : '.*country\":[ ]*\"\([^"]*\).*') &&
-  ASNORG6=$(expr "$IP6" : '.*isp\":[ ]*\"\([^"]*\).*')
 }
 
 # 输入起始 port 函数
@@ -230,28 +225,20 @@ Sing-Box 管理脚本 $VERSION
 done
 
   check_system_ip
-  if grep -qi 'cloudflare' <<< "$ASNORG4$ASNORG6"; then
+  if grep -qi 'cloudflare' <<< "$ASNORG4"; then
     local a=6
     until [ -n "$SERVER_IP" ]; do
       ((a--)) || true
       [ "$a" = 0 ] && error "\n 输入错误达5次,脚本退出 \n"
       reading "\n 检测到 warp / warp-go 正在运行，请输入确认的服务器 IP: " SERVER_IP
     done
-    if [[ "$SERVER_IP" =~ : ]]; then
-      WARP_ENDPOINT=2606:4700:d0::a29f:c101
-      DOMAIN_STRATEG=prefer_ipv6
-    else
-      WARP_ENDPOINT=162.159.193.10
-      DOMAIN_STRATEG=prefer_ipv4
-    fi
-  elif [ -n "$WAN4" ]; then
+    WARP_ENDPOINT=162.159.193.10
+    DOMAIN_STRATEG=prefer_ipv4
+
+  else [ -n "$WAN4" ]; then
     SERVER_IP_DEFAULT=$WAN4
     WARP_ENDPOINT=162.159.193.10
     DOMAIN_STRATEG=prefer_ipv4
-  elif [ -n "$WAN6" ]; then
-    SERVER_IP_DEFAULT=$WAN6
-    WARP_ENDPOINT=2606:4700:d0::a29f:c101
-    DOMAIN_STRATEG=prefer_ipv6
   fi
  
   # 对选择协议的输入处理逻辑：先把所有的大写转为小写，并把所有没有去选项剔除掉，最后按输入的次序排序。如果选项为 a(all) 和其他选项并存，将会忽略 a，如 abc 则会处理为 bc
@@ -1815,7 +1802,6 @@ echo_system_status()
   echo -e "==================================================\n"
   info " 脚本版本: $VERSION\n 系统信息:\n\t 当前操作系统: $SYS\n\t 内核: $(uname -r)\n\t 处理器架构: $SING_BOX_ARCH\n\t 虚拟化: $VIRT "
   info "\t IPv4: $WAN4 $COUNTRY4  $ASNORG4 "
-  info "\t IPv6: $WAN6 $COUNTRY6  $ASNORG6 "
   info "\t Sing-box: $STATUS\t $SING_BOX_VERSION "
   [ -n "$PID" ] && info "\t 进程ID: $PID "
   [ -n "$RUNTIME" ] && info "\t 运行时长: $RUNTIME "
