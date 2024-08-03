@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh ${work_path}/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.9040 Build240804"
+main_version="V1.0.9050 Build240804"
 work_path="/opt/CherryScript"
 
 main_menu_start() {
@@ -1625,8 +1625,8 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
                         ;;
 
                 esac
-                ;;
             done
+          ;;
           11)
             clear
             ss -tulnape
