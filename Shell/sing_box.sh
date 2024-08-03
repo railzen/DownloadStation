@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # 当前脚本版本号
-VERSION='v1.0.0063 build240803'
+VERSION='v1.0.063 build240803'
 
 function rand() {  min=$1 ; max=$(($2-$min+1)) ; num=$(date +%s%n) ; echo $(($num%$max+$min)) ; } #增加一个十位数再求余
 # 各变量默认值
@@ -234,8 +234,7 @@ done
     done
     WARP_ENDPOINT=162.159.193.10
     DOMAIN_STRATEG=prefer_ipv4
-
-  else [ -n "$WAN4" ]; then
+  else
     SERVER_IP_DEFAULT=$WAN4
     WARP_ENDPOINT=162.159.193.10
     DOMAIN_STRATEG=prefer_ipv4
