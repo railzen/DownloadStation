@@ -1756,18 +1756,10 @@ change_protocols() {
 
 # 卸载 Sing-box 全家桶
 uninstall() {
-  if [ -d $WORK_DIR ]; then
-    if [ "$SYSTEM" = 'Alpine' ]; then
-      cmd_systemctl disable sing-box 2>/dev/null
-    else
-      cmd_systemctl disable sing-box 2>/dev/null
-    fi
-    sleep 1
-    rm -rf $WORK_DIR $TEMP_DIR /etc/systemd/system/sing-box.service /usr/bin/sb
-    info "\n Sing-box 已彻底卸载 \n"
-  else
-    error "\n Sing-box 脚本还没有安装 \n"
-  fi
+  cmd_systemctl disable sing-box 2>/dev/null
+  sleep 1
+  rm -rf $WORK_DIR $TEMP_DIR /etc/systemd/system/sing-box.service
+  info "\n Sing-box 已彻底卸载 \n"
 
   # 如果 Alpine 系统，删除开机自启动和python3版systemd
   if [ "$SYSTEM" = 'Alpine' ]; then
