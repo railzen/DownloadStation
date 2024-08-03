@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh ${work_path}/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.9006 Build240803"
+main_version="V1.0.9007 Build240803"
 work_path="/opt/CherryScript"
 
 main_menu_start() {
@@ -2594,7 +2594,7 @@ EOF
               root_use
               echo "ROOT私钥登录模式"
               echo "------------------------------------------------"
-              echo "将会生成密钥对，更安全的方式SSH登录"
+              echo "请输入公钥，使用更安全的方式SSH登录"
               read -p "确定继续吗？(Y/N): " choice
 
               case "$choice" in
@@ -4495,16 +4495,23 @@ fi
 
 
 add_sshkey() {
-ssh-keygen -t rsa -b 4096 -C "xxxx@gmail.com" -f /root/.ssh/sshkey -N ""
+#ssh-keygen -t rsa -b 4096 -C "xxxx@gmail.com" -f /root/.ssh/sshkey -N ""
+read -p "请输入SSH公钥： " sshPublicKey
 
-cat ~/.ssh/sshkey.pub >> ~/.ssh/authorized_keys
+if [ -z "$sshPublicKey" ]; then
+    sshPublicKey="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCrQNcEPHhji5+5Kwozb6LlTkplfhIicDJKuOI0O8xMBFA8p8vqhwf1eVT0LA3tTlmtRSIk8tAW1L/vAVzzNn7BZ/uJCEnlF4gZj1YkMILXE4zaB5Zy13b5Ngxzkm3ErpJ1vhKwueUUBd0VnOeqIcLIpYiuysykJh46YzS0ivX7jNw6I1aoonjWv8xPDdE84lpik6xtREZMHK1Lp7MAh7ez1k8X6JUHU9i7pbS3M66a8//qAzCy1vRtn0DvaWpfcw2XWXuxA/vPSmNA1ewdPObH3iNcVYtGCL9ECPPWdOlssskvxTM0XmGT9JC5bExqSJ1ODttkN5imETN0pWcOpT5L ssh-key-2024-02-26"
+    echo -e "${red}您输入的公钥信息为空！这里展示一个示范公钥，请您注意删除 ${white}"
+fi
+
+echo ${sshPublicKey} >> ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
 
-ip_address
-echo -e "私钥信息已生成，务必复制保存，可保存成 ${Yellow}${ipv4_address}_ssh.key${White} 文件，用于以后的SSH登录"
+echo -e "您输入的公钥信息已经保存到 /.ssh/authorized_keys "
+echo -e "您公钥信息为： "
 echo "--------------------------------"
-cat ~/.ssh/sshkey
+echo ${sshPublicKey}
 echo "--------------------------------"
+echo -e "请保存好您的私钥！"
 
 sed -i -e 's/^\s*#\?\s*PermitRootLogin .*/PermitRootLogin prohibit-password/' \
        -e 's/^\s*#\?\s*PasswordAuthentication .*/PasswordAuthentication no/' \
