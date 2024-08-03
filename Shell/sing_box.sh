@@ -61,7 +61,6 @@ C[53]="请选择或者填入优选域名，默认为 \${CDN_DOMAIN[0]}:"
 C[54]="ShadowTLS 配置文件内容，需要更新 sing_box 内核"
 C[58]="内存占用"
 C[60]="选择的协议及端口次序如下:"
-C[61]="(必须在 Cloudflare 解析自有域名)"
 C[63]="(1/3) 已安装的协议"
 C[64]="请选择需要删除的协议（可以多选）:"
 C[65]="(2/3) 未安装的协议"
@@ -285,9 +284,9 @@ sing-box_variables() {
   # 选择安装的协议，由于选项 a 为全部协议，所以选项数不是从 a 开始，而是从 b 开始，处理输入：把大写全部变为小写，把不符合的选项去掉，把重复的选项合并
   MAX_CHOOSE_PROTOCOLS=$(asc $[CONSECUTIVE_PORTS+96+1])
   if [ -z "$CHOOSE_PROTOCOLS" ]; then
-    listchoice "\n (1/6) 多选需要安装协议(比如 hgbd):\n "
+    listchoice "\n 多选需要安装协议(比如 bcdf):\n "
     for e in "${!PROTOCOL_LIST[@]}"; do
-      [[ "$e" =~ '6'|'7' ]] && listchoice " $(asc $[e+98]). ${PROTOCOL_LIST[e]} $(text 61) " || listchoice " $(asc $[e+98]). ${PROTOCOL_LIST[e]} "
+      [[ "$e" =~ '6'|'7' ]] && listchoice " $(asc $[e+98]). ${PROTOCOL_LIST[e]} (必须在 Cloudflare 解析自有域名) " || listchoice " $(asc $[e+98]). ${PROTOCOL_LIST[e]} "
     done
     echo "======================================================================================================================"
     echo " 0.退出"
@@ -1861,6 +1860,19 @@ version() {
   fi
 }
 
+echo_system_status()
+{
+  echo -e "======================================================================================================================\n"
+  info " $(text 17): $VERSION\n $(text 19):\n\t $(text 20): $SYS\n\t $(text 21): $(uname -r)\n\t $(text 22): $SING_BOX_ARCH\n\t $(text 23): $VIRT "
+  info "\t IPv4: $WAN4 $COUNTRY4  $ASNORG4 "
+  info "\t IPv6: $WAN6 $COUNTRY6  $ASNORG6 "
+  info "\t Sing-box: $STATUS\t $SING_BOX_VERSION "
+  [ -n "$PID" ] && info "\t 进程ID: $PID "
+  [ -n "$RUNTIME" ] && info "\t 运行时长: $RUNTIME "
+  [ -n "$MEMORY_USAGE" ] && info "\t 内存占用: $MEMORY_USAGE MB"
+  [ -n "$NOW_START_PORT" ] && info "\t $(text 45) "
+  echo -e "\n======================================================================================================================\n"
+}
 # 判断当前 Sing-box 的运行状态，并对应的给菜单和动作赋值
 menu_setting() {
   if [[ "$STATUS" =~ "关闭"|"开启" ]]; then
@@ -1899,10 +1911,10 @@ menu_setting() {
 
   else
     OPTION[1]="1.  $(text 34)"
-    OPTION[2]="2.  升级内核、安装BBR、DD脚本"
+    #OPTION[2]="2.  升级内核、安装BBR、DD脚本"
 
     ACTION[1]() { install_sing-box; export_list install; exit; }
-    ACTION[2]() { bash <(wget --no-check-certificate -qO- "https://raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master/tcp.sh"); exit; }
+    #ACTION[2]() { bash <(wget --no-check-certificate -qO- "https://raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master/tcp.sh"); exit; }
 
   fi
 
@@ -1912,23 +1924,25 @@ menu_setting() {
 
 menu() {
   clear
-  echo -e "======================================================================================================================\n"
-  info " $(text 17): $VERSION\n $(text 19):\n\t $(text 20): $SYS\n\t $(text 21): $(uname -r)\n\t $(text 22): $SING_BOX_ARCH\n\t $(text 23): $VIRT "
-  info "\t IPv4: $WAN4 $COUNTRY4  $ASNORG4 "
-  info "\t IPv6: $WAN6 $COUNTRY6  $ASNORG6 "
-  info "\t Sing-box: $STATUS\t $SING_BOX_VERSION "
-  [ -n "$PID" ] && info "\t 进程ID: $PID "
-  [ -n "$RUNTIME" ] && info "\t 运行时长: $RUNTIME "
-  [ -n "$MEMORY_USAGE" ] && info "\t 内存占用: $MEMORY_USAGE MB"
-  [ -n "$NOW_START_PORT" ] && info "\t $(text 45) "
-  echo -e "\n======================================================================================================================\n"
+
+  #只有一个选项，那就直接进吧
+  if [[ "${#OPTION[*]}" == "2" ]]; then
+      check_system_ip || ACTION[1]
+      exit
+  fi
+
   for ((b=1;b<${#OPTION[*]};b++)); do listchoice " ${OPTION[b]} "; done
   listchoice " ${OPTION[0]} "
   reading "\n 请选择: " CHOOSE
 
+  # 选项为0直接退出
+  if [[ "${CHOOSE}" == "0" ]]; then
+      exit
+  fi
+
   # 输入必须是数字且少于等于最大可选项
   if grep -qE "^[0-9]{1,2}$" <<< "$CHOOSE" && [ "$CHOOSE" -lt "${#OPTION[*]}" ]; then
-    ACTION[$CHOOSE]
+    check_system_ip && ACTION[$CHOOSE]
   else
     warning " $(text 36) [0-$((${#OPTION[*]}-1))] " && sleep 1 && menu
   fi
@@ -1942,7 +1956,7 @@ check_root
 check_arch
 check_system_info
 check_dependencies
-check_system_ip
+#check_system_ip
 check_install
 
 menu_setting
