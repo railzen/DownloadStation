@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # 当前脚本版本号
-VERSION='v1.0.0053 (2024.08.03)'
+VERSION='v1.0.0054 (2024.08.03)'
 
 function rand() {  min=$1 ; max=$(($2-$min+1)) ; num=$(date +%s%n) ; echo $(($num%$max+$min)) ; } #增加一个十位数再求余
 # 各变量默认值
@@ -24,7 +24,7 @@ mkdir -p $TEMP_DIR
 warning() { echo -e "\033[31m\033[01m$*\033[0m"; }  # 红色
 error() { echo -e "\033[31m\033[01m$*\033[0m" && exit 1; } # 红色
 info() { echo -e "\033[32m\033[01m$*\033[0m"; }   # 绿色
-listchoice() { echo -e "\033[33m\033[01m$*\033[0m"; }   # 黄色
+hint() { echo -e "\033[33m\033[01m$*\033[0m"; }   # 黄色
 listchoice() { echo -e "$*"; }
 reading() { read -rp "$(info "$1")" "$2"; }
 
