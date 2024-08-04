@@ -802,6 +802,8 @@ showInstallStatus() {
         if echo ${currentInstallProtocolType} | grep -q ",9,"; then
             echoContent white "Tuic \c"
         fi
+        
+        echo -e "\n--------------------------------------------------"
     fi
 }
 
