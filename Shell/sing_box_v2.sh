@@ -1927,7 +1927,7 @@ User=root
 WorkingDirectory=/root
 CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_SYS_PTRACE CAP_DAC_READ_SEARCH
 AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_SYS_PTRACE CAP_DAC_READ_SEARCH
-ExecStart=${execStart}
+ExecStart=$(echo -e ${execStart})
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
 RestartSec=10
@@ -2070,7 +2070,7 @@ handleSingBox() {
             echoContent green " ---> sing-box启动成功"
         else
             echoContent red "sing-box启动失败"
-            echoContent red "请手动执行【${WORK_DIR}/sing-box/sing-box run -c ${WORK_DIR}/sing-box/conf/config.json】，查看错误日志"
+            echo -e "请手动执行【${WORK_DIR}/sing-box/sing-box run -c ${WORK_DIR}/sing-box/conf/config.json】，查看错误日志"
             exit 0
         fi
     elif [[ "$1" == "stop" ]]; then
@@ -4692,7 +4692,6 @@ unInstall() {
         menu
         exit 0
     fi
-    echoContent yellow " ---> 脚本不会删除acme相关配置，删除请手动执行 [rm -rf /root/.acme.sh]"
 
     if [[ "${release}" == "alpine" ]]; then
         if [[ "${coreInstallType}" == "1" ]]; then
@@ -7618,7 +7617,6 @@ menu() {
 	echo -e "=================================================="
     showInstallStatus
     checkWgetShowProgress
-    echo -e "\n"
     echo -e "1.安装SingBox"    
     echo -e "2.安装Xray"
     echo -e "3.Hysteria2管理"
