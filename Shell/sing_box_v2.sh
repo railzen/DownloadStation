@@ -7618,7 +7618,7 @@ menu() {
 	echo -e "=================================================="
     showInstallStatus
     checkWgetShowProgress
-    echo -e "\n--------------------------------------------------"
+    echo -e "\n"
     echo -e "1.安装SingBox"    
     echo -e "2.安装Xray"
     echo -e "3.Hysteria2管理"
@@ -7628,7 +7628,10 @@ menu() {
     echo -e "7.分流工具"
     echo -e "8.切换alpn"
     echo -e "9.core管理"
-    echo -e "10.卸载脚本"
+    echo -e "10.安装SS2022"
+    echo -e "11.卸载SS2022"
+    echo -e "12.切换Sing-Box脚本"
+    echo -e "20.卸载脚本"
     echo -e "--------------------------------------------------"
     echo -e "0.退出脚本"
     echo -e "==================================================\n"
@@ -7666,6 +7669,18 @@ menu() {
         ;;
 
     10)
+        curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/sing_box.sh && chmod +x sing_box.sh && ./sing_box.sh install_ss2022
+        read -r -p "按任意键继续... " temp
+        ;;
+    11)
+        curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/sing_box.sh && chmod +x sing_box.sh && ./sing_box.sh uninstall_ss2022
+        read -r -p "按任意键继续... " temp
+        ;;
+    12)
+        curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/sing_box.sh && chmod +x sing_box.sh && ./sing_box.sh
+        exit 0
+        ;;
+    20)
         unInstall 1
         ;;
 
