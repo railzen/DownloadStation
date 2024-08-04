@@ -3,7 +3,7 @@
 # -------------------------------------------------------------
 # 检查系统
 export LANG=en_US.UTF-8
-VERSION='v1.0.002 build240804'
+VERSION='v1.0.003 build240804'
 WORK_DIR='/etc/v2ray-agent/tls/'
 echoContent() {
     case $1 in
@@ -750,58 +750,58 @@ showInstallStatus() {
     if [[ -n "${coreInstallType}" ]]; then
         if [[ "${coreInstallType}" == 1 ]]; then
             if [[ -n $(pgrep -f "xray/xray") ]]; then
-                echoContent yellow "\n核心: Xray-core[运行中]"
+                echoContent green "核心: Xray-core[运行中]"
             else
-                echoContent yellow "\n核心: Xray-core[未运行]"
+                echoContent red "核心: Xray-core[未运行]"
             fi
 
         elif [[ "${coreInstallType}" == 2 ]]; then
             if [[ -n $(pgrep -f "sing-box/sing-box") ]]; then
-                echoContent yellow "\n核心: sing-box[运行中]"
+                echoContent green "核心: sing-box[运行中]"
             else
-                echoContent yellow "\n核心: sing-box[未运行]"
+                echoContent red "核心: sing-box[未运行]"
             fi
         fi
         # 读取协议类型
         readInstallProtocolType
 
         if [[ -n ${currentInstallProtocolType} ]]; then
-            echoContent yellow "已安装协议: \c"
+            echoContent white "已安装协议: \c"
         fi
         if echo ${currentInstallProtocolType} | grep -q ",0,"; then
-            echoContent yellow "VLESS+TCP[TLS_Vision] \c"
+            echoContent white "VLESS+TCP[TLS_Vision] \c"
         fi
 
         if echo ${currentInstallProtocolType} | grep -q ",1,"; then
-            echoContent yellow "VLESS+WS[TLS] \c"
+            echoContent white "VLESS+WS[TLS] \c"
         fi
 
         if echo ${currentInstallProtocolType} | grep -q ",2,"; then
-            echoContent yellow "Trojan+gRPC[TLS] \c"
+            echoContent white "Trojan+gRPC[TLS] \c"
         fi
 
         if echo ${currentInstallProtocolType} | grep -q ",3,"; then
-            echoContent yellow "VMess+WS[TLS] \c"
+            echoContent white "VMess+WS[TLS] \c"
         fi
 
         if echo ${currentInstallProtocolType} | grep -q ",4,"; then
-            echoContent yellow "Trojan+TCP[TLS] \c"
+            echoContent white "Trojan+TCP[TLS] \c"
         fi
 
         if echo ${currentInstallProtocolType} | grep -q ",5,"; then
-            echoContent yellow "VLESS+gRPC[TLS] \c"
+            echoContent white "VLESS+gRPC[TLS] \c"
         fi
         if echo ${currentInstallProtocolType} | grep -q ",6,"; then
-            echoContent yellow "Hysteria2 \c"
+            echoContent white "Hysteria2 \c"
         fi
         if echo ${currentInstallProtocolType} | grep -q ",7,"; then
-            echoContent yellow "VLESS+Reality+Vision \c"
+            echoContent white "VLESS+Reality+Vision \c"
         fi
         if echo ${currentInstallProtocolType} | grep -q ",8,"; then
-            echoContent yellow "VLESS+Reality+gRPC \c"
+            echoContent white "VLESS+Reality+gRPC \c"
         fi
         if echo ${currentInstallProtocolType} | grep -q ",9,"; then
-            echoContent yellow "Tuic \c"
+            echoContent white "Tuic \c"
         fi
     fi
 }
@@ -7629,29 +7629,30 @@ menu() {
 	echo -e "=================================================="
     showInstallStatus
     checkWgetShowProgress
-    echoContent white "1.安装SingBox"    
-    echoContent white "2.安装Xray"
-    echoContent white "3.Hysteria2管理"
-    echoContent white "4.REALITY管理"
-    echoContent white "5.Tuic管理"
-    echoContent white "6.用户管理"
-    echoContent white "7.分流工具"
-    echoContent white "8.切换alpn"
-    echoContent white "9.core管理"
-    echoContent white "10.卸载脚本"
-    echoContent white "--------------------------------------------------"
-    echoContent white "0.退出脚本"
-    echoContent white "==================================================\n"
+    echo -e "\n--------------------------------------------------"
+    echo -e "1.安装SingBox"    
+    echo -e "2.安装Xray"
+    echo -e "3.Hysteria2管理"
+    echo -e "4.REALITY管理"
+    echo -e "5.Tuic管理"
+    echo -e "6.用户管理"
+    echo -e "7.分流工具"
+    echo -e "8.切换alpn"
+    echo -e "9.core管理"
+    echo -e "10.卸载脚本"
+    echo -e "--------------------------------------------------"
+    echo -e "0.退出脚本"
+    echo -e "==================================================\n"
     mkdirTools
     read -r -p "请选择: " selectInstallType
     case ${selectInstallType} in
     1)
-        customSingBoxInstall
         selectCoreType=1
+        customSingBoxInstall
         ;;
     2)
+    	selectCoreType=2
 		customXrayInstall
-		selectCoreType=2
         ;;
     3)
         manageHysteria
