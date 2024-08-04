@@ -3,7 +3,7 @@
 # -------------------------------------------------------------
 # 检查系统
 export LANG=en_US.UTF-8
-VERSION='v1.0.001 build240803'
+VERSION='v1.0.002 build240804'
 WORK_DIR='/etc/v2ray-agent/tls/'
 echoContent() {
     case $1 in
