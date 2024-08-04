@@ -1690,6 +1690,7 @@ uninstall() {
     rc-update add local >/dev/null 2>&1
     ! ls /etc/systemd/system/*.service >/dev/null 2>&1 && rm -f /bin/systemctl
   fi
+  exit 0
 }
 
 # Sing-box 的最新版本

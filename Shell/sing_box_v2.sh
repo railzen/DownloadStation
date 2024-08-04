@@ -7670,11 +7670,9 @@ menu() {
 
     10)
         curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/sing_box.sh && chmod +x sing_box.sh && ./sing_box.sh install_ss2022
-        read -r -p "按任意键继续... " temp
         ;;
     11)
         curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/sing_box.sh && chmod +x sing_box.sh && ./sing_box.sh uninstall_ss2022
-        read -r -p "按任意键继续... " temp
         ;;
     12)
         curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/sing_box.sh && chmod +x sing_box.sh && ./sing_box.sh
