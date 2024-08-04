@@ -2652,7 +2652,7 @@ EOF
                 case $choice in
                     1)
                         clear
-                        echo "使用密钥登录会关闭密码登录方式，需要使用私钥进行SSH登录"
+                        echo "使用密钥登录会关闭密码登录方式，需要使用私钥进行SSH登录, 按Ctrl+C取消"
                         add_sshkey
                         ;;
 
