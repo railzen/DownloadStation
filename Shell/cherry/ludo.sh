@@ -4669,28 +4669,32 @@ clear
 }
 
 chech_dependance(){ if [ !-f /usr/bin/curl ]; then install curl; fi; }
-# 脚本从此处开始
 
+# 脚本从此处开始
 if [[ ! $# = 0 && $1 = "dir" ]];then
     cd ${work_path}/work
     exit 0
 elif [[ ! $# = 0 && $1 = "restart" ]];then
-    #快速重启所有本脚本创建的服务，用于更新配置
+    # 快速重启所有本脚本创建的服务，用于更新配置
     ls /etc/systemd/system | grep Cherry- | xargs systemctl restart
     exit 0
 fi
 
+# 初始化变量
 Yellow='\033[33m'; White='\033[0m'; Green='\033[0;32m'; Blue='\033[0;34m'; Red='\033[31m'; Gray='\e[37m'; LightBlue='\033[96m'; DarkYellow='\033[93m'
-
 SYSCTLCONF=/etc/sysctl.conf
 GAICONF=/etc/gai.conf
 MARK="# CherryModified"
 
+# 初始化环境
 mkdir ${work_path} > /dev/null 2>&1
 mkdir ${work_path}/work > /dev/null 2>&1
 mv -f ./ludo.sh ${work_path}/ludo.sh > /dev/null 2>&1
 cp -f ${work_path}/ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
 cd ${work_path}/work
-#卸载：rm -rf ~/ludo.sh ${work_path}/ /usr/local/bin/ludo
+
+# 检查依赖及展示菜单
 chech_dependance
 main_menu_start
+
+#卸载命令：rm -rf /opt/CherryScript/ /usr/local/bin/ludo
