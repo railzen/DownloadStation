@@ -7219,7 +7219,7 @@ initRealityKey() {
         fi
     fi
     if [[ -z "${realityPrivateKey}" ]]; then
-        if [[ "${selectCoreType}" == "2" || "${coreInstallType}" == "2" ]]; then
+        if [[ "${selectCoreType}" == "1" || "${coreInstallType}" == "1" ]]; then
             realityX25519Key=$(/etc/v2ray-agent/sing-box/sing-box generate reality-keypair)
             realityPrivateKey=$(echo "${realityX25519Key}" | head -1 | awk '{print $2}')
             realityPublicKey=$(echo "${realityX25519Key}" | tail -n 1 | awk '{print $2}')
@@ -7647,9 +7647,11 @@ menu() {
     case ${selectInstallType} in
     1)
         customSingBoxInstall
+        selectCoreType=1
         ;;
     2)
 		customXrayInstall
+		selectCoreType=2
         ;;
     3)
         manageHysteria
