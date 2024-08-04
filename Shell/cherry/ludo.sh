@@ -2666,6 +2666,9 @@ EOF
                         echo "--------------------------------"
                         cat ~/.ssh/new_generated_sshkey
                         echo "--------------------------------"
+                        echo "Public Key:"
+                        cat ~/.ssh/new_generated_sshkey.pub
+                        echo "--------------------------------"
                         # 用完就删掉，不保存在服务器上避免泄露，密钥由用户自己保存
                         rm -f ~/.ssh/new_generated_sshkey*
                         sed -i -e 's/^\s*#\?\s*PermitRootLogin .*/PermitRootLogin prohibit-password/' \
