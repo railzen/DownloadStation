@@ -7669,11 +7669,9 @@ menu() {
     7)
         routingToolsMenu 1
         ;;
-
     8)
         switchAlpn 1
         ;;
-
     9)
         coreVersionManageMenu 1
         ;;
