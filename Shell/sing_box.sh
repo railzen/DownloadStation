@@ -211,6 +211,7 @@ Sing-Box 管理脚本 $VERSION
     echo -e " 0.退出"
     echo -e "==================================================\n"
     if [[ "${flagInstallSS2022}" == "Install" ]]; then
+      clear
       CHOOSE_PROTOCOLS="f"
       break;
     else
