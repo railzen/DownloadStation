@@ -2648,8 +2648,8 @@ EOF
                 echo "------------------------"
                 echo "0. 退出"
                 echo "------------------------"
-                read -p "请输入你的选择: " sub_choice
-                case $sub_choice in
+                read -p "请输入你的选择: " choice
+                case $choice in
                     1)
                         clear
                         echo "使用密钥登录会关闭密码登录方式，需要使用私钥进行SSH登录"
