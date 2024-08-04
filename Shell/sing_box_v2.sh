@@ -3,8 +3,8 @@
 # -------------------------------------------------------------
 # 检查系统
 export LANG=en_US.UTF-8
-VERSION='v1.0.003 build240804'
-WORK_DIR='/etc/v2ray-agent/tls/'
+VERSION='v1.0.004 build240804'
+WORK_DIR='/opts/CherryScript/singbox_mux'
 echoContent() {
     case $1 in
     # 红色
@@ -42,8 +42,7 @@ ssl_certificate() {
 checkCentosSELinux() {
     if [[ -f "/etc/selinux/config" ]] && ! grep -q "SELINUX=disabled" <"/etc/selinux/config"; then
         echoContent yellow "# 注意事项"
-        echoContent yellow "检测到SELinux已开启，请手动关闭，教程如下"
-        echoContent yellow "https://www.v2ray-agent.com/archives/1679931532764#heading-8 "
+        echoContent yellow "检测到SELinux已开启，请手动关闭"
         exit 0
     fi
 }
@@ -339,27 +338,27 @@ readInstallType() {
     singBoxConfigPath=
 
     # 1.检测安装目录
-    if [[ -d "/etc/v2ray-agent" ]]; then
-        if [[ -f "/etc/v2ray-agent/xray/xray" ]]; then
+    if [[ -d "${WORK_DIR}" ]]; then
+        if [[ -f "${WORK_DIR}/xray/xray" ]]; then
             # 检测xray-core
-            if [[ -d "/etc/v2ray-agent/xray/conf" ]] && [[ -f "/etc/v2ray-agent/xray/conf/02_VLESS_TCP_inbounds.json" || -f "/etc/v2ray-agent/xray/conf/02_trojan_TCP_inbounds.json" || -f "/etc/v2ray-agent/xray/conf/07_VLESS_vision_reality_inbounds.json" ]]; then
+            if [[ -d "${WORK_DIR}/xray/conf" ]] && [[ -f "${WORK_DIR}/xray/conf/02_VLESS_TCP_inbounds.json" || -f "${WORK_DIR}/xray/conf/02_trojan_TCP_inbounds.json" || -f "${WORK_DIR}/xray/conf/07_VLESS_vision_reality_inbounds.json" ]]; then
                 # xray-core
-                configPath=/etc/v2ray-agent/xray/conf/
-                ctlPath=/etc/v2ray-agent/xray/xray
+                configPath=${WORK_DIR}/xray/conf/
+                ctlPath=${WORK_DIR}/xray/xray
                 coreInstallType=1
                 if [[ -f "${configPath}07_VLESS_vision_reality_inbounds.json" ]]; then
                     realityStatus=1
                 fi
-                if [[ -f "/etc/v2ray-agent/sing-box/sing-box" ]] && [[ -f "/etc/v2ray-agent/sing-box/conf/config/06_hysteria2_inbounds.json" || -f "/etc/v2ray-agent/sing-box/conf/config/09_tuic_inbounds.json" || -f "/etc/v2ray-agent/sing-box/conf/config/20_socks5_inbounds.json" ]]; then
-                    singBoxConfigPath=/etc/v2ray-agent/sing-box/conf/config/
+                if [[ -f "${WORK_DIR}/sing-box/sing-box" ]] && [[ -f "${WORK_DIR}/sing-box/conf/config/06_hysteria2_inbounds.json" || -f "${WORK_DIR}/sing-box/conf/config/09_tuic_inbounds.json" || -f "${WORK_DIR}/sing-box/conf/config/20_socks5_inbounds.json" ]]; then
+                    singBoxConfigPath=${WORK_DIR}/sing-box/conf/config/
                 fi
             fi
-        elif [[ -f "/etc/v2ray-agent/sing-box/sing-box" && -f "/etc/v2ray-agent/sing-box/conf/config.json" ]]; then
+        elif [[ -f "${WORK_DIR}/sing-box/sing-box" && -f "${WORK_DIR}/sing-box/conf/config.json" ]]; then
             # 检测sing-box
-            ctlPath=/etc/v2ray-agent/sing-box/sing-box
+            ctlPath=${WORK_DIR}/sing-box/sing-box
             coreInstallType=2
-            configPath=/etc/v2ray-agent/sing-box/conf/config/
-            singBoxConfigPath=/etc/v2ray-agent/sing-box/conf/config/
+            configPath=${WORK_DIR}/sing-box/conf/config/
+            singBoxConfigPath=${WORK_DIR}/sing-box/conf/config/
         fi
     fi
 }
@@ -624,12 +623,12 @@ readSingBoxConfig() {
 unInstallSingBox() {
     local type=$1
     if [[ -n "${singBoxConfigPath}" ]]; then
-        if grep -q 'tuic' </etc/v2ray-agent/sing-box/conf/config.json && [[ "${type}" == "tuic" ]]; then
+        if grep -q 'tuic' <${WORK_DIR}/sing-box/conf/config.json && [[ "${type}" == "tuic" ]]; then
             rm "${singBoxConfigPath}09_tuic_inbounds.json"
             echoContent green " ---> 删除sing-box tuic配置成功"
         fi
 
-        if grep -q 'hysteria2' </etc/v2ray-agent/sing-box/conf/config.json && [[ "${type}" == "hysteria2" ]]; then
+        if grep -q 'hysteria2' <${WORK_DIR}/sing-box/conf/config.json && [[ "${type}" == "hysteria2" ]]; then
             rm "${singBoxConfigPath}06_hysteria2_inbounds.json"
             echoContent green " ---> 删除sing-box hysteria2配置成功"
         fi
@@ -645,7 +644,7 @@ unInstallSingBox() {
     else
         handleSingBox stop
         rm /etc/systemd/system/sing-box.service
-        rm -rf /etc/v2ray-agent/sing-box/*
+        rm -rf ${WORK_DIR}/sing-box/*
         echoContent green " ---> sing-box 卸载完成"
     fi
 }
@@ -738,8 +737,8 @@ readConfigHostPathUUID() {
             # currentPath=${currentPath::-2}
         fi
     fi
-    if [[ -f "/etc/v2ray-agent/cdn" ]] && [[ -n "$(head -1 /etc/v2ray-agent/cdn)" ]]; then
-        currentCDNAddress=$(head -1 /etc/v2ray-agent/cdn)
+    if [[ -f "${WORK_DIR}/cdn" ]] && [[ -n "$(head -1 ${WORK_DIR}/cdn)" ]]; then
+        currentCDNAddress=$(head -1 ${WORK_DIR}/cdn)
     else
         currentCDNAddress="${currentHost}"
     fi
@@ -810,11 +809,11 @@ showInstallStatus() {
 cleanUp() {
     if [[ "$1" == "xrayDel" ]]; then
         handleXray stop
-        rm -rf /etc/v2ray-agent/xray/*
+        rm -rf ${WORK_DIR}/xray/*
     elif [[ "$1" == "singBoxDel" ]]; then
         handleSingBox stop
-        rm -rf /etc/v2ray-agent/sing-box/conf/config.json >/dev/null 2>&1
-        rm -rf /etc/v2ray-agent/sing-box/conf/config/* >/dev/null 2>&1
+        rm -rf ${WORK_DIR}/sing-box/conf/config.json >/dev/null 2>&1
+        rm -rf ${WORK_DIR}/sing-box/conf/config/* >/dev/null 2>&1
     fi
 }
 initVar "$1"
@@ -830,30 +829,30 @@ readSingBoxConfig
 
 # 初始化安装目录
 mkdirTools() {
-    mkdir -p /etc/v2ray-agent/tls
-    mkdir -p /etc/v2ray-agent/subscribe_local/default
-    mkdir -p /etc/v2ray-agent/subscribe_local/clashMeta
+    mkdir -p ${WORK_DIR}/tls
+    mkdir -p ${WORK_DIR}/subscribe_local/default
+    mkdir -p ${WORK_DIR}/subscribe_local/clashMeta
 
-    mkdir -p /etc/v2ray-agent/subscribe_remote/default
-    mkdir -p /etc/v2ray-agent/subscribe_remote/clashMeta
+    mkdir -p ${WORK_DIR}/subscribe_remote/default
+    mkdir -p ${WORK_DIR}/subscribe_remote/clashMeta
 
-    mkdir -p /etc/v2ray-agent/subscribe/default
-    mkdir -p /etc/v2ray-agent/subscribe/clashMetaProfiles
-    mkdir -p /etc/v2ray-agent/subscribe/clashMeta
+    mkdir -p ${WORK_DIR}/subscribe/default
+    mkdir -p ${WORK_DIR}/subscribe/clashMetaProfiles
+    mkdir -p ${WORK_DIR}/subscribe/clashMeta
 
-    mkdir -p /etc/v2ray-agent/subscribe/sing-box
-    mkdir -p /etc/v2ray-agent/subscribe/sing-box_profiles
-    mkdir -p /etc/v2ray-agent/subscribe_local/sing-box
+    mkdir -p ${WORK_DIR}/subscribe/sing-box
+    mkdir -p ${WORK_DIR}/subscribe/sing-box_profiles
+    mkdir -p ${WORK_DIR}/subscribe_local/sing-box
 
-    mkdir -p /etc/v2ray-agent/xray/conf
-    mkdir -p /etc/v2ray-agent/xray/reality_scan
-    mkdir -p /etc/v2ray-agent/xray/tmp
+    mkdir -p ${WORK_DIR}/xray/conf
+    mkdir -p ${WORK_DIR}/xray/reality_scan
+    mkdir -p ${WORK_DIR}/xray/tmp
     mkdir -p /etc/systemd/system/
-    mkdir -p /tmp/v2ray-agent-tls/
+    mkdir -p /tmp/singbox_mux/
 
-    mkdir -p /etc/v2ray-agent/warp
+    mkdir -p ${WORK_DIR}/warp
 
-    mkdir -p /etc/v2ray-agent/sing-box/conf/config
+    mkdir -p ${WORK_DIR}/sing-box/conf/config
 
     mkdir -p /usr/share/nginx/html/
 }
@@ -872,8 +871,8 @@ installTools() {
 
     echoContent green " ---> 检查、安装更新【新机器会很慢，如长时间无反应，请手动停止后重新执行】"
 
-    ${upgrade} >/etc/v2ray-agent/install.log 2>&1
-    if grep <"/etc/v2ray-agent/install.log" -q "changed"; then
+    ${upgrade} >${WORK_DIR}/install.log 2>&1
+    if grep <"${WORK_DIR}/install.log" -q "changed"; then
         ${updateReleaseInfoChange} >/dev/null 2>&1
     fi
 
@@ -1008,11 +1007,11 @@ installTools() {
     else
         if [[ ! -d "$HOME/.acme.sh" ]] || [[ -d "$HOME/.acme.sh" && -z $(find "$HOME/.acme.sh/acme.sh") ]]; then
             echoContent green " ---> 安装acme.sh"
-            curl -s https://get.acme.sh | sh >/etc/v2ray-agent/tls/acme.log 2>&1
+            curl -s https://get.acme.sh | sh >${WORK_DIR}/tls/acme.log 2>&1
 
             if [[ ! -d "$HOME/.acme.sh" ]] || [[ -z $(find "$HOME/.acme.sh/acme.sh") ]]; then
                 echoContent red "  acme安装失败--->"
-                tail -n 100 /etc/v2ray-agent/tls/acme.log
+                tail -n 100 ${WORK_DIR}/tls/acme.log
                 echoContent yellow "错误排查:"
                 echoContent red "  1.获取Github文件失败，请等待Github恢复后尝试，恢复进度可查看 [https://www.githubstatus.com/]"
                 echoContent red "  2.acme.sh脚本出现bug，可查看[https://github.com/acmesh-official/acme.sh] issues"
@@ -1195,7 +1194,7 @@ switchDNSAPI() {
 # 初始化dns配置
 initDNSAPIConfig() {
     if [[ "$1" == "cloudflare" ]]; then
-        echoContent yellow "\n CF_Token参考配置教程：https://www.v2ray-agent.com/archives/1701160377972\n"
+        echoContent yellow "\n \n"
         read -r -p "请输入API Token:" cfAPIToken
         if [[ -z "${cfAPIToken}" ]]; then
             echoContent red " ---> 输入为空，请重新输入"
@@ -1212,7 +1211,7 @@ initDNSAPIConfig() {
             #            fi
         fi
     elif [[ "$1" == "aliyun" ]]; then
-        #        echoContent yellow "\n CF_Token参考配置教程：https://www.v2ray-agent.com/archives/1701160377972\n"
+        #        echoContent yellow "\n \n"
         read -r -p "请输入Ali Key:" aliKey
         read -r -p "请输入Ali Secret:" aliSecret
         if [[ -z "${aliKey}" || -z "${aliSecret}" ]]; then
@@ -1258,7 +1257,7 @@ switchSSLType() {
             echoContent red " ---> buypass不支持API申请证书"
             exit 0
         fi
-        echo "${sslType}" >/etc/v2ray-agent/tls/ssl_type
+        echo "${sslType}" >${WORK_DIR}/tls/ssl_type
     fi
 }
 
@@ -1292,13 +1291,13 @@ acmeInstallSSL() {
 
     if [[ "${dnsAPIType}" == "cloudflare" ]]; then
         echoContent green " ---> DNS API 生成证书中"
-        sudo CF_Token="${cfAPIToken}" "$HOME/.acme.sh/acme.sh" --issue -d "${dnsAPIDomain}" --dns dns_cf -k ec-256 --server "${sslType}" ${sslIPv6} 2>&1 | tee -a /etc/v2ray-agent/tls/acme.log >/dev/null
+        sudo CF_Token="${cfAPIToken}" "$HOME/.acme.sh/acme.sh" --issue -d "${dnsAPIDomain}" --dns dns_cf -k ec-256 --server "${sslType}" ${sslIPv6} 2>&1 | tee -a ${WORK_DIR}/tls/acme.log >/dev/null
     elif [[ "${dnsAPIType}" == "aliyun" ]]; then
         echoContent green " --->  DNS API 生成证书中"
-        sudo Ali_Key="${aliKey}" Ali_Secret="${aliSecret}" "$HOME/.acme.sh/acme.sh" --issue -d "${dnsAPIDomain}" --dns dns_ali -k ec-256 --server "${sslType}" ${sslIPv6} 2>&1 | tee -a /etc/v2ray-agent/tls/acme.log >/dev/null
+        sudo Ali_Key="${aliKey}" Ali_Secret="${aliSecret}" "$HOME/.acme.sh/acme.sh" --issue -d "${dnsAPIDomain}" --dns dns_ali -k ec-256 --server "${sslType}" ${sslIPv6} 2>&1 | tee -a ${WORK_DIR}/tls/acme.log >/dev/null
     else
         echoContent green " ---> 生成证书中"
-        sudo "$HOME/.acme.sh/acme.sh" --issue -d "${tlsDomain}" --standalone -k ec-256 --server "${sslType}" ${sslIPv6} 2>&1 | tee -a /etc/v2ray-agent/tls/acme.log >/dev/null
+        sudo "$HOME/.acme.sh/acme.sh" --issue -d "${tlsDomain}" --standalone -k ec-256 --server "${sslType}" ${sslIPv6} 2>&1 | tee -a ${WORK_DIR}/tls/acme.log >/dev/null
     fi
 }
 # 自定义端口
@@ -1415,9 +1414,9 @@ installCronUpdateGeo() {
             exit 0
         fi
         echoContent skyBlue "\n进度 1/1 : 添加定时更新geo文件"
-        crontab -l >/etc/v2ray-agent/backup_crontab.cron
-        echo "35 1 * * * /bin/bash /etc/v2ray-agent/install.sh UpdateGeo >> /etc/v2ray-agent/crontab_tls.log 2>&1" >>/etc/v2ray-agent/backup_crontab.cron
-        crontab /etc/v2ray-agent/backup_crontab.cron
+        crontab -l >${WORK_DIR}/backup_crontab.cron
+        echo "35 1 * * * /bin/bash ${WORK_DIR}/install.sh UpdateGeo >> ${WORK_DIR}/crontab_tls.log 2>&1" >>${WORK_DIR}/backup_crontab.cron
+        crontab ${WORK_DIR}/backup_crontab.cron
         echoContent green "\n ---> 添加定时更新geo文件成功"
     fi
 }
@@ -1437,25 +1436,25 @@ installV2Ray() {
 
         echoContent green " ---> v2ray-core版本:${version}"
         if [[ "${release}" == "alpine" ]]; then
-            wget -c -q -P /etc/v2ray-agent/v2ray/ "https://github.com/v2fly/v2ray-core/releases/download/${version}/${v2rayCoreCPUVendor}.zip"
+            wget -c -q -P ${WORK_DIR}/v2ray/ "https://github.com/v2fly/v2ray-core/releases/download/${version}/${v2rayCoreCPUVendor}.zip"
         else
-            wget -c -q "${wgetShowProgressStatus}" -P /etc/v2ray-agent/v2ray/ "https://github.com/v2fly/v2ray-core/releases/download/${version}/${v2rayCoreCPUVendor}.zip"
+            wget -c -q "${wgetShowProgressStatus}" -P ${WORK_DIR}/v2ray/ "https://github.com/v2fly/v2ray-core/releases/download/${version}/${v2rayCoreCPUVendor}.zip"
         fi
 
-        unzip -o "/etc/v2ray-agent/v2ray/${v2rayCoreCPUVendor}.zip" -d /etc/v2ray-agent/v2ray >/dev/null
-        rm -rf "/etc/v2ray-agent/v2ray/${v2rayCoreCPUVendor}.zip"
+        unzip -o "${WORK_DIR}/v2ray/${v2rayCoreCPUVendor}.zip" -d ${WORK_DIR}/v2ray >/dev/null
+        rm -rf "${WORK_DIR}/v2ray/${v2rayCoreCPUVendor}.zip"
     else
         if [[ "${selectCoreType}" == "3" ]]; then
             echoContent green " ---> 锁定v2ray-core版本为v4.32.1"
-            rm -f /etc/v2ray-agent/v2ray/v2ray
-            rm -f /etc/v2ray-agent/v2ray/v2ctl
+            rm -f ${WORK_DIR}/v2ray/v2ray
+            rm -f ${WORK_DIR}/v2ray/v2ctl
             installV2Ray "$1"
         else
-            echoContent green " ---> v2ray-core版本:$(/etc/v2ray-agent/v2ray/v2ray --version | awk '{print $2}' | head -1)"
+            echoContent green " ---> v2ray-core版本:$(${WORK_DIR}/v2ray/v2ray --version | awk '{print $2}' | head -1)"
             read -r -p "是否更新、升级？[y/n]:" reInstallV2RayStatus
             if [[ "${reInstallV2RayStatus}" == "y" ]]; then
-                rm -f /etc/v2ray-agent/v2ray/v2ray
-                rm -f /etc/v2ray-agent/v2ray/v2ctl
+                rm -f ${WORK_DIR}/v2ray/v2ray
+                rm -f ${WORK_DIR}/v2ray/v2ctl
                 installV2Ray "$1"
             fi
         fi
@@ -1467,36 +1466,36 @@ installSingBox() {
     readInstallType
     echoContent skyBlue "\n进度  $1/${totalProgress} : 安装sing-box"
 
-    if [[ ! -f "/etc/v2ray-agent/sing-box/sing-box" ]]; then
+    if [[ ! -f "${WORK_DIR}/sing-box/sing-box" ]]; then
 
         version=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases?per_page=20" | jq -r ".[]|select (.prerelease==${prereleaseStatus})|.tag_name" | head -1)
 
         echoContent green " ---> sing-box版本:${version}"
 
         if [[ "${release}" == "alpine" ]]; then
-            wget -c -q -P /etc/v2ray-agent/sing-box/ "https://github.com/SagerNet/sing-box/releases/download/${version}/sing-box-${version/v/}${singBoxCoreCPUVendor}.tar.gz"
+            wget -c -q -P ${WORK_DIR}/sing-box/ "https://github.com/SagerNet/sing-box/releases/download/${version}/sing-box-${version/v/}${singBoxCoreCPUVendor}.tar.gz"
         else
-            wget -c -q "${wgetShowProgressStatus}" -P /etc/v2ray-agent/sing-box/ "https://github.com/SagerNet/sing-box/releases/download/${version}/sing-box-${version/v/}${singBoxCoreCPUVendor}.tar.gz"
+            wget -c -q "${wgetShowProgressStatus}" -P ${WORK_DIR}/sing-box/ "https://github.com/SagerNet/sing-box/releases/download/${version}/sing-box-${version/v/}${singBoxCoreCPUVendor}.tar.gz"
         fi
 
-        if [[ ! -f "/etc/v2ray-agent/sing-box/sing-box-${version/v/}${singBoxCoreCPUVendor}.tar.gz" ]]; then
+        if [[ ! -f "${WORK_DIR}/sing-box/sing-box-${version/v/}${singBoxCoreCPUVendor}.tar.gz" ]]; then
             read -r -p "核心下载失败，请重新尝试安装，是否重新尝试？[y/n]" downloadStatus
             if [[ "${downloadStatus}" == "y" ]]; then
                 installSingBox "$1"
             fi
         else
 
-            tar zxvf "/etc/v2ray-agent/sing-box/sing-box-${version/v/}${singBoxCoreCPUVendor}.tar.gz" -C "/etc/v2ray-agent/sing-box/" >/dev/null 2>&1
+            tar zxvf "${WORK_DIR}/sing-box/sing-box-${version/v/}${singBoxCoreCPUVendor}.tar.gz" -C "${WORK_DIR}/sing-box/" >/dev/null 2>&1
 
-            mv "/etc/v2ray-agent/sing-box/sing-box-${version/v/}${singBoxCoreCPUVendor}/sing-box" /etc/v2ray-agent/sing-box/sing-box
-            rm -rf /etc/v2ray-agent/sing-box/sing-box-*
-            chmod 655 /etc/v2ray-agent/sing-box/sing-box
+            mv "${WORK_DIR}/sing-box/sing-box-${version/v/}${singBoxCoreCPUVendor}/sing-box" ${WORK_DIR}/sing-box/sing-box
+            rm -rf ${WORK_DIR}/sing-box/sing-box-*
+            chmod 655 ${WORK_DIR}/sing-box/sing-box
         fi
     else
-        echoContent green " ---> sing-box版本:v$(/etc/v2ray-agent/sing-box/sing-box version | grep "sing-box version" | awk '{print $3}')"
+        echoContent green " ---> sing-box版本:v$(${WORK_DIR}/sing-box/sing-box version | grep "sing-box version" | awk '{print $3}')"
         read -r -p "是否更新、升级？[y/n]:" reInstallSingBoxStatus
         if [[ "${reInstallSingBoxStatus}" == "y" ]]; then
-            rm -f /etc/v2ray-agent/sing-box/sing-box
+            rm -f ${WORK_DIR}/sing-box/sing-box
             installSingBox "$1"
         fi
     fi
@@ -1521,46 +1520,46 @@ installXray() {
 
     echoContent skyBlue "\n进度  $1/${totalProgress} : 安装Xray"
 
-    if [[ ! -f "/etc/v2ray-agent/xray/xray" ]]; then
+    if [[ ! -f "${WORK_DIR}/xray/xray" ]]; then
 
         version=$(curl -s "https://api.github.com/repos/XTLS/Xray-core/releases?per_page=5" | jq -r ".[]|select (.prerelease==${prereleaseStatus})|.tag_name" | head -1)
 
         echoContent green " ---> Xray-core版本:${version}"
         if [[ "${release}" == "alpine" ]]; then
-            wget -c -q -P /etc/v2ray-agent/xray/ "https://github.com/XTLS/Xray-core/releases/download/${version}/${xrayCoreCPUVendor}.zip"
+            wget -c -q -P ${WORK_DIR}/xray/ "https://github.com/XTLS/Xray-core/releases/download/${version}/${xrayCoreCPUVendor}.zip"
         else
-            wget -c -q "${wgetShowProgressStatus}" -P /etc/v2ray-agent/xray/ "https://github.com/XTLS/Xray-core/releases/download/${version}/${xrayCoreCPUVendor}.zip"
+            wget -c -q "${wgetShowProgressStatus}" -P ${WORK_DIR}/xray/ "https://github.com/XTLS/Xray-core/releases/download/${version}/${xrayCoreCPUVendor}.zip"
         fi
 
-        if [[ ! -f "/etc/v2ray-agent/xray/${xrayCoreCPUVendor}.zip" ]]; then
+        if [[ ! -f "${WORK_DIR}/xray/${xrayCoreCPUVendor}.zip" ]]; then
             read -r -p "核心下载失败，请重新尝试安装，是否重新尝试？[y/n]" downloadStatus
             if [[ "${downloadStatus}" == "y" ]]; then
                 installXray "$1"
             fi
         else
-            unzip -o "/etc/v2ray-agent/xray/${xrayCoreCPUVendor}.zip" -d /etc/v2ray-agent/xray >/dev/null
-            rm -rf "/etc/v2ray-agent/xray/${xrayCoreCPUVendor}.zip"
+            unzip -o "${WORK_DIR}/xray/${xrayCoreCPUVendor}.zip" -d ${WORK_DIR}/xray >/dev/null
+            rm -rf "${WORK_DIR}/xray/${xrayCoreCPUVendor}.zip"
 
             version=$(curl -s https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/releases?per_page=1 | jq -r '.[]|.tag_name')
             echoContent skyBlue "------------------------Version-------------------------------"
             echo "version:${version}"
-            rm /etc/v2ray-agent/xray/geo* >/dev/null 2>&1
+            rm ${WORK_DIR}/xray/geo* >/dev/null 2>&1
 
             if [[ "${release}" == "alpine" ]]; then
-                wget -c -q -P /etc/v2ray-agent/xray/ "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/download/${version}/geosite.dat"
-                wget -c -q -P /etc/v2ray-agent/xray/ "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/download/${version}/geoip.dat"
+                wget -c -q -P ${WORK_DIR}/xray/ "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/download/${version}/geosite.dat"
+                wget -c -q -P ${WORK_DIR}/xray/ "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/download/${version}/geoip.dat"
             else
-                wget -c -q "${wgetShowProgressStatus}" -P /etc/v2ray-agent/xray/ "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/download/${version}/geosite.dat"
-                wget -c -q "${wgetShowProgressStatus}" -P /etc/v2ray-agent/xray/ "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/download/${version}/geoip.dat"
+                wget -c -q "${wgetShowProgressStatus}" -P ${WORK_DIR}/xray/ "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/download/${version}/geosite.dat"
+                wget -c -q "${wgetShowProgressStatus}" -P ${WORK_DIR}/xray/ "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/download/${version}/geoip.dat"
             fi
 
-            chmod 655 /etc/v2ray-agent/xray/xray
+            chmod 655 ${WORK_DIR}/xray/xray
         fi
     else
-        echoContent green " ---> Xray-core版本:$(/etc/v2ray-agent/xray/xray --version | awk '{print $2}' | head -1)"
+        echoContent green " ---> Xray-core版本:$(${WORK_DIR}/xray/xray --version | awk '{print $2}' | head -1)"
         read -r -p "是否更新、升级？[y/n]:" reInstallXrayStatus
         if [[ "${reInstallXrayStatus}" == "y" ]]; then
-            rm -f /etc/v2ray-agent/xray/xray
+            rm -f ${WORK_DIR}/xray/xray
             installXray "$1" "$2"
         fi
     fi
@@ -1569,7 +1568,7 @@ installXray() {
 # v2ray版本管理
 v2rayVersionManageMenu() {
     echoContent skyBlue "\n进度  $1/${totalProgress} : V2Ray版本管理"
-    if [[ ! -d "/etc/v2ray-agent/v2ray/" ]]; then
+    if [[ ! -d "${WORK_DIR}/v2ray/" ]]; then
         echoContent red " ---> 没有检测到安装目录，请执行脚本安装内容"
         menu
         exit 0
@@ -1707,17 +1706,17 @@ updateV2Ray() {
         fi
         echoContent green " ---> v2ray-core版本:${version}"
         if [[ "${release}" == "alpine" ]]; then
-            wget -c -q -P /etc/v2ray-agent/v2ray/ "https://github.com/v2fly/v2ray-core/releases/download/${version}/${v2rayCoreCPUVendor}.zip"
+            wget -c -q -P ${WORK_DIR}/v2ray/ "https://github.com/v2fly/v2ray-core/releases/download/${version}/${v2rayCoreCPUVendor}.zip"
         else
-            wget -c -q "${wgetShowProgressStatus}" -P /etc/v2ray-agent/v2ray/ "https://github.com/v2fly/v2ray-core/releases/download/${version}/${v2rayCoreCPUVendor}.zip"
+            wget -c -q "${wgetShowProgressStatus}" -P ${WORK_DIR}/v2ray/ "https://github.com/v2fly/v2ray-core/releases/download/${version}/${v2rayCoreCPUVendor}.zip"
         fi
 
-        unzip -o "/etc/v2ray-agent/v2ray/${v2rayCoreCPUVendor}.zip" -d /etc/v2ray-agent/v2ray >/dev/null
-        rm -rf "/etc/v2ray-agent/v2ray/${v2rayCoreCPUVendor}.zip"
+        unzip -o "${WORK_DIR}/v2ray/${v2rayCoreCPUVendor}.zip" -d ${WORK_DIR}/v2ray >/dev/null
+        rm -rf "${WORK_DIR}/v2ray/${v2rayCoreCPUVendor}.zip"
         handleV2Ray stop
         handleV2Ray start
     else
-        echoContent green " ---> 当前v2ray-core版本:$(/etc/v2ray-agent/v2ray/v2ray --version | awk '{print $2}' | head -1)"
+        echoContent green " ---> 当前v2ray-core版本:$(${WORK_DIR}/v2ray/v2ray --version | awk '{print $2}' | head -1)"
 
         if [[ -n "$1" ]]; then
             version=$1
@@ -1732,24 +1731,24 @@ updateV2Ray() {
             read -r -p "回退版本为${version}，是否继续？[y/n]:" rollbackV2RayStatus
             if [[ "${rollbackV2RayStatus}" == "y" ]]; then
                 if [[ "${coreInstallType}" == "2" ]]; then
-                    echoContent green " ---> 当前v2ray-core版本:$(/etc/v2ray-agent/v2ray/v2ray --version | awk '{print $2}' | head -1)"
+                    echoContent green " ---> 当前v2ray-core版本:$(${WORK_DIR}/v2ray/v2ray --version | awk '{print $2}' | head -1)"
                 elif [[ "${coreInstallType}" == "1" ]]; then
-                    echoContent green " ---> 当前Xray-core版本:$(/etc/v2ray-agent/xray/xray --version | awk '{print $2}' | head -1)"
+                    echoContent green " ---> 当前Xray-core版本:$(${WORK_DIR}/xray/xray --version | awk '{print $2}' | head -1)"
                 fi
 
                 handleV2Ray stop
-                rm -f /etc/v2ray-agent/v2ray/v2ray
-                rm -f /etc/v2ray-agent/v2ray/v2ctl
+                rm -f ${WORK_DIR}/v2ray/v2ray
+                rm -f ${WORK_DIR}/v2ray/v2ctl
                 updateV2Ray "${version}"
             else
                 echoContent green " ---> 放弃回退版本"
             fi
-        elif [[ "${version}" == "v$(/etc/v2ray-agent/v2ray/v2ray --version | awk '{print $2}' | head -1)" ]]; then
+        elif [[ "${version}" == "v$(${WORK_DIR}/v2ray/v2ray --version | awk '{print $2}' | head -1)" ]]; then
             read -r -p "当前版本与最新版相同，是否重新安装？[y/n]:" reInstallV2RayStatus
             if [[ "${reInstallV2RayStatus}" == "y" ]]; then
                 handleV2Ray stop
-                rm -f /etc/v2ray-agent/v2ray/v2ray
-                rm -f /etc/v2ray-agent/v2ray/v2ctl
+                rm -f ${WORK_DIR}/v2ray/v2ray
+                rm -f ${WORK_DIR}/v2ray/v2ctl
                 updateV2Ray
             else
                 echoContent green " ---> 放弃重新安装"
@@ -1757,8 +1756,8 @@ updateV2Ray() {
         else
             read -r -p "最新版本为:${version}，是否更新？[y/n]:" installV2RayStatus
             if [[ "${installV2RayStatus}" == "y" ]]; then
-                rm -f /etc/v2ray-agent/v2ray/v2ray
-                rm -f /etc/v2ray-agent/v2ray/v2ctl
+                rm -f ${WORK_DIR}/v2ray/v2ray
+                rm -f ${WORK_DIR}/v2ray/v2ctl
                 updateV2Ray
             else
                 echoContent green " ---> 放弃更新"
@@ -1782,18 +1781,18 @@ updateXray() {
         echoContent green " ---> Xray-core版本:${version}"
 
         if [[ "${release}" == "alpine" ]]; then
-            wget -c -q -P /etc/v2ray-agent/xray/ "https://github.com/XTLS/Xray-core/releases/download/${version}/${xrayCoreCPUVendor}.zip"
+            wget -c -q -P ${WORK_DIR}/xray/ "https://github.com/XTLS/Xray-core/releases/download/${version}/${xrayCoreCPUVendor}.zip"
         else
-            wget -c -q "${wgetShowProgressStatus}" -P /etc/v2ray-agent/xray/ "https://github.com/XTLS/Xray-core/releases/download/${version}/${xrayCoreCPUVendor}.zip"
+            wget -c -q "${wgetShowProgressStatus}" -P ${WORK_DIR}/xray/ "https://github.com/XTLS/Xray-core/releases/download/${version}/${xrayCoreCPUVendor}.zip"
         fi
 
-        unzip -o "/etc/v2ray-agent/xray/${xrayCoreCPUVendor}.zip" -d /etc/v2ray-agent/xray >/dev/null
-        rm -rf "/etc/v2ray-agent/xray/${xrayCoreCPUVendor}.zip"
-        chmod 655 /etc/v2ray-agent/xray/xray
+        unzip -o "${WORK_DIR}/xray/${xrayCoreCPUVendor}.zip" -d ${WORK_DIR}/xray >/dev/null
+        rm -rf "${WORK_DIR}/xray/${xrayCoreCPUVendor}.zip"
+        chmod 655 ${WORK_DIR}/xray/xray
         handleXray stop
         handleXray start
     else
-        echoContent green " ---> 当前Xray-core版本:$(/etc/v2ray-agent/xray/xray --version | awk '{print $2}' | head -1)"
+        echoContent green " ---> 当前Xray-core版本:$(${WORK_DIR}/xray/xray --version | awk '{print $2}' | head -1)"
 
         if [[ -n "$1" ]]; then
             version=$1
@@ -1804,19 +1803,19 @@ updateXray() {
         if [[ -n "$1" ]]; then
             read -r -p "回退版本为${version}，是否继续？[y/n]:" rollbackXrayStatus
             if [[ "${rollbackXrayStatus}" == "y" ]]; then
-                echoContent green " ---> 当前Xray-core版本:$(/etc/v2ray-agent/xray/xray --version | awk '{print $2}' | head -1)"
+                echoContent green " ---> 当前Xray-core版本:$(${WORK_DIR}/xray/xray --version | awk '{print $2}' | head -1)"
 
                 handleXray stop
-                rm -f /etc/v2ray-agent/xray/xray
+                rm -f ${WORK_DIR}/xray/xray
                 updateXray "${version}"
             else
                 echoContent green " ---> 放弃回退版本"
             fi
-        elif [[ "${version}" == "v$(/etc/v2ray-agent/xray/xray --version | awk '{print $2}' | head -1)" ]]; then
+        elif [[ "${version}" == "v$(${WORK_DIR}/xray/xray --version | awk '{print $2}' | head -1)" ]]; then
             read -r -p "当前版本与最新版相同，是否重新安装？[y/n]:" reInstallXrayStatus
             if [[ "${reInstallXrayStatus}" == "y" ]]; then
                 handleXray stop
-                rm -f /etc/v2ray-agent/xray/xray
+                rm -f ${WORK_DIR}/xray/xray
                 updateXray
             else
                 echoContent green " ---> 放弃重新安装"
@@ -1824,7 +1823,7 @@ updateXray() {
         else
             read -r -p "最新版本为:${version}，是否更新？[y/n]:" installXrayStatus
             if [[ "${installXrayStatus}" == "y" ]]; then
-                rm /etc/v2ray-agent/xray/xray
+                rm ${WORK_DIR}/xray/xray
                 updateXray
             else
                 echoContent green " ---> 放弃更新"
@@ -1854,7 +1853,7 @@ installHysteriaService() {
     if [[ -n $(find /bin /usr/bin -name "systemctl") ]]; then
         rm -rf /etc/systemd/system/hysteria.service
         touch /etc/systemd/system/hysteria.service
-        execStart='/etc/v2ray-agent/hysteria/hysteria server -c /etc/v2ray-agent/hysteria/conf/config.json --log-level debug'
+        execStart='${WORK_DIR}/hysteria/hysteria server -c ${WORK_DIR}/hysteria/conf/config.json --log-level debug'
         cat <<EOF >/etc/systemd/system/hysteria.service
 [Unit]
 After=network.target nss-lookup.target
@@ -1864,7 +1863,7 @@ User=root
 WorkingDirectory=/root
 CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
 AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
-ExecStart=/etc/v2ray-agent/hysteria/hysteria server -c /etc/v2ray-agent/hysteria/conf/config.json --log-level debug
+ExecStart=${WORK_DIR}/hysteria/hysteria server -c ${WORK_DIR}/hysteria/conf/config.json --log-level debug
 Restart=on-failure
 RestartSec=10
 LimitNPROC=10000
@@ -1914,7 +1913,7 @@ EOF
 # sing-box开机自启
 installSingBoxService() {
     echoContent skyBlue "\n进度  $1/${totalProgress} : 配置sing-box开机自启"
-    execStart='/etc/v2ray-agent/sing-box/sing-box run -c /etc/v2ray-agent/sing-box/conf/config.json'
+    execStart='${WORK_DIR}/sing-box/sing-box run -c ${WORK_DIR}/sing-box/conf/config.json'
 
     if [[ -n $(find /bin /usr/bin -name "systemctl") && "${release}" != "alpine" ]]; then
         rm -rf /etc/systemd/system/sing-box.service
@@ -1950,7 +1949,7 @@ EOF
 # Xray开机自启
 installXrayService() {
     echoContent skyBlue "\n进度  $1/${totalProgress} : 配置Xray开机自启"
-    execStart='/etc/v2ray-agent/xray/xray run -confdir /etc/v2ray-agent/xray/conf'
+    execStart='${WORK_DIR}/xray/xray run -confdir ${WORK_DIR}/xray/conf'
     if [[ -n $(find /bin /usr/bin -name "systemctl") ]]; then
         rm -rf /etc/systemd/system/xray.service
         touch /etc/systemd/system/xray.service
@@ -1994,7 +1993,7 @@ handleHysteria() {
             echoContent green " ---> Hysteria启动成功"
         else
             echoContent red "Hysteria启动失败"
-            echoContent red "请手动执行【/etc/v2ray-agent/hysteria/hysteria --log-level debug -c /etc/v2ray-agent/hysteria/conf/config.json server】，查看错误日志"
+            echoContent red "请手动执行【${WORK_DIR}/hysteria/hysteria --log-level debug -c ${WORK_DIR}/hysteria/conf/config.json server】，查看错误日志"
             exit 0
         fi
     elif [[ "$1" == "stop" ]]; then
@@ -2033,7 +2032,7 @@ handleTuic() {
             echoContent green " ---> Tuic启动成功"
         else
             echoContent red "Tuic启动失败"
-            echoContent red "请手动执行【/etc/v2ray-agent/tuic/tuic -c /etc/v2ray-agent/tuic/conf/config.json】，查看错误日志"
+            echoContent red "请手动执行【${WORK_DIR}/tuic/tuic -c ${WORK_DIR}/tuic/conf/config.json】，查看错误日志"
             exit 0
         fi
     elif [[ "$1" == "stop" ]]; then
@@ -2071,7 +2070,7 @@ handleSingBox() {
             echoContent green " ---> sing-box启动成功"
         else
             echoContent red "sing-box启动失败"
-            echoContent red "请手动执行【/etc/v2ray-agent/sing-box/sing-box run -c /etc/v2ray-agent/sing-box/conf/config.json】，查看错误日志"
+            echoContent red "请手动执行【${WORK_DIR}/sing-box/sing-box run -c ${WORK_DIR}/sing-box/conf/config.json】，查看错误日志"
             exit 0
         fi
     elif [[ "$1" == "stop" ]]; then
@@ -2108,7 +2107,7 @@ handleXray() {
             echoContent green " ---> Xray启动成功"
         else
             echoContent red "Xray启动失败"
-            echoContent red "请手动执行以下的命令后【/etc/v2ray-agent/xray/xray -confdir /etc/v2ray-agent/xray/conf】将错误日志进行反馈"
+            echoContent red "请手动执行以下的命令后【${WORK_DIR}/xray/xray -confdir ${WORK_DIR}/xray/conf】将错误日志进行反馈"
             exit 0
         fi
     elif [[ "$1" == "stop" ]]; then
@@ -2488,7 +2487,7 @@ initHysteriaConfig() {
     #    initHysteriaNetwork
     local uuid=
     uuid=$(${ctlPath} uuid)
-    cat <<EOF >/etc/v2ray-agent/hysteria/conf/config.json
+    cat <<EOF >${WORK_DIR}/hysteria/conf/config.json
 {
     "listen":":${hysteriaPort}",
     "tls":{
@@ -2519,7 +2518,7 @@ initHysteriaConfig() {
 
 EOF
 
-    #    addClientsHysteria "/etc/v2ray-agent/hysteria/conf/config.json" true
+    #    addClientsHysteria "${WORK_DIR}/hysteria/conf/config.json" true
 
     # 添加socks入站
     cat <<EOF >${configPath}/02_socks_inbounds_hysteria.json
@@ -2610,7 +2609,7 @@ initTuicProtocol() {
 #
 #    initTuicPort
 #    initTuicProtocol
-#    cat <<EOF >/etc/v2ray-agent/tuic/conf/config.json
+#    cat <<EOF >${WORK_DIR}/tuic/conf/config.json
 #{
 #    "server": "[::]:${tuicPort}",
 #    "users": $(initXrayClients 9),
@@ -2629,7 +2628,7 @@ initSingBoxTuicConfig() {
 
     initTuicPort
     initTuicProtocol
-    cat <<EOF >/etc/v2ray-agent/sing-box/conf/config/06_hysteria2_inbounds.json
+    cat <<EOF >${WORK_DIR}/sing-box/conf/config/06_hysteria2_inbounds.json
 {
      "inbounds": [
     {
@@ -2824,7 +2823,7 @@ addXrayOutbound() {
     fi
 
     if [[ -n "${domainStrategy}" ]]; then
-        cat <<EOF >"/etc/v2ray-agent/xray/conf/${tag}.json"
+        cat <<EOF >"${WORK_DIR}/xray/conf/${tag}.json"
 {
     "outbounds":[
         {
@@ -2840,7 +2839,7 @@ EOF
     fi
     # direct
     if echo "${tag}" | grep -q "direct"; then
-        cat <<EOF >"/etc/v2ray-agent/xray/conf/${tag}.json"
+        cat <<EOF >"${WORK_DIR}/xray/conf/${tag}.json"
 {
     "outbounds":[
         {
@@ -2856,7 +2855,7 @@ EOF
     fi
     # blackhole
     if echo "${tag}" | grep -q "blackhole"; then
-        cat <<EOF >"/etc/v2ray-agent/xray/conf/${tag}.json"
+        cat <<EOF >"${WORK_DIR}/xray/conf/${tag}.json"
 {
     "outbounds":[
         {
@@ -2869,7 +2868,7 @@ EOF
     fi
     # socks5 outbound
     if echo "${tag}" | grep -q "socks5"; then
-        cat <<EOF >"/etc/v2ray-agent/xray/conf/${tag}.json"
+        cat <<EOF >"${WORK_DIR}/xray/conf/${tag}.json"
 {
   "outbounds": [
     {
@@ -2895,7 +2894,7 @@ EOF
 EOF
     fi
     if echo "${tag}" | grep -q "wireguard_out_IPv4"; then
-        cat <<EOF >"/etc/v2ray-agent/xray/conf/${tag}.json"
+        cat <<EOF >"${WORK_DIR}/xray/conf/${tag}.json"
 {
   "outbounds": [
     {
@@ -2925,7 +2924,7 @@ EOF
 EOF
     fi
     if echo "${tag}" | grep -q "wireguard_out_IPv6"; then
-        cat <<EOF >"/etc/v2ray-agent/xray/conf/${tag}.json"
+        cat <<EOF >"${WORK_DIR}/xray/conf/${tag}.json"
 {
   "outbounds": [
     {
@@ -2955,7 +2954,7 @@ EOF
 EOF
     fi
     if echo "${tag}" | grep -q "vmess-out"; then
-        cat <<EOF >"/etc/v2ray-agent/xray/conf/${tag}.json"
+        cat <<EOF >"${WORK_DIR}/xray/conf/${tag}.json"
 {
   "outbounds": [
     {
@@ -3000,8 +2999,8 @@ EOF
 # 删除 Xray-core出站
 removeXrayOutbound() {
     local tag=$1
-    if [[ -f "/etc/v2ray-agent/xray/conf/${tag}.json" ]]; then
-        rm "/etc/v2ray-agent/xray/conf/${tag}.json" >/dev/null 2>&1
+    if [[ -f "${WORK_DIR}/xray/conf/${tag}.json" ]]; then
+        rm "${WORK_DIR}/xray/conf/${tag}.json" >/dev/null 2>&1
     fi
 }
 # 移除sing-box配置
@@ -3046,7 +3045,7 @@ initSingBoxHysteria2Config() {
     initHysteriaPort
     initHysteria2Network
 
-    cat <<EOF >/etc/v2ray-agent/sing-box/conf/config/hysteria2.json
+    cat <<EOF >${WORK_DIR}/sing-box/conf/config/hysteria2.json
 {
     "inbounds": [
         {
@@ -3105,8 +3104,8 @@ singBoxHysteria2Install() {
 
 # 合并config
 singBoxMergeConfig() {
-    rm /etc/v2ray-agent/sing-box/conf/config.json >/dev/null 2>&1
-    /etc/v2ray-agent/sing-box/sing-box merge config.json -C /etc/v2ray-agent/sing-box/conf/config/ -D /etc/v2ray-agent/sing-box/conf/ >/dev/null 2>&1
+    rm ${WORK_DIR}/sing-box/conf/config.json >/dev/null 2>&1
+    ${WORK_DIR}/sing-box/sing-box merge config.json -C ${WORK_DIR}/sing-box/conf/config/ -D ${WORK_DIR}/sing-box/conf/ >/dev/null 2>&1
 }
 
 # 初始化Xray Trojan XTLS 配置文件
@@ -3220,7 +3219,7 @@ initXrayConfig() {
         if [[ -n ${customUUID} ]]; then
             uuid=${customUUID}
         else
-            uuid=$(/etc/v2ray-agent/xray/xray uuid)
+            uuid=$(${WORK_DIR}/xray/xray uuid)
         fi
 
         echoContent yellow "\n请输入自定义用户名[需合法]，[回车]随机用户名"
@@ -3233,7 +3232,7 @@ initXrayConfig() {
     if [[ -z "${addClientsStatus}" && -z "${uuid}" ]]; then
         addClientsStatus=
         echoContent red "\n ---> uuid读取错误，随机生成"
-        uuid=$(/etc/v2ray-agent/xray/xray uuid)
+        uuid=$(${WORK_DIR}/xray/xray uuid)
     fi
 
     if [[ -n "${uuid}" ]]; then
@@ -3242,12 +3241,12 @@ initXrayConfig() {
     fi
 
     # log
-    if [[ ! -f "/etc/v2ray-agent/xray/conf/00_log.json" ]]; then
+    if [[ ! -f "${WORK_DIR}/xray/conf/00_log.json" ]]; then
 
-        cat <<EOF >/etc/v2ray-agent/xray/conf/00_log.json
+        cat <<EOF >${WORK_DIR}/xray/conf/00_log.json
 {
   "log": {
-    "error": "/etc/v2ray-agent/xray/error.log",
+    "error": "${WORK_DIR}/xray/error.log",
     "loglevel": "warning",
     "dnsLog": false
   }
@@ -3255,9 +3254,9 @@ initXrayConfig() {
 EOF
     fi
 
-    if [[ ! -f "/etc/v2ray-agent/xray/conf/12_policy.json" ]]; then
+    if [[ ! -f "${WORK_DIR}/xray/conf/12_policy.json" ]]; then
 
-        cat <<EOF >/etc/v2ray-agent/xray/conf/12_policy.json
+        cat <<EOF >${WORK_DIR}/xray/conf/12_policy.json
 {
   "policy": {
       "levels": {
@@ -3273,8 +3272,8 @@ EOF
 
     addXrayOutbound "z_direct_outbound"
     # dns
-    if [[ ! -f "/etc/v2ray-agent/xray/conf/11_dns.json" ]]; then
-        cat <<EOF >/etc/v2ray-agent/xray/conf/11_dns.json
+    if [[ ! -f "${WORK_DIR}/xray/conf/11_dns.json" ]]; then
+        cat <<EOF >${WORK_DIR}/xray/conf/11_dns.json
 {
     "dns": {
         "servers": [
@@ -3285,7 +3284,7 @@ EOF
 EOF
     fi
     # routing
-    cat <<EOF >/etc/v2ray-agent/xray/conf/09_routing.json
+    cat <<EOF >${WORK_DIR}/xray/conf/09_routing.json
 {
   "routing": {
     "rules": [
@@ -3309,7 +3308,7 @@ EOF
     # trojan
     if echo "${selectCustomInstallType}" | grep -q ",4," || [[ "$1" == "all" ]]; then
         fallbacksList='{"dest":31296,"xver":1},{"alpn":"h2","dest":31302,"xver":1}'
-        cat <<EOF >/etc/v2ray-agent/xray/conf/04_trojan_TCP_inbounds.json
+        cat <<EOF >${WORK_DIR}/xray/conf/04_trojan_TCP_inbounds.json
 {
 "inbounds":[
 	{
@@ -3338,13 +3337,13 @@ EOF
 }
 EOF
     elif [[ -z "$3" ]]; then
-        rm /etc/v2ray-agent/xray/conf/04_trojan_TCP_inbounds.json >/dev/null 2>&1
+        rm ${WORK_DIR}/xray/conf/04_trojan_TCP_inbounds.json >/dev/null 2>&1
     fi
 
     # VLESS_WS_TLS
     if echo "${selectCustomInstallType}" | grep -q ",1," || [[ "$1" == "all" ]]; then
         fallbacksList=${fallbacksList}',{"path":"/'${customPath}'ws","dest":31297,"xver":1}'
-        cat <<EOF >/etc/v2ray-agent/xray/conf/03_VLESS_WS_inbounds.json
+        cat <<EOF >${WORK_DIR}/xray/conf/03_VLESS_WS_inbounds.json
 {
 "inbounds":[
     {
@@ -3369,7 +3368,7 @@ EOF
 }
 EOF
     elif [[ -z "$3" ]]; then
-        rm /etc/v2ray-agent/xray/conf/03_VLESS_WS_inbounds.json >/dev/null 2>&1
+        rm ${WORK_DIR}/xray/conf/03_VLESS_WS_inbounds.json >/dev/null 2>&1
     fi
 
     # trojan_grpc
@@ -3377,7 +3376,7 @@ EOF
         if ! echo "${selectCustomInstallType}" | grep -q ",5," && [[ -n ${selectCustomInstallType} ]]; then
             fallbacksList=${fallbacksList//31302/31304}
         fi
-        cat <<EOF >/etc/v2ray-agent/xray/conf/04_trojan_gRPC_inbounds.json
+        cat <<EOF >${WORK_DIR}/xray/conf/04_trojan_gRPC_inbounds.json
 {
     "inbounds": [
         {
@@ -3404,13 +3403,13 @@ EOF
 }
 EOF
     elif [[ -z "$3" ]]; then
-        rm /etc/v2ray-agent/xray/conf/04_trojan_gRPC_inbounds.json >/dev/null 2>&1
+        rm ${WORK_DIR}/xray/conf/04_trojan_gRPC_inbounds.json >/dev/null 2>&1
     fi
 
     # VMess_WS
     if echo "${selectCustomInstallType}" | grep -q ",3," || [[ "$1" == "all" ]]; then
         fallbacksList=${fallbacksList}',{"path":"/'${customPath}'vws","dest":31299,"xver":1}'
-        cat <<EOF >/etc/v2ray-agent/xray/conf/05_VMess_WS_inbounds.json
+        cat <<EOF >${WORK_DIR}/xray/conf/05_VMess_WS_inbounds.json
 {
 "inbounds":[
 {
@@ -3434,11 +3433,11 @@ EOF
 }
 EOF
     elif [[ -z "$3" ]]; then
-        rm /etc/v2ray-agent/xray/conf/05_VMess_WS_inbounds.json >/dev/null 2>&1
+        rm ${WORK_DIR}/xray/conf/05_VMess_WS_inbounds.json >/dev/null 2>&1
     fi
 
     if echo "${selectCustomInstallType}" | grep -q ",5," || [[ "$1" == "all" ]]; then
-        cat <<EOF >/etc/v2ray-agent/xray/conf/06_VLESS_gRPC_inbounds.json
+        cat <<EOF >${WORK_DIR}/xray/conf/06_VLESS_gRPC_inbounds.json
 {
     "inbounds":[
     {
@@ -3461,13 +3460,13 @@ EOF
 }
 EOF
     elif [[ -z "$3" ]]; then
-        rm /etc/v2ray-agent/xray/conf/06_VLESS_gRPC_inbounds.json >/dev/null 2>&1
+        rm ${WORK_DIR}/xray/conf/06_VLESS_gRPC_inbounds.json >/dev/null 2>&1
     fi
 
     # VLESS Vision
     if echo "${selectCustomInstallType}" | grep -q ",0," || [[ "$1" == "all" ]]; then
 
-        cat <<EOF >/etc/v2ray-agent/xray/conf/02_VLESS_TCP_inbounds.json
+        cat <<EOF >${WORK_DIR}/xray/conf/02_VLESS_TCP_inbounds.json
 {
     "inbounds":[
         {
@@ -3502,7 +3501,7 @@ EOF
 }
 EOF
     elif [[ -z "$3" ]]; then
-        rm /etc/v2ray-agent/xray/conf/02_VLESS_TCP_inbounds.json >/dev/null 2>&1
+        rm ${WORK_DIR}/xray/conf/02_VLESS_TCP_inbounds.json >/dev/null 2>&1
     fi
 
     # VLESS_TCP/reality
@@ -3512,7 +3511,7 @@ EOF
         initRealityClientServersName
         initRealityKey
 
-        cat <<EOF >/etc/v2ray-agent/xray/conf/07_VLESS_vision_reality_inbounds.json
+        cat <<EOF >${WORK_DIR}/xray/conf/07_VLESS_vision_reality_inbounds.json
 {
   "inbounds": [
     {
@@ -3553,7 +3552,7 @@ EOF
 }
 EOF
 
-        cat <<EOF >/etc/v2ray-agent/xray/conf/08_VLESS_vision_gRPC_inbounds.json
+        cat <<EOF >${WORK_DIR}/xray/conf/08_VLESS_vision_gRPC_inbounds.json
 {
   "inbounds": [
     {
@@ -3581,8 +3580,8 @@ EOF
 EOF
 
     elif [[ -z "$3" ]]; then
-        rm /etc/v2ray-agent/xray/conf/07_VLESS_vision_reality_inbounds.json >/dev/null 2>&1
-        rm /etc/v2ray-agent/xray/conf/08_VLESS_vision_gRPC_inbounds.json >/dev/null 2>&1
+        rm ${WORK_DIR}/xray/conf/07_VLESS_vision_reality_inbounds.json >/dev/null 2>&1
+        rm ${WORK_DIR}/xray/conf/08_VLESS_vision_gRPC_inbounds.json >/dev/null 2>&1
     fi
     installSniffing
     removeXrayOutbound IPv4_out
@@ -3638,7 +3637,7 @@ initSingBoxConfig() {
         if [[ -n ${customUUID} ]]; then
             uuid=${customUUID}
         else
-            uuid=$(/etc/v2ray-agent/sing-box/sing-box generate uuid)
+            uuid=$(${WORK_DIR}/sing-box/sing-box generate uuid)
         fi
 
         echoContent yellow "\n请输入自定义用户名[需合法]，[回车]随机用户名"
@@ -3651,7 +3650,7 @@ initSingBoxConfig() {
     if [[ -z "${addClientsStatus}" && -z "${uuid}" ]]; then
         addClientsStatus=
         echoContent red "\n ---> uuid读取错误，随机生成"
-        uuid=$(/etc/v2ray-agent/sing-box/sing-box generate uuid)
+        uuid=$(${WORK_DIR}/sing-box/sing-box generate uuid)
     fi
 
     if [[ -n "${uuid}" ]]; then
@@ -3672,7 +3671,7 @@ initSingBoxConfig() {
         handleSingBox stop
 
         checkPortOpen "${result[-1]}" "${domain}"
-        cat <<EOF >/etc/v2ray-agent/sing-box/conf/config/02_VLESS_TCP_inbounds.json
+        cat <<EOF >${WORK_DIR}/sing-box/conf/config/02_VLESS_TCP_inbounds.json
 {
     "inbounds":[
         {
@@ -3692,7 +3691,7 @@ initSingBoxConfig() {
 }
 EOF
     elif [[ -z "$3" ]]; then
-        rm /etc/v2ray-agent/sing-box/conf/config/02_VLESS_TCP_inbounds.json >/dev/null 2>&1
+        rm ${WORK_DIR}/sing-box/conf/config/02_VLESS_TCP_inbounds.json >/dev/null 2>&1
     fi
 
     if echo "${selectCustomInstallType}" | grep -q ",1," || [[ "$1" == "all" ]]; then
@@ -3707,7 +3706,7 @@ EOF
         handleSingBox stop
         randomPathFunction
         checkPortOpen "${result[-1]}" "${domain}"
-        cat <<EOF >/etc/v2ray-agent/sing-box/conf/config/03_VLESS_WS_inbounds.json
+        cat <<EOF >${WORK_DIR}/sing-box/conf/config/03_VLESS_WS_inbounds.json
 {
     "inbounds":[
         {
@@ -3733,7 +3732,7 @@ EOF
 }
 EOF
     elif [[ -z "$3" ]]; then
-        rm /etc/v2ray-agent/sing-box/conf/config/03_VLESS_WS_inbounds.json >/dev/null 2>&1
+        rm ${WORK_DIR}/sing-box/conf/config/03_VLESS_WS_inbounds.json >/dev/null 2>&1
     fi
 
     if echo "${selectCustomInstallType}" | grep -q ",3," || [[ "$1" == "all" ]]; then
@@ -3748,7 +3747,7 @@ EOF
         handleSingBox stop
         randomPathFunction
         checkPortOpen "${result[-1]}" "${domain}"
-        cat <<EOF >/etc/v2ray-agent/sing-box/conf/config/05_VMess_WS_inbounds.json
+        cat <<EOF >${WORK_DIR}/sing-box/conf/config/05_VMess_WS_inbounds.json
 {
     "inbounds":[
         {
@@ -3774,7 +3773,7 @@ EOF
 }
 EOF
     elif [[ -z "$3" ]]; then
-        rm /etc/v2ray-agent/sing-box/conf/config/05_VMess_WS_inbounds.json >/dev/null 2>&1
+        rm ${WORK_DIR}/sing-box/conf/config/05_VMess_WS_inbounds.json >/dev/null 2>&1
     fi
 
     # VLESS_Reality_Vision
@@ -3786,7 +3785,7 @@ EOF
         echo
         mapfile -t result < <(initSingBoxPort "${singBoxVLESSRealityVisionPort}")
         echoContent green "\n ---> VLESS_Reality_Vision端口：${result[-1]}"
-        cat <<EOF >/etc/v2ray-agent/sing-box/conf/config/07_VLESS_vision_reality_inbounds.json
+        cat <<EOF >${WORK_DIR}/sing-box/conf/config/07_VLESS_vision_reality_inbounds.json
 {
   "inbounds": [
     {
@@ -3816,7 +3815,7 @@ EOF
 }
 EOF
     elif [[ -z "$3" ]]; then
-        rm /etc/v2ray-agent/sing-box/conf/config/07_VLESS_vision_reality_inbounds.json >/dev/null 2>&1
+        rm ${WORK_DIR}/sing-box/conf/config/07_VLESS_vision_reality_inbounds.json >/dev/null 2>&1
     fi
 
     if echo "${selectCustomInstallType}" | grep -q ",8," || [[ "$1" == "all" ]]; then
@@ -3827,7 +3826,7 @@ EOF
         echo
         mapfile -t result < <(initSingBoxPort "${singBoxVLESSRealityGRPCPort}")
         echoContent green "\n ---> VLESS_Reality_gPRC端口：${result[-1]}"
-        cat <<EOF >/etc/v2ray-agent/sing-box/conf/config/08_VLESS_vision_gRPC_inbounds.json
+        cat <<EOF >${WORK_DIR}/sing-box/conf/config/08_VLESS_vision_gRPC_inbounds.json
 {
   "inbounds": [
     {
@@ -3861,7 +3860,7 @@ EOF
 }
 EOF
     elif [[ -z "$3" ]]; then
-        rm /etc/v2ray-agent/sing-box/conf/config/08_VLESS_vision_gRPC_inbounds.json >/dev/null 2>&1
+        rm ${WORK_DIR}/sing-box/conf/config/08_VLESS_vision_gRPC_inbounds.json >/dev/null 2>&1
     fi
 
     if echo "${selectCustomInstallType}" | grep -q ",6," || [[ "$1" == "all" ]]; then
@@ -3871,7 +3870,7 @@ EOF
         mapfile -t result < <(initSingBoxPort "${singBoxHysteria2Port}")
         echoContent green "\n ---> Hysteria2端口：${result[-1]}"
         initHysteria2Network
-        cat <<EOF >/etc/v2ray-agent/sing-box/conf/config/06_hysteria2_inbounds.json
+        cat <<EOF >${WORK_DIR}/sing-box/conf/config/06_hysteria2_inbounds.json
 {
     "inbounds": [
         {
@@ -3895,7 +3894,7 @@ EOF
 }
 EOF
     elif [[ -z "$3" ]]; then
-        rm /etc/v2ray-agent/sing-box/conf/config/06_hysteria2_inbounds.json >/dev/null 2>&1
+        rm ${WORK_DIR}/sing-box/conf/config/06_hysteria2_inbounds.json >/dev/null 2>&1
     fi
 
     if echo "${selectCustomInstallType}" | grep -q ",4," || [[ "$1" == "all" ]]; then
@@ -3904,7 +3903,7 @@ EOF
         echo
         mapfile -t result < <(initSingBoxPort "${singBoxTrojanPort}")
         echoContent green "\n ---> Trojan端口：${result[-1]}"
-        cat <<EOF >/etc/v2ray-agent/sing-box/conf/config/04_trojan_TCP_inbounds.json
+        cat <<EOF >${WORK_DIR}/sing-box/conf/config/04_trojan_TCP_inbounds.json
 {
     "inbounds": [
         {
@@ -3923,7 +3922,7 @@ EOF
 }
 EOF
     elif [[ -z "$3" ]]; then
-        rm /etc/v2ray-agent/sing-box/conf/config/04_trojan_TCP_inbounds.json >/dev/null 2>&1
+        rm ${WORK_DIR}/sing-box/conf/config/04_trojan_TCP_inbounds.json >/dev/null 2>&1
     fi
 
     if echo "${selectCustomInstallType}" | grep -q ",9," || [[ "$1" == "all" ]]; then
@@ -3933,7 +3932,7 @@ EOF
         mapfile -t result < <(initSingBoxPort "${singBoxTuicPort}")
         echoContent green "\n ---> Tuic端口：${result[-1]}"
         initTuicProtocol
-        cat <<EOF >/etc/v2ray-agent/sing-box/conf/config/09_tuic_inbounds.json
+        cat <<EOF >${WORK_DIR}/sing-box/conf/config/09_tuic_inbounds.json
 {
      "inbounds": [
         {
@@ -3957,7 +3956,7 @@ EOF
 }
 EOF
     elif [[ -z "$3" ]]; then
-        rm /etc/v2ray-agent/sing-box/conf/config/09_tuic_inbounds.json >/dev/null 2>&1
+        rm ${WORK_DIR}/sing-box/conf/config/09_tuic_inbounds.json >/dev/null 2>&1
     fi
 
     if echo "${selectCustomInstallType}" | grep -q ",10," || [[ "$1" == "all" ]]; then
@@ -3966,7 +3965,7 @@ EOF
         echo
         mapfile -t result < <(initSingBoxPort "${singBoxNaivePort}")
         echoContent green "\n ---> Naive端口：${result[-1]}"
-        cat <<EOF >/etc/v2ray-agent/sing-box/conf/config/10_naive_inbounds.json
+        cat <<EOF >${WORK_DIR}/sing-box/conf/config/10_naive_inbounds.json
 {
      "inbounds": [
         {
@@ -3986,7 +3985,7 @@ EOF
 }
 EOF
     elif [[ -z "$3" ]]; then
-        rm /etc/v2ray-agent/sing-box/conf/config/10_naive_inbounds.json >/dev/null 2>&1
+        rm ${WORK_DIR}/sing-box/conf/config/10_naive_inbounds.json >/dev/null 2>&1
     fi
     if echo "${selectCustomInstallType}" | grep -q ",11," || [[ "$1" == "all" ]]; then
         echoContent yellow "\n===================== 配置VMess+HTTPUpgrade =====================\n"
@@ -4002,7 +4001,7 @@ EOF
         checkPortOpen "${result[-1]}" "${domain}"
         singBoxNginxConfig "$1" "${result[-1]}"
         bootStartup nginx
-        cat <<EOF >/etc/v2ray-agent/sing-box/conf/config/11_VMess_HTTPUpgrade_inbounds.json
+        cat <<EOF >${WORK_DIR}/sing-box/conf/config/11_VMess_HTTPUpgrade_inbounds.json
 {
     "inbounds":[
         {
@@ -4020,7 +4019,7 @@ EOF
 }
 EOF
     elif [[ -z "$3" ]]; then
-        rm /etc/v2ray-agent/sing-box/conf/config/11_VMess_HTTPUpgrade_inbounds.json >/dev/null 2>&1
+        rm ${WORK_DIR}/sing-box/conf/config/11_VMess_HTTPUpgrade_inbounds.json >/dev/null 2>&1
     fi
     removeSingBoxConfig wireguard_out_IPv4
     removeSingBoxConfig wireguard_out_IPv6
@@ -4036,7 +4035,7 @@ EOF
 }
 # 初始化 sing-box订阅配置
 initSubscribeLocalConfig() {
-    rm -rf /etc/v2ray-agent/subscribe_local/sing-box/*
+    rm -rf ${WORK_DIR}/subscribe_local/sing-box/*
 }
 # 通用
 defaultBase64Code() {
@@ -4048,8 +4047,8 @@ defaultBase64Code() {
     local path=$6
     local user=
     user=$(echo "${email}" | awk -F "[-]" '{print $1}')
-    if [[ ! -f "/etc/v2ray-agent/subscribe_local/sing-box/${user}" ]]; then
-        echo [] >"/etc/v2ray-agent/subscribe_local/sing-box/${user}"
+    if [[ ! -f "${WORK_DIR}/subscribe_local/sing-box/${user}" ]]; then
+        echo [] >"${WORK_DIR}/subscribe_local/sing-box/${user}"
     fi
     local singBoxSubscribeLocalConfig=
     if [[ "${type}" == "vlesstcp" ]]; then
@@ -4059,10 +4058,10 @@ defaultBase64Code() {
 
         echoContent yellow " ---> 格式化明文(VLESS+TCP+TLS_Vision)"
         echoContent green "协议类型:VLESS，地址:${currentHost}，端口:${port}，用户ID:${id}，安全:tls，client-fingerprint: chrome，传输方式:tcp，flow:xtls-rprx-vision，账户名:${email}\n"
-        cat <<EOF >>"/etc/v2ray-agent/subscribe_local/default/${user}"
+        cat <<EOF >>"${WORK_DIR}/subscribe_local/default/${user}"
 vless://${id}@${currentHost}:${port}?encryption=none&security=tls&type=tcp&host=${currentHost}&fp=chrome&headerType=none&sni=${currentHost}&flow=xtls-rprx-vision#${email}
 EOF
-        cat <<EOF >>"/etc/v2ray-agent/subscribe_local/clashMeta/${user}"
+        cat <<EOF >>"${WORK_DIR}/subscribe_local/clashMeta/${user}"
   - name: "${email}"
     type: vless
     server: ${currentHost}
@@ -4074,8 +4073,8 @@ EOF
     flow: xtls-rprx-vision
     client-fingerprint: chrome
 EOF
-        singBoxSubscribeLocalConfig=$(jq -r ". += [{\"tag\":\"${email}\",\"type\":\"vless\",\"server\":\"${currentHost}\",\"server_port\":${port},\"uuid\":\"${id}\",\"flow\":\"xtls-rprx-vision\",\"tls\":{\"enabled\":true,\"server_name\":\"${currentHost}\",\"utls\":{\"enabled\":true,\"fingerprint\":\"chrome\"}},\"packet_encoding\":\"xudp\"}]" "/etc/v2ray-agent/subscribe_local/sing-box/${user}")
-        echo "${singBoxSubscribeLocalConfig}" | jq . >"/etc/v2ray-agent/subscribe_local/sing-box/${user}"
+        singBoxSubscribeLocalConfig=$(jq -r ". += [{\"tag\":\"${email}\",\"type\":\"vless\",\"server\":\"${currentHost}\",\"server_port\":${port},\"uuid\":\"${id}\",\"flow\":\"xtls-rprx-vision\",\"tls\":{\"enabled\":true,\"server_name\":\"${currentHost}\",\"utls\":{\"enabled\":true,\"fingerprint\":\"chrome\"}},\"packet_encoding\":\"xudp\"}]" "${WORK_DIR}/subscribe_local/sing-box/${user}")
+        echo "${singBoxSubscribeLocalConfig}" | jq . >"${WORK_DIR}/subscribe_local/sing-box/${user}"
 
         echoContent yellow " ---> 二维码 VLESS(VLESS+TCP+TLS_Vision)"
         echoContent green "    https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=vless%3A%2F%2F${id}%40${currentHost}%3A${port}%3Fencryption%3Dnone%26fp%3Dchrome%26security%3Dtls%26type%3Dtcp%26${currentHost}%3D${currentHost}%26headerType%3Dnone%26sni%3D${currentHost}%26flow%3Dxtls-rprx-vision%23${email}\n"
@@ -4090,10 +4089,10 @@ EOF
         echoContent green "    vmess://${qrCodeBase64Default}\n"
         echoContent yellow " ---> 二维码 vmess(VMess+WS+TLS)"
 
-        cat <<EOF >>"/etc/v2ray-agent/subscribe_local/default/${user}"
+        cat <<EOF >>"${WORK_DIR}/subscribe_local/default/${user}"
 vmess://${qrCodeBase64Default}
 EOF
-        cat <<EOF >>"/etc/v2ray-agent/subscribe_local/clashMeta/${user}"
+        cat <<EOF >>"${WORK_DIR}/subscribe_local/clashMeta/${user}"
   - name: "${email}"
     type: vmess
     server: ${add}
@@ -4111,9 +4110,9 @@ EOF
       headers:
         Host: ${currentHost}
 EOF
-        singBoxSubscribeLocalConfig=$(jq -r ". += [{\"tag\":\"${email}\",\"type\":\"vmess\",\"server\":\"${add}\",\"server_port\":${port},\"uuid\":\"${id}\",\"alter_id\":0,\"tls\":{\"enabled\":true,\"server_name\":\"${currentHost}\",\"utls\":{\"enabled\":true,\"fingerprint\":\"chrome\"}},\"packet_encoding\":\"packetaddr\",\"transport\":{\"type\":\"ws\",\"path\":\"${path}\",\"max_early_data\":2048,\"early_data_header_name\":\"Sec-WebSocket-Protocol\"}}]" "/etc/v2ray-agent/subscribe_local/sing-box/${user}")
+        singBoxSubscribeLocalConfig=$(jq -r ". += [{\"tag\":\"${email}\",\"type\":\"vmess\",\"server\":\"${add}\",\"server_port\":${port},\"uuid\":\"${id}\",\"alter_id\":0,\"tls\":{\"enabled\":true,\"server_name\":\"${currentHost}\",\"utls\":{\"enabled\":true,\"fingerprint\":\"chrome\"}},\"packet_encoding\":\"packetaddr\",\"transport\":{\"type\":\"ws\",\"path\":\"${path}\",\"max_early_data\":2048,\"early_data_header_name\":\"Sec-WebSocket-Protocol\"}}]" "${WORK_DIR}/subscribe_local/sing-box/${user}")
 
-        echo "${singBoxSubscribeLocalConfig}" | jq . >"/etc/v2ray-agent/subscribe_local/sing-box/${user}"
+        echo "${singBoxSubscribeLocalConfig}" | jq . >"${WORK_DIR}/subscribe_local/sing-box/${user}"
 
         echoContent green "    https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=vmess://${qrCodeBase64Default}\n"
 
@@ -4125,10 +4124,10 @@ EOF
         echoContent yellow " ---> 格式化明文(VLESS+WS+TLS)"
         echoContent green "    协议类型:VLESS，地址:${add}，伪装域名/SNI:${currentHost}，端口:${port}，client-fingerprint: chrome,用户ID:${id}，安全:tls，传输方式:ws，路径:${path}，账户名:${email}\n"
 
-        cat <<EOF >>"/etc/v2ray-agent/subscribe_local/default/${user}"
+        cat <<EOF >>"${WORK_DIR}/subscribe_local/default/${user}"
 vless://${id}@${add}:${port}?encryption=none&security=tls&type=ws&host=${currentHost}&sni=${currentHost}&fp=chrome&path=${path}#${email}
 EOF
-        cat <<EOF >>"/etc/v2ray-agent/subscribe_local/clashMeta/${user}"
+        cat <<EOF >>"${WORK_DIR}/subscribe_local/clashMeta/${user}"
   - name: "${email}"
     type: vless
     server: ${add}
@@ -4145,8 +4144,8 @@ EOF
         Host: ${currentHost}
 EOF
 
-        singBoxSubscribeLocalConfig=$(jq -r ". += [{\"tag\":\"${email}\",\"type\":\"vless\",\"server\":\"${add}\",\"server_port\":${port},\"uuid\":\"${id}\",\"tls\":{\"enabled\":true,\"server_name\":\"${currentHost}\",\"utls\":{\"enabled\":true,\"fingerprint\":\"chrome\"}},\"multiplex\":{\"enabled\":false,\"protocol\":\"smux\",\"max_streams\":32},\"packet_encoding\":\"xudp\",\"transport\":{\"type\":\"ws\",\"path\":\"${path}\",\"headers\":{\"Host\":\"${currentHost}\"}}}]" "/etc/v2ray-agent/subscribe_local/sing-box/${user}")
-        echo "${singBoxSubscribeLocalConfig}" | jq . >"/etc/v2ray-agent/subscribe_local/sing-box/${user}"
+        singBoxSubscribeLocalConfig=$(jq -r ". += [{\"tag\":\"${email}\",\"type\":\"vless\",\"server\":\"${add}\",\"server_port\":${port},\"uuid\":\"${id}\",\"tls\":{\"enabled\":true,\"server_name\":\"${currentHost}\",\"utls\":{\"enabled\":true,\"fingerprint\":\"chrome\"}},\"multiplex\":{\"enabled\":false,\"protocol\":\"smux\",\"max_streams\":32},\"packet_encoding\":\"xudp\",\"transport\":{\"type\":\"ws\",\"path\":\"${path}\",\"headers\":{\"Host\":\"${currentHost}\"}}}]" "${WORK_DIR}/subscribe_local/sing-box/${user}")
+        echo "${singBoxSubscribeLocalConfig}" | jq . >"${WORK_DIR}/subscribe_local/sing-box/${user}"
 
         echoContent yellow " ---> 二维码 VLESS(VLESS+WS+TLS)"
         echoContent green "    https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=vless%3A%2F%2F${id}%40${add}%3A${port}%3Fencryption%3Dnone%26security%3Dtls%26type%3Dws%26host%3D${currentHost}%26fp%3Dchrome%26sni%3D${currentHost}%26path%3D${path}%23${email}"
@@ -4159,10 +4158,10 @@ EOF
         echoContent yellow " ---> 格式化明文(VLESS+gRPC+TLS)"
         echoContent green "    协议类型:VLESS，地址:${add}，伪装域名/SNI:${currentHost}，端口:${port}，用户ID:${id}，安全:tls，传输方式:gRPC，alpn:h2，client-fingerprint: chrome,serviceName:${currentPath}grpc，账户名:${email}\n"
 
-        cat <<EOF >>"/etc/v2ray-agent/subscribe_local/default/${user}"
+        cat <<EOF >>"${WORK_DIR}/subscribe_local/default/${user}"
 vless://${id}@${add}:${port}?encryption=none&security=tls&type=grpc&host=${currentHost}&path=${currentPath}grpc&serviceName=${currentPath}grpc&fp=chrome&alpn=h2&sni=${currentHost}#${email}
 EOF
-        cat <<EOF >>"/etc/v2ray-agent/subscribe_local/clashMeta/${user}"
+        cat <<EOF >>"${WORK_DIR}/subscribe_local/clashMeta/${user}"
   - name: "${email}"
     type: vless
     server: ${add}
@@ -4177,8 +4176,8 @@ EOF
       grpc-service-name: ${currentPath}grpc
 EOF
 
-        singBoxSubscribeLocalConfig=$(jq -r ". += [{\"tag\":\"${email}\",\"type\": \"vless\",\"server\": \"${add}\",\"server_port\": ${port},\"uuid\": \"${id}\",\"tls\": {  \"enabled\": true,  \"server_name\": \"${currentHost}\",  \"utls\": {    \"enabled\": true,    \"fingerprint\": \"chrome\"  }},\"packet_encoding\": \"xudp\",\"transport\": {  \"type\": \"grpc\",  \"service_name\": \"${currentPath}grpc\"}}]" "/etc/v2ray-agent/subscribe_local/sing-box/${user}")
-        echo "${singBoxSubscribeLocalConfig}" | jq . >"/etc/v2ray-agent/subscribe_local/sing-box/${user}"
+        singBoxSubscribeLocalConfig=$(jq -r ". += [{\"tag\":\"${email}\",\"type\": \"vless\",\"server\": \"${add}\",\"server_port\": ${port},\"uuid\": \"${id}\",\"tls\": {  \"enabled\": true,  \"server_name\": \"${currentHost}\",  \"utls\": {    \"enabled\": true,    \"fingerprint\": \"chrome\"  }},\"packet_encoding\": \"xudp\",\"transport\": {  \"type\": \"grpc\",  \"service_name\": \"${currentPath}grpc\"}}]" "${WORK_DIR}/subscribe_local/sing-box/${user}")
+        echo "${singBoxSubscribeLocalConfig}" | jq . >"${WORK_DIR}/subscribe_local/sing-box/${user}"
 
         echoContent yellow " ---> 二维码 VLESS(VLESS+gRPC+TLS)"
         echoContent green "    https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=vless%3A%2F%2F${id}%40${add}%3A${port}%3Fencryption%3Dnone%26security%3Dtls%26type%3Dgrpc%26host%3D${currentHost}%26serviceName%3D${currentPath}grpc%26fp%3Dchrome%26path%3D${currentPath}grpc%26sni%3D${currentHost}%26alpn%3Dh2%23${email}"
@@ -4188,11 +4187,11 @@ EOF
         echoContent yellow " ---> Trojan(TLS)"
         echoContent green "    trojan://${id}@${currentHost}:${port}?peer=${currentHost}&fp=chrome&sni=${currentHost}&alpn=http/1.1#${currentHost}_Trojan\n"
 
-        cat <<EOF >>"/etc/v2ray-agent/subscribe_local/default/${user}"
+        cat <<EOF >>"${WORK_DIR}/subscribe_local/default/${user}"
 trojan://${id}@${currentHost}:${port}?peer=${currentHost}&fp=chrome&sni=${currentHost}&alpn=http/1.1#${email}_Trojan
 EOF
 
-        cat <<EOF >>"/etc/v2ray-agent/subscribe_local/clashMeta/${user}"
+        cat <<EOF >>"${WORK_DIR}/subscribe_local/clashMeta/${user}"
   - name: "${email}"
     type: trojan
     server: ${currentHost}
@@ -4202,8 +4201,8 @@ EOF
     udp: true
     sni: ${currentHost}
 EOF
-        singBoxSubscribeLocalConfig=$(jq -r ". += [{\"tag\":\"${email}\",\"type\":\"trojan\",\"server\":\"${currentHost}\",\"server_port\":${port},\"password\":\"${id}\",\"tls\":{\"alpn\":[\"http/1.1\"],\"enabled\":true,\"server_name\":\"${currentHost}\",\"utls\":{\"enabled\":true,\"fingerprint\":\"chrome\"}}}]" "/etc/v2ray-agent/subscribe_local/sing-box/${user}")
-        echo "${singBoxSubscribeLocalConfig}" | jq . >"/etc/v2ray-agent/subscribe_local/sing-box/${user}"
+        singBoxSubscribeLocalConfig=$(jq -r ". += [{\"tag\":\"${email}\",\"type\":\"trojan\",\"server\":\"${currentHost}\",\"server_port\":${port},\"password\":\"${id}\",\"tls\":{\"alpn\":[\"http/1.1\"],\"enabled\":true,\"server_name\":\"${currentHost}\",\"utls\":{\"enabled\":true,\"fingerprint\":\"chrome\"}}}]" "${WORK_DIR}/subscribe_local/sing-box/${user}")
+        echo "${singBoxSubscribeLocalConfig}" | jq . >"${WORK_DIR}/subscribe_local/sing-box/${user}"
 
         echoContent yellow " ---> 二维码 Trojan(TLS)"
         echoContent green "    https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=trojan%3a%2f%2f${id}%40${currentHost}%3a${port}%3fpeer%3d${currentHost}%26fp%3Dchrome%26sni%3d${currentHost}%26alpn%3Dhttp/1.1%23${email}\n"
@@ -4213,10 +4212,10 @@ EOF
 
         echoContent yellow " ---> Trojan gRPC(TLS)"
         echoContent green "    trojan://${id}@${add}:${port}?encryption=none&peer=${currentHost}&fp=chrome&security=tls&type=grpc&sni=${currentHost}&alpn=h2&path=${currentPath}trojangrpc&serviceName=${currentPath}trojangrpc#${email}\n"
-        cat <<EOF >>"/etc/v2ray-agent/subscribe_local/default/${user}"
+        cat <<EOF >>"${WORK_DIR}/subscribe_local/default/${user}"
 trojan://${id}@${add}:${port}?encryption=none&peer=${currentHost}&security=tls&type=grpc&fp=chrome&sni=${currentHost}&alpn=h2&path=${currentPath}trojangrpc&serviceName=${currentPath}trojangrpc#${email}
 EOF
-        cat <<EOF >>"/etc/v2ray-agent/subscribe_local/clashMeta/${user}"
+        cat <<EOF >>"${WORK_DIR}/subscribe_local/clashMeta/${user}"
   - name: "${email}"
     server: ${add}
     port: ${port}
@@ -4229,8 +4228,8 @@ EOF
       grpc-service-name: ${currentPath}trojangrpc
 EOF
 
-        singBoxSubscribeLocalConfig=$(jq -r ". += [{\"tag\":\"${email}\",\"type\":\"trojan\",\"server\":\"${add}\",\"server_port\":${port},\"password\":\"${id}\",\"tls\":{\"enabled\":true,\"server_name\":\"${currentHost}\",\"insecure\":true,\"utls\":{\"enabled\":true,\"fingerprint\":\"chrome\"}},\"transport\":{\"type\":\"grpc\",\"service_name\":\"${currentPath}trojangrpc\",\"idle_timeout\":\"15s\",\"ping_timeout\":\"15s\",\"permit_without_stream\":false},\"multiplex\":{\"enabled\":false,\"protocol\":\"smux\",\"max_streams\":32}}]" "/etc/v2ray-agent/subscribe_local/sing-box/${user}")
-        echo "${singBoxSubscribeLocalConfig}" | jq . >"/etc/v2ray-agent/subscribe_local/sing-box/${user}"
+        singBoxSubscribeLocalConfig=$(jq -r ". += [{\"tag\":\"${email}\",\"type\":\"trojan\",\"server\":\"${add}\",\"server_port\":${port},\"password\":\"${id}\",\"tls\":{\"enabled\":true,\"server_name\":\"${currentHost}\",\"insecure\":true,\"utls\":{\"enabled\":true,\"fingerprint\":\"chrome\"}},\"transport\":{\"type\":\"grpc\",\"service_name\":\"${currentPath}trojangrpc\",\"idle_timeout\":\"15s\",\"ping_timeout\":\"15s\",\"permit_without_stream\":false},\"multiplex\":{\"enabled\":false,\"protocol\":\"smux\",\"max_streams\":32}}]" "${WORK_DIR}/subscribe_local/sing-box/${user}")
+        echo "${singBoxSubscribeLocalConfig}" | jq . >"${WORK_DIR}/subscribe_local/sing-box/${user}"
 
         echoContent yellow " ---> 二维码 Trojan gRPC(TLS)"
         echoContent green "    https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=trojan%3a%2f%2f${id}%40${add}%3a${port}%3Fencryption%3Dnone%26fp%3Dchrome%26security%3Dtls%26peer%3d${currentHost}%26type%3Dgrpc%26sni%3d${currentHost}%26path%3D${currentPath}trojangrpc%26alpn%3Dh2%26serviceName%3D${currentPath}trojangrpc%23${email}\n"
@@ -4247,13 +4246,13 @@ EOF
         fi
 
         echoContent green "    hysteria2://${id}@${currentHost}:${singBoxHysteria2Port}?${multiPort}peer=${currentHost}&insecure=0&sni=${currentHost}&alpn=h3#${email}\n"
-        cat <<EOF >>"/etc/v2ray-agent/subscribe_local/default/${user}"
+        cat <<EOF >>"${WORK_DIR}/subscribe_local/default/${user}"
 hysteria2://${id}@${currentHost}:${singBoxHysteria2Port}?${multiPort}peer=${currentHost}&insecure=0&sni=${currentHost}&alpn=h3#${email}
 EOF
         echoContent yellow " ---> v2rayN(hysteria+TLS)"
         echo "{\"server\": \"${currentHost}:${port}\",\"socks5\": { \"listen\": \"127.0.0.1:7798\", \"timeout\": 300},\"auth\":\"${id}\",\"tls\":{\"sni\":\"${currentHost}\"}}" | jq
 
-        cat <<EOF >>"/etc/v2ray-agent/subscribe_local/clashMeta/${user}"
+        cat <<EOF >>"${WORK_DIR}/subscribe_local/clashMeta/${user}"
   - name: "${email}"
     type: hysteria2
     server: ${currentHost}
@@ -4266,8 +4265,8 @@ EOF
     down: "${hysteria2ClientDownloadSpeed} Mbps"
 EOF
 
-        singBoxSubscribeLocalConfig=$(jq -r ". += [{\"tag\":\"${email}\",\"type\":\"hysteria2\",\"server\":\"${currentHost}\",\"server_port\":${singBoxHysteria2Port},\"up_mbps\":${hysteria2ClientUploadSpeed},\"down_mbps\":${hysteria2ClientDownloadSpeed},\"password\":\"${id}\",\"tls\":{\"enabled\":true,\"server_name\":\"${currentHost}\",\"alpn\":[\"h3\"]}}]" "/etc/v2ray-agent/subscribe_local/sing-box/${user}")
-        echo "${singBoxSubscribeLocalConfig}" | jq . >"/etc/v2ray-agent/subscribe_local/sing-box/${user}"
+        singBoxSubscribeLocalConfig=$(jq -r ". += [{\"tag\":\"${email}\",\"type\":\"hysteria2\",\"server\":\"${currentHost}\",\"server_port\":${singBoxHysteria2Port},\"up_mbps\":${hysteria2ClientUploadSpeed},\"down_mbps\":${hysteria2ClientDownloadSpeed},\"password\":\"${id}\",\"tls\":{\"enabled\":true,\"server_name\":\"${currentHost}\",\"alpn\":[\"h3\"]}}]" "${WORK_DIR}/subscribe_local/sing-box/${user}")
+        echo "${singBoxSubscribeLocalConfig}" | jq . >"${WORK_DIR}/subscribe_local/sing-box/${user}"
 
         echoContent yellow " ---> 二维码 Hysteria2(TLS)"
         echoContent green "    https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=hysteria2%3A%2F%2F${id}%40${currentHost}%3A${singBoxHysteria2Port}%3F${multiPortEncode}peer%3D${currentHost}%26insecure%3D0%26sni%3D${currentHost}%26alpn%3Dh3%23${email}\n"
@@ -4284,10 +4283,10 @@ EOF
 
         echoContent yellow " ---> 格式化明文(VLESS+reality+uTLS+Vision)"
         echoContent green "协议类型:VLESS reality，地址:$(getPublicIP)，publicKey:${publicKey}，shortId: 6ba85179e30d4fc2,serverNames：${realityServerName}，端口:${port}，用户ID:${id}，传输方式:tcp，账户名:${email}\n"
-        cat <<EOF >>"/etc/v2ray-agent/subscribe_local/default/${user}"
+        cat <<EOF >>"${WORK_DIR}/subscribe_local/default/${user}"
 vless://${id}@$(getPublicIP):${port}?encryption=none&security=reality&type=tcp&sni=${realityServerName}&fp=chrome&pbk=${publicKey}&sid=6ba85179e30d4fc2&flow=xtls-rprx-vision#${email}
 EOF
-        cat <<EOF >>"/etc/v2ray-agent/subscribe_local/clashMeta/${user}"
+        cat <<EOF >>"${WORK_DIR}/subscribe_local/clashMeta/${user}"
   - name: "${email}"
     type: vless
     server: $(getPublicIP)
@@ -4304,8 +4303,8 @@ EOF
     client-fingerprint: chrome
 EOF
 
-        singBoxSubscribeLocalConfig=$(jq -r ". += [{\"tag\":\"${email}\",\"type\":\"vless\",\"server\":\"$(getPublicIP)\",\"server_port\":${port},\"uuid\":\"${id}\",\"flow\":\"xtls-rprx-vision\",\"tls\":{\"enabled\":true,\"server_name\":\"${realityServerName}\",\"utls\":{\"enabled\":true,\"fingerprint\":\"chrome\"},\"reality\":{\"enabled\":true,\"public_key\":\"${publicKey}\",\"short_id\":\"6ba85179e30d4fc2\"}},\"packet_encoding\":\"xudp\"}]" "/etc/v2ray-agent/subscribe_local/sing-box/${user}")
-        echo "${singBoxSubscribeLocalConfig}" | jq . >"/etc/v2ray-agent/subscribe_local/sing-box/${user}"
+        singBoxSubscribeLocalConfig=$(jq -r ". += [{\"tag\":\"${email}\",\"type\":\"vless\",\"server\":\"$(getPublicIP)\",\"server_port\":${port},\"uuid\":\"${id}\",\"flow\":\"xtls-rprx-vision\",\"tls\":{\"enabled\":true,\"server_name\":\"${realityServerName}\",\"utls\":{\"enabled\":true,\"fingerprint\":\"chrome\"},\"reality\":{\"enabled\":true,\"public_key\":\"${publicKey}\",\"short_id\":\"6ba85179e30d4fc2\"}},\"packet_encoding\":\"xudp\"}]" "${WORK_DIR}/subscribe_local/sing-box/${user}")
+        echo "${singBoxSubscribeLocalConfig}" | jq . >"${WORK_DIR}/subscribe_local/sing-box/${user}"
 
         echoContent yellow " ---> 二维码 VLESS(VLESS+reality+uTLS+Vision)"
         echoContent green "    https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=vless%3A%2F%2F${id}%40$(getPublicIP)%3A${port}%3Fencryption%3Dnone%26security%3Dreality%26type%3Dtcp%26sni%3D${realityServerName}%26fp%3Dchrome%26pbk%3D${publicKey}%26sid%3D6ba85179e30d4fc2%26flow%3Dxtls-rprx-vision%23${email}\n"
@@ -4323,10 +4322,10 @@ EOF
 
         echoContent yellow " ---> 格式化明文(VLESS+reality+uTLS+gRPC)"
         echoContent green "协议类型:VLESS reality，serviceName:grpc，地址:$(getPublicIP)，publicKey:${publicKey}，shortId: 6ba85179e30d4fc2，serverNames：${realityServerName}，端口:${port}，用户ID:${id}，传输方式:gRPC，client-fingerprint：chrome，账户名:${email}\n"
-        cat <<EOF >>"/etc/v2ray-agent/subscribe_local/default/${user}"
+        cat <<EOF >>"${WORK_DIR}/subscribe_local/default/${user}"
 vless://${id}@$(getPublicIP):${port}?encryption=none&security=reality&type=grpc&sni=${realityServerName}&fp=chrome&pbk=${publicKey}&sid=6ba85179e30d4fc2&path=grpc&serviceName=grpc#${email}
 EOF
-        cat <<EOF >>"/etc/v2ray-agent/subscribe_local/clashMeta/${user}"
+        cat <<EOF >>"${WORK_DIR}/subscribe_local/clashMeta/${user}"
   - name: "${email}"
     type: vless
     server: $(getPublicIP)
@@ -4344,8 +4343,8 @@ EOF
     client-fingerprint: chrome
 EOF
 
-        singBoxSubscribeLocalConfig=$(jq -r ". += [{\"tag\":\"${email}\",\"type\":\"vless\",\"server\":\"$(getPublicIP)\",\"server_port\":${port},\"uuid\":\"${id}\",\"tls\":{\"enabled\":true,\"server_name\":\"${realityServerName}\",\"utls\":{\"enabled\":true,\"fingerprint\":\"chrome\"},\"reality\":{\"enabled\":true,\"public_key\":\"${publicKey}\",\"short_id\":\"6ba85179e30d4fc2\"}},\"packet_encoding\":\"xudp\",\"transport\":{\"type\":\"grpc\",\"service_name\":\"grpc\"}}]" "/etc/v2ray-agent/subscribe_local/sing-box/${user}")
-        echo "${singBoxSubscribeLocalConfig}" | jq . >"/etc/v2ray-agent/subscribe_local/sing-box/${user}"
+        singBoxSubscribeLocalConfig=$(jq -r ". += [{\"tag\":\"${email}\",\"type\":\"vless\",\"server\":\"$(getPublicIP)\",\"server_port\":${port},\"uuid\":\"${id}\",\"tls\":{\"enabled\":true,\"server_name\":\"${realityServerName}\",\"utls\":{\"enabled\":true,\"fingerprint\":\"chrome\"},\"reality\":{\"enabled\":true,\"public_key\":\"${publicKey}\",\"short_id\":\"6ba85179e30d4fc2\"}},\"packet_encoding\":\"xudp\",\"transport\":{\"type\":\"grpc\",\"service_name\":\"grpc\"}}]" "${WORK_DIR}/subscribe_local/sing-box/${user}")
+        echo "${singBoxSubscribeLocalConfig}" | jq . >"${WORK_DIR}/subscribe_local/sing-box/${user}"
 
         echoContent yellow " ---> 二维码 VLESS(VLESS+reality+uTLS+gRPC)"
         echoContent green "    https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=vless%3A%2F%2F${id}%40$(getPublicIP)%3A${port}%3Fencryption%3Dnone%26security%3Dreality%26type%3Dgrpc%26sni%3D${realityServerName}%26fp%3Dchrome%26pbk%3D${publicKey}%26sid%3D6ba85179e30d4fc2%26path%3Dgrpc%26serviceName%3Dgrpc%23${email}\n"
@@ -4364,13 +4363,13 @@ EOF
         echoContent yellow " ---> 格式化明文(Tuic+TLS)"
         echoContent green "    协议类型:Tuic，地址:${currentHost}，端口：${port}，uuid：${tuicUUID}，password：${tuicPassword}，congestion-controller:${tuicAlgorithm}，alpn: h3，账户名:${email}\n"
 
-        cat <<EOF >>"/etc/v2ray-agent/subscribe_local/default/${user}"
+        cat <<EOF >>"${WORK_DIR}/subscribe_local/default/${user}"
 tuic://${tuicUUID}:${tuicPassword}@${currentHost}:${port}?congestion_control=${tuicAlgorithm}&alpn=h3&sni=${currentHost}&udp_relay_mode=quic&allow_insecure=0#${email}
 EOF
         echoContent yellow " ---> v2rayN(Tuic+TLS)"
         echo "{\"relay\": {\"server\": \"${currentHost}:${port}\",\"uuid\": \"${tuicUUID}\",\"password\": \"${tuicPassword}\",\"ip\": \"${currentHost}\",\"congestion_control\": \"${tuicAlgorithm}\",\"alpn\": [\"h3\"]},\"local\": {\"server\": \"127.0.0.1:7798\"},\"log_level\": \"warn\"}" | jq
 
-        cat <<EOF >>"/etc/v2ray-agent/subscribe_local/clashMeta/${user}"
+        cat <<EOF >>"${WORK_DIR}/subscribe_local/clashMeta/${user}"
   - name: "${email}"
     server: ${currentHost}
     type: tuic
@@ -4385,8 +4384,8 @@ EOF
     sni: ${email}
 EOF
 
-        singBoxSubscribeLocalConfig=$(jq -r ". += [{\"tag\":\"${email}\",\"type\": \"tuic\",\"server\": \"${currentHost}\",\"server_port\": ${port},\"uuid\": \"${tuicUUID}\",\"password\": \"${tuicPassword}\",\"congestion_control\": \"${tuicAlgorithm}\",\"tls\": {\"enabled\": true,\"server_name\": \"${currentHost}\",\"alpn\": [\"h3\"]}}]" "/etc/v2ray-agent/subscribe_local/sing-box/${user}")
-        echo "${singBoxSubscribeLocalConfig}" | jq . >"/etc/v2ray-agent/subscribe_local/sing-box/${user}"
+        singBoxSubscribeLocalConfig=$(jq -r ". += [{\"tag\":\"${email}\",\"type\": \"tuic\",\"server\": \"${currentHost}\",\"server_port\": ${port},\"uuid\": \"${tuicUUID}\",\"password\": \"${tuicPassword}\",\"congestion_control\": \"${tuicAlgorithm}\",\"tls\": {\"enabled\": true,\"server_name\": \"${currentHost}\",\"alpn\": [\"h3\"]}}]" "${WORK_DIR}/subscribe_local/sing-box/${user}")
+        echo "${singBoxSubscribeLocalConfig}" | jq . >"${WORK_DIR}/subscribe_local/sing-box/${user}"
 
         echoContent yellow "\n ---> 二维码 Tuic"
         echoContent green "    https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=tuic%3A%2F%2F${tuicUUID}%3A${tuicPassword}%40${currentHost}%3A${tuicPort}%3Fcongestion_control%3D${tuicAlgorithm}%26alpn%3Dh3%26sni%3D${currentHost}%26udp_relay_mode%3Dquic%26allow_insecure%3D0%23${email}\n"
@@ -4394,7 +4393,7 @@ EOF
         echoContent yellow " ---> Naive(TLS)"
 
         echoContent green "    naive+https://${email}:${id}@${currentHost}:${port}?padding=true#${email}\n"
-        cat <<EOF >>"/etc/v2ray-agent/subscribe_local/default/${user}"
+        cat <<EOF >>"${WORK_DIR}/subscribe_local/default/${user}"
 naive+https://${email}:${id}@${currentHost}:${port}?padding=true#${email}
 EOF
         echoContent yellow " ---> 二维码 Naive(TLS)"
@@ -4409,10 +4408,10 @@ EOF
         echoContent green "    vmess://${qrCodeBase64Default}\n"
         echoContent yellow " ---> 二维码 vmess(VMess+HTTPUpgrade+TLS)"
 
-        cat <<EOF >>"/etc/v2ray-agent/subscribe_local/default/${user}"
+        cat <<EOF >>"${WORK_DIR}/subscribe_local/default/${user}"
    vmess://${qrCodeBase64Default}
 EOF
-        cat <<EOF >>"/etc/v2ray-agent/subscribe_local/clashMeta/${user}"
+        cat <<EOF >>"${WORK_DIR}/subscribe_local/clashMeta/${user}"
   - name: "${email}"
     type: vmess
     server: ${add}
@@ -4431,9 +4430,9 @@ EOF
        Host: ${currentHost}
      v2ray-http-upgrade: true
 EOF
-        singBoxSubscribeLocalConfig=$(jq -r ". += [{\"tag\":\"${email}\",\"type\":\"vmess\",\"server\":\"${add}\",\"server_port\":${port},\"uuid\":\"${id}\",\"security\":\"auto\",\"alter_id\":0,\"tls\":{\"enabled\":true,\"server_name\":\"${currentHost}\",\"utls\":{\"enabled\":true,\"fingerprint\":\"chrome\"}},\"packet_encoding\":\"packetaddr\",\"transport\":{\"type\":\"httpupgrade\",\"path\":\"${path}\"}}]" "/etc/v2ray-agent/subscribe_local/sing-box/${user}")
+        singBoxSubscribeLocalConfig=$(jq -r ". += [{\"tag\":\"${email}\",\"type\":\"vmess\",\"server\":\"${add}\",\"server_port\":${port},\"uuid\":\"${id}\",\"security\":\"auto\",\"alter_id\":0,\"tls\":{\"enabled\":true,\"server_name\":\"${currentHost}\",\"utls\":{\"enabled\":true,\"fingerprint\":\"chrome\"}},\"packet_encoding\":\"packetaddr\",\"transport\":{\"type\":\"httpupgrade\",\"path\":\"${path}\"}}]" "${WORK_DIR}/subscribe_local/sing-box/${user}")
 
-        echo "${singBoxSubscribeLocalConfig}" | jq . >"/etc/v2ray-agent/subscribe_local/sing-box/${user}"
+        echo "${singBoxSubscribeLocalConfig}" | jq . >"${WORK_DIR}/subscribe_local/sing-box/${user}"
 
         echoContent green "    https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=vmess://${qrCodeBase64Default}\n"
 
@@ -4721,12 +4720,12 @@ unInstall() {
         fi
     fi
 
-    rm -rf /etc/v2ray-agent
+    rm -rf ${WORK_DIR}
 
     rm -rf /usr/bin/vasma
     rm -rf /usr/sbin/vasma
     echoContent green " ---> 卸载快捷方式完成"
-    echoContent green " ---> 卸载v2ray-agent脚本完成"
+    echoContent green " ---> 卸载脚本完成"
 }
 
 # 自定义uuid
@@ -5130,13 +5129,13 @@ EOF
         tail -f ${configPathLog}error.log
         ;;
     4)
-        if [[ ! -f "/etc/v2ray-agent/crontab_tls.log" ]]; then
-            touch /etc/v2ray-agent/crontab_tls.log
+        if [[ ! -f "${WORK_DIR}/crontab_tls.log" ]]; then
+            touch ${WORK_DIR}/crontab_tls.log
         fi
-        tail -n 100 /etc/v2ray-agent/crontab_tls.log
+        tail -n 100 ${WORK_DIR}/crontab_tls.log
         ;;
     5)
-        tail -n 100 /etc/v2ray-agent/tls/acme.log
+        tail -n 100 ${WORK_DIR}/tls/acme.log
         ;;
     6)
         echo >${configPathLog}access.log
@@ -5179,8 +5178,7 @@ ipv6Routing() {
     elif [[ "${ipv6Status}" == "2" ]]; then
         echoContent red "=============================================================="
         echoContent yellow "# 注意事项\n"
-        echoContent yellow "# 注意事项"
-        echoContent yellow "# 使用教程：https://www.v2ray-agent.com/archives/1683226921000 \n"
+        echoContent yellow "# 注意事项\n"
 
         read -r -p "请按照上面示例录入域名:" domainList
         if [[ "${coreInstallType}" == "1" ]]; then
@@ -5399,22 +5397,22 @@ installSniffing() {
 
 # 读取第三方warp配置
 readConfigWarpReg() {
-    if [[ ! -f "/etc/v2ray-agent/warp/config" ]]; then
-        /etc/v2ray-agent/warp/warp-reg >/etc/v2ray-agent/warp/config
+    if [[ ! -f "${WORK_DIR}/warp/config" ]]; then
+        ${WORK_DIR}/warp/warp-reg >${WORK_DIR}/warp/config
     fi
 
-    secretKeyWarpReg=$(grep <"/etc/v2ray-agent/warp/config" private_key | awk '{print $2}')
+    secretKeyWarpReg=$(grep <"${WORK_DIR}/warp/config" private_key | awk '{print $2}')
 
-    addressWarpReg=$(grep <"/etc/v2ray-agent/warp/config" v6 | awk '{print $2}')
+    addressWarpReg=$(grep <"${WORK_DIR}/warp/config" v6 | awk '{print $2}')
 
-    publicKeyWarpReg=$(grep <"/etc/v2ray-agent/warp/config" public_key | awk '{print $2}')
+    publicKeyWarpReg=$(grep <"${WORK_DIR}/warp/config" public_key | awk '{print $2}')
 
-    reservedWarpReg=$(grep <"/etc/v2ray-agent/warp/config" reserved | awk -F "[:]" '{print $2}')
+    reservedWarpReg=$(grep <"${WORK_DIR}/warp/config" reserved | awk -F "[:]" '{print $2}')
 
 }
 # 安装warp-reg工具
 installWarpReg() {
-    if [[ ! -f "/etc/v2ray-agent/warp/warp-reg" ]]; then
+    if [[ ! -f "${WORK_DIR}/warp/warp-reg" ]]; then
         echo
         echoContent yellow "# 注意事项"
         echoContent yellow "# 依赖第三方程序，请熟知其中风险"
@@ -5424,8 +5422,8 @@ installWarpReg() {
 
         if [[ "${installWarpRegStatus}" == "y" ]]; then
 
-            curl -sLo /etc/v2ray-agent/warp/warp-reg "https://github.com/badafans/warp-reg/releases/download/v1.0/${warpRegCoreCPUVendor}"
-            chmod 655 /etc/v2ray-agent/warp/warp-reg
+            curl -sLo ${WORK_DIR}/warp/warp-reg "https://github.com/badafans/warp-reg/releases/download/v1.0/${warpRegCoreCPUVendor}"
+            chmod 655 ${WORK_DIR}/warp/warp-reg
 
         else
             echoContent yellow " ---> 放弃安装"
@@ -5495,11 +5493,11 @@ unInstallWireGuard() {
 
         if [[ "${type}" == "IPv4" ]]; then
             if [[ ! -f "${configPath}wireguard_out_IPv6.json" ]]; then
-                rm -rf /etc/v2ray-agent/warp/config >/dev/null 2>&1
+                rm -rf ${WORK_DIR}/warp/config >/dev/null 2>&1
             fi
         elif [[ "${type}" == "IPv6" ]]; then
             if [[ ! -f "${configPath}wireguard_out_IPv4.json" ]]; then
-                rm -rf /etc/v2ray-agent/warp/config >/dev/null 2>&1
+                rm -rf ${WORK_DIR}/warp/config >/dev/null 2>&1
             fi
         fi
     fi
@@ -5507,7 +5505,7 @@ unInstallWireGuard() {
     if [[ -n "${singBoxConfigPath}" ]]; then
         if [[ ! -f "${singBoxConfigPath}wireguard_out_IPv6_route.json" && ! -f "${singBoxConfigPath}wireguard_out_IPv4_route.json" ]]; then
             rm "${singBoxConfigPath}wireguard_outbound.json" >/dev/null 2>&1
-            rm -rf /etc/v2ray-agent/warp/config >/dev/null 2>&1
+            rm -rf ${WORK_DIR}/warp/config >/dev/null 2>&1
         fi
     fi
 }
@@ -5559,8 +5557,7 @@ warpRoutingReg() {
         exit 0
     elif [[ "${warpStatus}" == "2" ]]; then
         echoContent yellow "# 注意事项"
-        echoContent yellow "# 支持sing-box、Xray-core"
-        echoContent yellow "# 使用教程：https://www.v2ray-agent.com/archives/1683226921000 \n"
+        echoContent yellow "# 支持sing-box、Xray-core\n"
 
         read -r -p "请按照上面示例录入域名:" domainList
         addWireGuardRoute "${type}" outboundTag "${domainList}"
@@ -5702,8 +5699,7 @@ routingToolsMenu() {
 vmessWSRouting() {
     echoContent skyBlue "\n功能 1/${totalProgress} : VMess+WS+TLS 分流"
     echoContent red "\n=============================================================="
-    echoContent yellow "# 注意事项"
-    echoContent yellow "# 使用教程：https://www.v2ray-agent.com/archives/1683226921000 \n"
+    echoContent yellow "# 注意事项\n"
 
     echoContent yellow "1.添加出站"
     echoContent yellow "2.卸载"
@@ -5729,8 +5725,7 @@ socks5Routing() {
     echoContent red "# 注意事项"
     echoContent yellow "# 流量明文访问"
 
-    echoContent yellow "# 只能用于不会被阻断访问的网络环境下的不同机器之间的流量转发，请不要用于代理访问"
-    echoContent yellow "# 使用教程：https://www.v2ray-agent.com/archives/1683226921000#heading-5 \n"
+    echoContent yellow "# 只能用于不会被阻断访问的网络环境下的不同机器之间的流量转发，请不要用于代理访问\n"
 
     echoContent yellow "1.Socks5出站"
     echoContent yellow "2.Socks5入站"
@@ -5969,9 +5964,9 @@ setSocks5Inbound() {
     read -r -p 'UUID:' socks5RoutingUUID
     if [[ -z "${socks5RoutingUUID}" ]]; then
         if [[ "${coreInstallType}" == "1" ]]; then
-            socks5RoutingUUID=$(/etc/v2ray-agent/xray/xray uuid)
+            socks5RoutingUUID=$(${WORK_DIR}/xray/xray uuid)
         elif [[ -n "${singBoxConfigPath}" ]]; then
-            socks5RoutingUUID=$(/etc/v2ray-agent/sing-box/sing-box generate uuid)
+            socks5RoutingUUID=$(${WORK_DIR}/sing-box/sing-box generate uuid)
         fi
     fi
     echo
@@ -5993,7 +5988,7 @@ setSocks5Inbound() {
         echoContent red " ---> 选择类型错误"
         exit 0
     fi
-    cat <<EOF >/etc/v2ray-agent/sing-box/conf/config/20_socks5_inbounds.json
+    cat <<EOF >${WORK_DIR}/sing-box/conf/config/20_socks5_inbounds.json
 {
     "inbounds":[
         {
@@ -6035,7 +6030,7 @@ initSingBoxRules() {
 # socks5 inbound routing规则
 setSocks5InboundRouting() {
 
-    singBoxConfigPath=/etc/v2ray-agent/sing-box/conf/config/
+    singBoxConfigPath=${WORK_DIR}/sing-box/conf/config/
 
     if [[ "$1" == "addRules" && ! -f "${singBoxConfigPath}socks5_inbound_route.json" && ! -f "${configPath}09_routing.json" ]]; then
         echoContent red " ---> 请安装入站分流后再添加分流规则"
@@ -6075,7 +6070,6 @@ setSocks5InboundRouting() {
         addSingBoxOutbound block
         addSingBoxOutbound "01_direct_outbound"
     else
-        echoContent yellow "录入示例:netflix,openai,v2ray-agent.com\n"
         read -r -p "域名:" socks5InboundRoutingDomain
         if [[ -z "${socks5InboundRoutingDomain}" ]]; then
             echoContent red " ---> 域名不可为空"
@@ -6158,7 +6152,6 @@ setSocks5OutboundRouting() {
     echoContent yellow "非增量添加，会替换原有规则\n"
     echoContent yellow "当输入的规则匹配到geosite或者rule_set后会使用相应的规则\n"
     echoContent yellow "如无法匹配则，则使用domain精确匹配\n"
-    echoContent yellow "录入示例:netflix,openai,v2ray-agent.com\n"
     read -r -p "域名:" socks5RoutingOutboundDomain
     if [[ -z "${socks5RoutingOutboundDomain}" ]]; then
         echoContent red " ---> IP不可为空"
@@ -6278,8 +6271,7 @@ dnsRouting() {
     fi
     echoContent skyBlue "\n功能 1/${totalProgress} : DNS分流"
     echoContent red "\n=============================================================="
-    echoContent yellow "# 注意事项"
-    echoContent yellow "# 使用教程：https://www.v2ray-agent.com/archives/1683226921000 \n"
+    echoContent yellow "# 注意事项\n"
 
     echoContent yellow "1.添加"
     echoContent yellow "2.卸载"
@@ -6305,8 +6297,7 @@ sniRouting() {
     fi
     echoContent skyBlue "\n功能 1/${totalProgress} : SNI反向代理分流"
     echoContent red "\n=============================================================="
-    echoContent yellow "# 注意事项"
-    echoContent yellow "# 使用教程：https://www.v2ray-agent.com/archives/1683226921000 \n"
+    echoContent yellow "# 注意事项\n"
 
     echoContent yellow "1.添加"
     echoContent yellow "2.卸载"
@@ -6676,7 +6667,7 @@ unInstallHysteriaCore() {
 
         deleteHysteriaPortHoppingRules
         handleHysteria stop
-        rm -rf /etc/v2ray-agent/hysteria/*
+        rm -rf ${WORK_DIR}/hysteria/*
         rm ${configPath}02_socks_inbounds_hysteria.json
         rm -rf /etc/systemd/system/hysteria.service
         echoContent green " ---> 卸载完成"
@@ -6690,7 +6681,7 @@ unInstallTuicCore() {
         echoContent yellow " ---> 新版本依赖sing-box，检测到旧版本Tuic，执行卸载操作"
 
         handleTuic stop
-        rm -rf /etc/v2ray-agent/tuic/*
+        rm -rf ${WORK_DIR}/tuic/*
         rm -rf /etc/systemd/system/tuic.service
         echoContent green " ---> 卸载完成"
     fi
@@ -6707,8 +6698,8 @@ unInstallXrayCoreReality() {
     echoContent yellow "# 仅删除VLESS Reality相关配置，不会删除其他内容。"
     echoContent yellow "# 如果需要卸载其他内容，请卸载脚本功能"
     handleXray stop
-    rm /etc/v2ray-agent/xray/conf/07_VLESS_vision_reality_inbounds.json
-    rm /etc/v2ray-agent/xray/conf/08_VLESS_vision_gRPC_inbounds.json
+    rm ${WORK_DIR}/xray/conf/07_VLESS_vision_reality_inbounds.json
+    rm ${WORK_DIR}/xray/conf/08_VLESS_vision_gRPC_inbounds.json
     echoContent green " ---> 卸载完成"
 }
 
@@ -6736,8 +6727,8 @@ coreVersionManageMenu() {
 # 定时任务检查
 cronFunction() {
     if  [[ "${cronName}" == "UpdateGeo" ]]; then
-        updateGeoSite >>/etc/v2ray-agent/crontab_updateGeoSite.log
-        echoContent green " ---> geo更新日期:$(date "+%F %H:%M:%S")" >>/etc/v2ray-agent/crontab_updateGeoSite.log
+        updateGeoSite >>${WORK_DIR}/crontab_updateGeoSite.log
+        echoContent green " ---> geo更新日期:$(date "+%F %H:%M:%S")" >>${WORK_DIR}/crontab_updateGeoSite.log
         exit 0
     fi
 }
@@ -6779,7 +6770,7 @@ manageAccount() {
 clashMetaConfig() {
     local url=$1
     local id=$2
-    cat <<EOF >"/etc/v2ray-agent/subscribe/clashMetaProfiles/${id}"
+    cat <<EOF >"${WORK_DIR}/subscribe/clashMetaProfiles/${id}"
 mixed-port: 7890
 unified-delay: false
 geodata-mode: true
@@ -7220,12 +7211,12 @@ initRealityKey() {
     fi
     if [[ -z "${realityPrivateKey}" ]]; then
         if [[ "${selectCoreType}" == "1" || "${coreInstallType}" == "1" ]]; then
-            realityX25519Key=$(/etc/v2ray-agent/sing-box/sing-box generate reality-keypair)
+            realityX25519Key=$(${WORK_DIR}/sing-box/sing-box generate reality-keypair)
             realityPrivateKey=$(echo "${realityX25519Key}" | head -1 | awk '{print $2}')
             realityPublicKey=$(echo "${realityX25519Key}" | tail -n 1 | awk '{print $2}')
-            echo "publicKey:${realityPublicKey}" >/etc/v2ray-agent/sing-box/conf/config/reality_key
+            echo "publicKey:${realityPublicKey}" >${WORK_DIR}/sing-box/conf/config/reality_key
         else
-            realityX25519Key=$(/etc/v2ray-agent/xray/xray x25519)
+            realityX25519Key=$(${WORK_DIR}/xray/xray x25519)
             realityPrivateKey=$(echo "${realityX25519Key}" | head -1 | awk '{print $3}')
             realityPublicKey=$(echo "${realityX25519Key}" | tail -n 1 | awk '{print $3}')
         fi
@@ -7256,7 +7247,6 @@ initRealityDest() {
         realityDestDomainList="gateway.icloud.com,itunes.apple.com,swdist.apple.com,swcdn.apple.com,updates.cdn-apple.com,mensura.cdn-apple.com,osxapps.itunes.apple.com,aod.itunes.apple.com,download-installer.cdn.mozilla.net,addons.mozilla.org,s0.awsstatic.com,d1.awsstatic.com,images-na.ssl-images-amazon.com,m.media-amazon.com,player.live-video.net,one-piece.com,lol.secure.dyn.riotcdn.net,www.lovelive-anime.jp,www.swift.com,academy.nvidia.com,www.cisco.com,www.samsung.com,www.amd.com,cdn-dynmedia-1.microsoft.com,software.download.prss.microsoft.com,dl.google.com,www.google-analytics.com"
 
         echoContent skyBlue "\n===== 生成配置回落的域名 例如:[addons.mozilla.org:443] ======\n"
-        echoContent green "回落域名列表：https://www.v2ray-agent.com/archives/1680104902581#heading-8\n"
         read -r -p "请输入[回车]使用随机:" realityDestDomain
         if [[ -z "${realityDestDomain}" ]]; then
             local randomNum=
@@ -7305,7 +7295,6 @@ initRealityClientServersName() {
         realityDomainPort=443
         echoContent skyBlue "\n================ 配置客户端可用的serverNames ===============\n"
         echoContent yellow "#注意事项"
-        echoContent green "Reality目标可用域名列表：https://www.v2ray-agent.com/archives/1689439383686#heading-3\n"
         echoContent yellow "录入示例:addons.mozilla.org:443\n"
         read -r -p "请输入目标域名，[回车]随机域名，默认端口443:" realityServerName
         if [[ -z "${realityServerName}" ]]; then
@@ -7408,7 +7397,7 @@ manageReality() {
     readSingBoxConfig
 
     if ! echo "${currentInstallProtocolType}" | grep -q -E "7,|8," || [[ -z "${coreInstallType}" ]]; then
-        echoContent white "\n ---> 请先安装Reality协议，参考教程 https://www.v2ray-agent.com/archives/1680104902581#heading-11"
+        echoContent white "\n ---> 请先安装Reality协议"
         exit 0
     fi
 
@@ -7430,10 +7419,10 @@ manageReality() {
 
 # 安装reality scanner
 installRealityScanner() {
-    if [[ ! -f "/etc/v2ray-agent/xray/reality_scan/RealiTLScanner-linux-64" ]]; then
+    if [[ ! -f "${WORK_DIR}/xray/reality_scan/RealiTLScanner-linux-64" ]]; then
         version=$(curl -s https://api.github.com/repos/XTLS/RealiTLScanner/releases?per_page=1 | jq -r '.[]|.tag_name')
-        wget -c -q -P /etc/v2ray-agent/xray/reality_scan/ "https://github.com/XTLS/RealiTLScanner/releases/download/${version}/RealiTLScanner-linux-64"
-        chmod 655 /etc/v2ray-agent/xray/reality_scan/RealiTLScanner-linux-64
+        wget -c -q -P ${WORK_DIR}/xray/reality_scan/ "https://github.com/XTLS/RealiTLScanner/releases/download/${version}/RealiTLScanner-linux-64"
+        chmod 655 ${WORK_DIR}/xray/reality_scan/RealiTLScanner-linux-64
     fi
 }
 # reality scanner
@@ -7469,8 +7458,8 @@ realityScanner() {
 
     read -r -p "IP是否正确？[y/n]:" ipStatus
     if [[ "${ipStatus}" == "y" ]]; then
-        echoContent yellow "结果存储在 /etc/v2ray-agent/xray/reality_scan/result.log 文件中\n"
-        /etc/v2ray-agent/xray/reality_scan/RealiTLScanner-linux-64 -addr "${publicIP}" | tee /etc/v2ray-agent/xray/reality_scan/result.log
+        echoContent yellow "结果存储在 ${WORK_DIR}/xray/reality_scan/result.log 文件中\n"
+        ${WORK_DIR}/xray/reality_scan/RealiTLScanner-linux-64 -addr "${publicIP}" | tee ${WORK_DIR}/xray/reality_scan/result.log
     else
         echoContent red " ---> 无法读取正确IP"
     fi
@@ -7480,7 +7469,7 @@ manageHysteria() {
     echoContent white "\n进度  1/1 : Hysteria2 管理"
     echoContent white "\n=============================================================="
     local hysteria2Status=
-    if [[ -n "${singBoxConfigPath}" ]] && [[ -f "/etc/v2ray-agent/sing-box/conf/config/06_hysteria2_inbounds.json" ]]; then
+    if [[ -n "${singBoxConfigPath}" ]] && [[ -f "${WORK_DIR}/sing-box/conf/config/06_hysteria2_inbounds.json" ]]; then
         echoContent white "依赖第三方sing-box\n"
         echoContent white "1.重新安装"
         echoContent white "2.卸载"
@@ -7507,7 +7496,7 @@ manageTuic() {
     echoContent white "\n进度  1/1 : Tuic管理"
     echoContent white "\n=============================================================="
     local tuicStatus=
-    if [[ -n "${singBoxConfigPath}" ]] && [[ -f "/etc/v2ray-agent/sing-box/conf/config/09_tuic_inbounds.json" ]]; then
+    if [[ -n "${singBoxConfigPath}" ]] && [[ -f "${WORK_DIR}/sing-box/conf/config/09_tuic_inbounds.json" ]]; then
         echoContent white "依赖sing-box内核\n"
         echoContent white "1.重新安装"
         echoContent white "2.卸载"
@@ -7527,12 +7516,12 @@ manageTuic() {
 }
 # sing-box log日志
 singBoxLog() {
-    cat <<EOF >/etc/v2ray-agent/sing-box/conf/config/log.json
+    cat <<EOF >${WORK_DIR}/sing-box/conf/config/log.json
 {
   "log": {
     "disabled": $1,
     "level": "debug",
-    "output": "/etc/v2ray-agent/sing-box/conf/box.log",
+    "output": "${WORK_DIR}/sing-box/conf/box.log",
     "timestamp": true
   }
 }
@@ -7544,7 +7533,7 @@ EOF
 # hysteria版本管理
 hysteriaVersionManageMenu() {
     echoContent skyBlue "\n进度  $1/${totalProgress} : Hysteria版本管理"
-    if [[ ! -d "/etc/v2ray-agent/hysteria/" ]]; then
+    if [[ ! -d "${WORK_DIR}/hysteria/" ]]; then
         echoContent red " ---> 没有检测到安装目录，请执行脚本安装内容"
         menu
         exit 0
