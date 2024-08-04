@@ -7679,6 +7679,10 @@ menu() {
     10)
         unInstall 1
         ;;
+
+    0)
+		exit 0
+		;;
     esac
 }
 cronFunction
