@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh ${work_path}/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.9100 Build240804"
+main_version="V1.0.9110 Build240804"
 work_path="/opt/CherryScript"
 
 main_menu_start() {
@@ -3809,22 +3809,15 @@ restore_ip46() {
   if [[ -f $GAICONF ]]; then
     sed -i "/$MARK/d" $GAICONF
   fi
-  if [[ "$@" = 'info' ]]; then echo -e "${Green}已还原为默认配置${White}";check_ip46; fi
+  if [[ "$@" = 'info' ]]; then echo -e "${Green}已还原为默认配置${White}"; fi
 }
 prefer_ipv4() {
   echo "precedence ::ffff:0:0/96  100 $MARK" >>$GAICONF
-  check_ip46
 }
 prefer_ipv6() {
   echo "label 2002::/16   2 $MARK" >>$GAICONF
-  check_ip46
 }
-check_ip46() {
-  echo -e "${Green}检测访问网络优先级 (显示IPv4, 则为IPv4优先; 显示IPv6, 则为IPv6优先):${White}"
-  curl ip.sb
-  echo -e "${Yellow}PS: IPv6优先, 并不能保证所有请求都走IPv6, 某些客户端可能需要额外设定${White}"
-  echo "比如: xray/v2ray设定UseIPv6, ss设定ipv6_first, trojan设定prefer_ipv4, hy2设定 direct.mode"
-}
+
 
 # = enable/disable IPv6
 restore_ipv6() {
