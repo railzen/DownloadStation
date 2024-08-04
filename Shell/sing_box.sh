@@ -6,7 +6,7 @@ VERSION='v1.0.064 build240803'
 function rand() {  min=$1 ; max=$(($2-$min+1)) ; num=$(date +%s%n) ; echo $(($num%$max+$min)) ; } #增加一个十位数再求余
 # 各变量默认值
 TEMP_DIR='/tmp/cherry-sing-box'
-WORK_DIR='/opt/CherryScript/work/sing-box'
+WORK_DIR_SUB='/opt/CherryScript/work/sing-box'
 MIN_PORT=1000
 MAX_PORT=65520
 START_PORT_DEFAULT=$(rand $MIN_PORT $MAX_PORT) 
@@ -62,7 +62,7 @@ check_arch() {
 # 查安装及运行状态；状态码: 26 未安装， 27 已安装未运行， 28 运行中
 check_install() {
   STATUS="未安装" && [ -s /etc/systemd/system/sing-box.service ] && STATUS="关闭" && [ "$(systemctl is-active sing-box)" = 'active' ] && STATUS="开启"
-  if [[ $STATUS = "未安装" ]] && [ ! -s $WORK_DIR/sing-box ]; then
+  if [[ $STATUS = "未安装" ]] && [ ! -s $WORK_DIR_SUB/sing-box ]; then
     {
     local VERSION_LATEST=$(wget --no-check-certificate -qO- "https://api.github.com/repos/SagerNet/sing-box/releases" | awk -F '["v-]' '/tag_name/{print $5}' | sort -r | sed -n '1p')
     local ONLINE=$(wget --no-check-certificate -qO- "https://api.github.com/repos/SagerNet/sing-box/releases" | awk -F '["v]' -v var="tag_name.*$VERSION_LATEST" '$0 ~ var {print $5; exit}')
@@ -210,7 +210,13 @@ Sing-Box 管理脚本 $VERSION
     echo -e "\n=================================================="
     echo -e " 0.退出"
     echo -e "==================================================\n"
-    reading "\n 请选择: " CHOOSE_PROTOCOLS
+    if [[ "${flagInstallSS2022}" == "Install" ]]; then
+      CHOOSE_PROTOCOLS="f"
+      break;
+    else
+      reading "\n 请选择: " CHOOSE_PROTOCOLS
+    fi;
+      
   fi
   
   if [[ "${CHOOSE_PROTOCOLS}" == "0" ]]; then
@@ -335,8 +341,8 @@ check_dependencies() {
 
 # 生成100年的自签证书
 ssl_certificate() {
-  mkdir -p $WORK_DIR/cert
-  openssl ecparam -genkey -name prime256v1 -out $WORK_DIR/cert/private.key && openssl req -new -x509 -days 36500 -key $WORK_DIR/cert/private.key -out $WORK_DIR/cert/cert.pem -subj "/CN=$(awk -F . '{print $(NF-1)"."$NF}' <<< "$TLS_SERVER_DEFAULT")"
+  mkdir -p $WORK_DIR_SUB/cert
+  openssl ecparam -genkey -name prime256v1 -out $WORK_DIR_SUB/cert/private.key && openssl req -new -x509 -days 36500 -key $WORK_DIR_SUB/cert/private.key -out $WORK_DIR_SUB/cert/cert.pem -subj "/CN=$(awk -F . '{print $(NF-1)"."$NF}' <<< "$TLS_SERVER_DEFAULT")"
 }
 
 # 处理防火墙规则
@@ -348,121 +354,32 @@ check_firewall_configuration() {
   fi
 }
 
-# Nginx 配置文件
-json_nginx() {
-  cat > $WORK_DIR/nginx.conf << EOF
-user  root;
-worker_processes  auto;
-
-error_log  /dev/null;
-pid        /var/run/nginx.pid;
-
-events {
-    worker_connections  1024;
-}
-
-
-http {
-  map \$http_user_agent \$path1 {
-    default                    /;               # 默认路径
-    ~*v2rayN                   /v2rayn;         # 匹配 V2rayN 客户端
-    ~*clash                    /clash;          # 匹配 Clash 客户端
-    ~*Neko                     /neko;           # 匹配 Neko 客户端
-    ~*ShadowRocket             /shadowrocket;   # 匹配 ShadowRocket  客户端
-    ~*SFM                      /sing-box-pc;    # 匹配 Sing-box pc 客户端
-    ~*SFI|SFA                  /sing-box-phone; # 匹配 Sing-box phone 客户端
-#   ~*Chrome|Firefox|Mozilla   /;               # 添加更多的分流规则
-  }
-  map \$http_user_agent \$path2 {
-    default                    /;               # 默认路径
-    ~*v2rayN                   /v2rayn;         # 匹配 V2rayN 客户端
-    ~*clash                    /clash2;         # 匹配 Clash 客户端
-    ~*Neko                     /neko;           # 匹配 Neko 客户端
-    ~*ShadowRocket             /shadowrocket;   # 匹配 ShadowRocket  客户端
-    ~*SFM|SFI|SFA              /sing-box2;      # 匹配 Sing-box pc 和 phone 客户端
-#   ~*Chrome|Firefox|Mozilla   /;               # 添加更多的分流规则
-  }
-
-    include       /etc/nginx/mime.types;
-    default_type  application/octet-stream;
-
-    log_format  main  '\$remote_addr - \$remote_user [\$time_local] "\$request" '
-                      '\$status \$body_bytes_sent "\$http_referer" '
-                      '"\$http_user_agent" "\$http_x_forwarded_for"';
-
-    access_log  /dev/null;
-
-    sendfile        on;
-    #tcp_nopush     on;
-
-    keepalive_timeout  65;
-
-    #gzip  on;
-
-    #include /etc/nginx/conf.d/*.conf;
-
-  server {
-    listen $PORT_NGINX ;  # ipv4
-    listen [::]:$PORT_NGINX ;  # ipv6
-#    listen $PORT_NGINX ssl http2 ;  # https
-    server_name localhost;
-
-#    ssl_certificate            $WORK_DIR/cert/cert.pem;
-#    ssl_certificate_key        $WORK_DIR/cert/private.key;
-#    ssl_protocols              TLSv1.3;
-#    ssl_session_tickets        on;
-#    ssl_stapling               off;
-#    ssl_stapling_verify        off;
-
-    # 来自 /auto2 的分流
-    location ~ ^/${UUID_CONFIRM}/auto2 {
-      default_type 'text/plain; charset=utf-8';
-      alias ${WORK_DIR}/subscribe/\$path2;
-    }
-
-    # 来自 /auto 的分流
-    location ~ ^/${UUID_CONFIRM}/auto {
-      default_type 'text/plain; charset=utf-8';
-      alias ${WORK_DIR}/subscribe/\$path1;
-    }
-
-    location ~ ^/${UUID_CONFIRM}/(.*) {
-      autoindex on;
-      proxy_set_header X-Real-IP \$proxy_protocol_addr;
-      default_type 'text/plain; charset=utf-8';
-      alias ${WORK_DIR}/subscribe/\$1;
-    }
-  }
-}
-EOF
-}
-
 # 生成 sing-box 配置文件
 sing_box_json() {
   local IS_CHANGE=$1
-  mkdir -p $WORK_DIR/conf $WORK_DIR/logs $WORK_DIR/subscribe
+  mkdir -p $WORK_DIR_SUB/conf $WORK_DIR_SUB/logs $WORK_DIR_SUB/subscribe
 
   # 判断是否为新安装，不为 change 就是新安装
   if [ "$IS_CHANGE" = 'change' ]; then
     # 判断 sing-box 主程序所在路径
-    DIR=$WORK_DIR
+    DIR=$WORK_DIR_SUB
   else
     DIR=$TEMP_DIR
 
     # 生成 dns 配置
-    cat > $WORK_DIR/conf/00_log.json << EOF
+    cat > $WORK_DIR_SUB/conf/00_log.json << EOF
 {
     "log":{
         "disabled":false,
         "level":"error",
-        "output":"$WORK_DIR/logs/box.log",
+        "output":"$WORK_DIR_SUB/logs/box.log",
         "timestamp":true
     }
 }
 EOF
 
     # 生成 outbound 配置
-    cat > $WORK_DIR/conf/01_outbounds.json << EOF
+    cat > $WORK_DIR_SUB/conf/01_outbounds.json << EOF
 {
     "outbounds":[
         {
@@ -509,7 +426,7 @@ EOF
 EOF
 
     # 生成 route 配置
-    cat > $WORK_DIR/conf/02_route.json << EOF
+    cat > $WORK_DIR_SUB/conf/02_route.json << EOF
 {
     "route":{
         "rule_set":[
@@ -535,19 +452,19 @@ EOF
 EOF
 
     # 生成缓存文件
-    cat > $WORK_DIR/conf/03_experimental.json << EOF
+    cat > $WORK_DIR_SUB/conf/03_experimental.json << EOF
 {
     "experimental": {
         "cache_file": {
             "enabled": true,
-            "path": "$WORK_DIR/cache.db"
+            "path": "$WORK_DIR_SUB/cache.db"
         }
     }
 }
 EOF
 
     # 生成 dns 配置文件
-    cat > $WORK_DIR/conf/04_dns.json << EOF
+    cat > $WORK_DIR_SUB/conf/04_dns.json << EOF
 {
     "dns":{
         "servers":[
@@ -576,7 +493,7 @@ EOF
     [ -z "$PORT_XTLS_REALITY" ] && PORT_XTLS_REALITY=$[START_PORT+$(awk -v target=$CHECK_PROTOCOLS '{ for(i=1; i<=NF; i++) if($i == target) { print i-1; break } }' <<< "${INSTALL_PROTOCOLS[*]}")]
     NODE_NAME[11]=${NODE_NAME[11]:-"$NODE_NAME_CONFIRM"} && UUID[11]=${UUID[11]:-"$UUID_CONFIRM"} && TLS_SERVER[11]=${TLS_SERVER[11]:-"$TLS_SERVER"} && REALITY_PRIVATE[11]=${REALITY_PRIVATE[11]:-"$REALITY_PRIVATE"} && REALITY_PUBLIC[11]=${REALITY_PUBLIC[11]:-"$REALITY_PUBLIC"}
     open_firewall_port ${PORT_XTLS_REALITY}
-    cat > $WORK_DIR/conf/11_${NODE_TAG[0]}_inbounds.json << EOF
+    cat > $WORK_DIR_SUB/conf/11_${NODE_TAG[0]}_inbounds.json << EOF
 //  "public_key":"${REALITY_PUBLIC[11]}"
 {
     "inbounds":[
@@ -629,7 +546,7 @@ EOF
     [ -z "$PORT_HYSTERIA2" ] && PORT_HYSTERIA2=$[START_PORT+$(awk -v target=$CHECK_PROTOCOLS '{ for(i=1; i<=NF; i++) if($i == target) { print i-1; break } }' <<< "${INSTALL_PROTOCOLS[*]}")]
     NODE_NAME[12]=${NODE_NAME[12]:-"$NODE_NAME_CONFIRM"} && UUID[12]=${UUID[12]:-"$UUID_CONFIRM"}
     open_firewall_port ${PORT_HYSTERIA2}
-    cat > $WORK_DIR/conf/12_${NODE_TAG[1]}_inbounds.json << EOF
+    cat > $WORK_DIR_SUB/conf/12_${NODE_TAG[1]}_inbounds.json << EOF
 {
     "inbounds":[
         {
@@ -653,8 +570,8 @@ EOF
                 ],
                 "min_version":"1.3",
                 "max_version":"1.3",
-                "certificate_path":"$WORK_DIR/cert/cert.pem",
-                "key_path":"$WORK_DIR/cert/private.key"
+                "certificate_path":"$WORK_DIR_SUB/cert/cert.pem",
+                "key_path":"$WORK_DIR_SUB/cert/private.key"
             }
         }
     ]
@@ -668,7 +585,7 @@ EOF
     [ -z "$PORT_TUIC" ] && PORT_TUIC=$[START_PORT+$(awk -v target=$CHECK_PROTOCOLS '{ for(i=1; i<=NF; i++) if($i == target) { print i-1; break } }' <<< "${INSTALL_PROTOCOLS[*]}")]
     NODE_NAME[13]=${NODE_NAME[13]:-"$NODE_NAME_CONFIRM"} && UUID[13]=${UUID[13]:-"$UUID_CONFIRM"} && TUIC_PASSWORD=${TUIC_PASSWORD:-"$UUID_CONFIRM"} && TUIC_CONGESTION_CONTROL=${TUIC_CONGESTION_CONTROL:-"bbr"}
     open_firewall_port ${PORT_TUIC}
-    cat > $WORK_DIR/conf/13_${NODE_TAG[2]}_inbounds.json << EOF
+    cat > $WORK_DIR_SUB/conf/13_${NODE_TAG[2]}_inbounds.json << EOF
 {
     "inbounds":[
         {
@@ -691,8 +608,8 @@ EOF
                 "alpn":[
                     "h3"
                 ],
-                "certificate_path":"$WORK_DIR/cert/cert.pem",
-                "key_path":"$WORK_DIR/cert/private.key"
+                "certificate_path":"$WORK_DIR_SUB/cert/cert.pem",
+                "key_path":"$WORK_DIR_SUB/cert/private.key"
             }
         }
     ]
@@ -706,7 +623,7 @@ EOF
     [ -z "$PORT_SHADOWTLS" ] && PORT_SHADOWTLS=$[START_PORT+$(awk -v target=$CHECK_PROTOCOLS '{ for(i=1; i<=NF; i++) if($i == target) { print i-1; break } }' <<< "${INSTALL_PROTOCOLS[*]}")]
     NODE_NAME[14]=${NODE_NAME[14]:-"$NODE_NAME_CONFIRM"} && UUID[14]=${UUID[14]:-"$UUID_CONFIRM"} && TLS_SERVER[14]=${TLS_SERVER[14]:-"$TLS_SERVER"} && SHADOWTLS_PASSWORD=${SHADOWTLS_PASSWORD:-"$($DIR/sing-box generate rand --base64 16)"} && SHADOWTLS_METHOD=${SHADOWTLS_METHOD:-"2022-blake3-aes-128-gcm"}
     open_firewall_port ${PORT_SHADOWTLS}
-    cat > $WORK_DIR/conf/14_${NODE_TAG[3]}_inbounds.json << EOF
+    cat > $WORK_DIR_SUB/conf/14_${NODE_TAG[3]}_inbounds.json << EOF
 {
     "inbounds":[
         {
@@ -757,7 +674,7 @@ EOF
     [ -z "$PORT_SHADOWSOCKS" ] && PORT_SHADOWSOCKS=$[START_PORT+$(awk -v target=$CHECK_PROTOCOLS '{ for(i=1; i<=NF; i++) if($i == target) { print i-1; break } }' <<< "${INSTALL_PROTOCOLS[*]}")]
     NODE_NAME[15]=${NODE_NAME[15]:-"$NODE_NAME_CONFIRM"} && UUID[15]=${SHADOWTLS_PASSWORD:-"$($DIR/sing-box generate rand --base64 16)"} && SHADOWSOCKS_METHOD=${SHADOWSOCKS_METHOD:-"2022-blake3-aes-128-gcm"}
     open_firewall_port ${PORT_SHADOWSOCKS}
-    cat > $WORK_DIR/conf/15_${NODE_TAG[4]}_inbounds.json << EOF
+    cat > $WORK_DIR_SUB/conf/15_${NODE_TAG[4]}_inbounds.json << EOF
 {
     "inbounds":[
         {
@@ -790,7 +707,7 @@ EOF
     [ -z "$PORT_TROJAN" ] && PORT_TROJAN=$[START_PORT+$(awk -v target=$CHECK_PROTOCOLS '{ for(i=1; i<=NF; i++) if($i == target) { print i-1; break } }' <<< "${INSTALL_PROTOCOLS[*]}")]
     NODE_NAME[16]=${NODE_NAME[16]:-"$NODE_NAME_CONFIRM"} && TROJAN_PASSWORD=${TROJAN_PASSWORD:-"$UUID_CONFIRM"}
     open_firewall_port ${PORT_TROJAN}
-    cat > $WORK_DIR/conf/16_${NODE_TAG[5]}_inbounds.json << EOF
+    cat > $WORK_DIR_SUB/conf/16_${NODE_TAG[5]}_inbounds.json << EOF
 {
     "inbounds":[
         {
@@ -807,8 +724,8 @@ EOF
             ],
             "tls":{
                 "enabled":true,
-                "certificate_path":"$WORK_DIR/cert/cert.pem",
-                "key_path":"$WORK_DIR/cert/private.key"
+                "certificate_path":"$WORK_DIR_SUB/cert/cert.pem",
+                "key_path":"$WORK_DIR_SUB/cert/private.key"
             },
             "multiplex":{
                 "enabled":true,
@@ -831,7 +748,7 @@ EOF
     [ -z "$PORT_VMESS_WS" ] && PORT_VMESS_WS=$[START_PORT+$(awk -v target=$CHECK_PROTOCOLS '{ for(i=1; i<=NF; i++) if($i == target) { print i-1; break } }' <<< "${INSTALL_PROTOCOLS[*]}")]
     NODE_NAME[17]=${NODE_NAME[17]:-"$NODE_NAME_CONFIRM"} && UUID[17]=${UUID[17]:-"$UUID_CONFIRM"} && WS_SERVER_IP[17]=${WS_SERVER_IP[17]:-"$SERVER_IP"} && CDN[17]=${CDN[17]:-"$CDN"} && VMESS_WS_PATH=${VMESS_WS_PATH:-"${UUID[17]}-vmess"}
     open_firewall_port ${PORT_VMESS_WS}
-    cat > $WORK_DIR/conf/17_${NODE_TAG[6]}_inbounds.json << EOF
+    cat > $WORK_DIR_SUB/conf/17_${NODE_TAG[6]}_inbounds.json << EOF
 //  "WS_SERVER_IP_SHOW": "${WS_SERVER_IP[17]}"
 //  "VMESS_HOST_DOMAIN": "$VMESS_HOST_DOMAIN"
 //  "CDN": "${CDN[17]}"
@@ -879,7 +796,7 @@ EOF
     [ -z "$PORT_VLESS_WS" ] && PORT_VLESS_WS=$[START_PORT+$(awk -v target=$CHECK_PROTOCOLS '{ for(i=1; i<=NF; i++) if($i == target) { print i-1; break } }' <<< "${INSTALL_PROTOCOLS[*]}")]
     NODE_NAME[18]=${NODE_NAME[18]:-"$NODE_NAME_CONFIRM"} && UUID[18]=${UUID[18]:-"$UUID_CONFIRM"} && WS_SERVER_IP[18]=${WS_SERVER_IP[18]:-"$SERVER_IP"} && CDN[18]=${CDN[18]:-"$CDN"} && VLESS_WS_PATH=${VLESS_WS_PATH:-"${UUID[18]}-vless"}
     open_firewall_port ${PORT_VLESS_WS}
-    cat > $WORK_DIR/conf/18_${NODE_TAG[7]}_inbounds.json << EOF
+    cat > $WORK_DIR_SUB/conf/18_${NODE_TAG[7]}_inbounds.json << EOF
 //  "WS_SERVER_IP_SHOW": "${WS_SERVER_IP[18]}"
 //  "CDN": "${CDN[18]}"
 {
@@ -910,8 +827,8 @@ EOF
                 "server_name":"$VLESS_HOST_DOMAIN",
                 "min_version":"1.3",
                 "max_version":"1.3",
-                "certificate_path":"${WORK_DIR}/cert/cert.pem",
-                "key_path":"${WORK_DIR}/cert/private.key"
+                "certificate_path":"${WORK_DIR_SUB}/cert/cert.pem",
+                "key_path":"${WORK_DIR_SUB}/cert/private.key"
             },
             "multiplex":{
                 "enabled":true,
@@ -934,7 +851,7 @@ EOF
     [ -z "$PORT_H2_REALITY" ] && PORT_H2_REALITY=$[START_PORT+$(awk -v target=$CHECK_PROTOCOLS '{ for(i=1; i<=NF; i++) if($i == target) { print i-1; break } }' <<< "${INSTALL_PROTOCOLS[*]}")]
     NODE_NAME[19]=${NODE_NAME[19]:-"$NODE_NAME_CONFIRM"} && UUID[19]=${UUID[19]:-"$UUID_CONFIRM"} && TLS_SERVER[19]=${TLS_SERVER[19]:-"$TLS_SERVER"} && REALITY_PRIVATE[19]=${REALITY_PRIVATE[19]:-"$REALITY_PRIVATE"} && REALITY_PUBLIC[19]=${REALITY_PUBLIC[19]:-"$REALITY_PUBLIC"}
     open_firewall_port ${PORT_H2_REALITY}
-    cat > $WORK_DIR/conf/19_${NODE_TAG[8]}_inbounds.json << EOF
+    cat > $WORK_DIR_SUB/conf/19_${NODE_TAG[8]}_inbounds.json << EOF
 //  "public_key":"${REALITY_PUBLIC[19]}"
 {
     "inbounds":[
@@ -989,7 +906,7 @@ EOF
     [ -z "$PORT_GRPC_REALITY" ] && PORT_GRPC_REALITY=$[START_PORT+$(awk -v target=$CHECK_PROTOCOLS '{ for(i=1; i<=NF; i++) if($i == target) { print i-1; break } }' <<< "${INSTALL_PROTOCOLS[*]}")]
     NODE_NAME[20]=${NODE_NAME[20]:-"$NODE_NAME_CONFIRM"} && UUID[20]=${UUID[20]:-"$UUID_CONFIRM"} && TLS_SERVER[20]=${TLS_SERVER[20]:-"$TLS_SERVER"} && REALITY_PRIVATE[20]=${REALITY_PRIVATE[20]:-"$REALITY_PRIVATE"} && REALITY_PUBLIC[20]=${REALITY_PUBLIC[20]:-"$REALITY_PUBLIC"}
     open_firewall_port ${PORT_GRPC_REALITY}
-    cat > $WORK_DIR/conf/20_${NODE_TAG[9]}_inbounds.json << EOF
+    cat > $WORK_DIR_SUB/conf/20_${NODE_TAG[9]}_inbounds.json << EOF
 //  "public_key":"${REALITY_PUBLIC[20]}"
 {
     "inbounds":[
@@ -1052,9 +969,9 @@ User=root
 Type=simple
 NoNewPrivileges=yes
 TimeoutStartSec=0
-WorkingDirectory=$WORK_DIR
+WorkingDirectory=$WORK_DIR_SUB
 "
-  SING_BOX_SERVICE+="ExecStart=$WORK_DIR/sing-box run -C $WORK_DIR/conf/
+  SING_BOX_SERVICE+="ExecStart=$WORK_DIR_SUB/sing-box run -C $WORK_DIR_SUB/conf/
 ExecReload=/bin/kill -HUP \$MAINPID
 Restart=on-failure
 RestartSec=10
@@ -1071,51 +988,51 @@ fetch_nodes_value() {
   unset FILE NODE_NAME PORT_XTLS_REALITY UUID TLS_SERVER REALITY_PRIVATE REALITY_PUBLIC PORT_HYSTERIA2 OBFS PORT_TUIC TUIC_PASSWORD TUIC_CONGESTION_CONTROL PORT_SHADOWTLS SHADOWTLS_PASSWORD SHADOWSOCKS_METHOD PORT_SHADOWSOCKS PORT_TROJAN TROJAN_PASSWORD PORT_VMESS_WS VMESS_WS_PATH WS_SERVER_IP WS_SERVER_IP_SHOW VMESS_HOST_DOMAIN CDN PORT_VLESS_WS VLESS_WS_PATH VLESS_HOST_DOMAIN PORT_H2_REALITY PORT_GRPC_REALITY
 
   # 获取公共数据
-  ls $WORK_DIR/conf/*-ws*inbounds.json >/dev/null 2>&1 && SERVER_IP=$(awk -F '"' '/"WS_SERVER_IP_SHOW"/{print $4; exit}' $WORK_DIR/conf/*-ws*inbounds.json) || SERVER_IP=$(grep -A1 '"tag"' $WORK_DIR/list | sed -E '/-ws(-tls)*",$/{N;d}' | awk -F '"' '/"server"/{count++; if (count == 1) {print $4; exit}}')
-  EXISTED_PORTS=$(awk -F ':|,' '/listen_port/{print $2}' $WORK_DIR/conf/*_inbounds.json)
+  ls $WORK_DIR_SUB/conf/*-ws*inbounds.json >/dev/null 2>&1 && SERVER_IP=$(awk -F '"' '/"WS_SERVER_IP_SHOW"/{print $4; exit}' $WORK_DIR_SUB/conf/*-ws*inbounds.json) || SERVER_IP=$(grep -A1 '"tag"' $WORK_DIR_SUB/list | sed -E '/-ws(-tls)*",$/{N;d}' | awk -F '"' '/"server"/{count++; if (count == 1) {print $4; exit}}')
+  EXISTED_PORTS=$(awk -F ':|,' '/listen_port/{print $2}' $WORK_DIR_SUB/conf/*_inbounds.json)
   START_PORT=$(awk 'NR == 1 { min = $0 } { if ($0 < min) min = $0; count++ } END {print min}' <<< "$EXISTED_PORTS")
 
   # 获取 XTLS + Reality key-value
-  [ -s $WORK_DIR/conf/*_${NODE_TAG[0]}_inbounds.json ] && local JSON=$(cat $WORK_DIR/conf/*_${NODE_TAG[0]}_inbounds.json) && NODE_NAME[11]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[0]}.*/\1/p" <<< "$JSON") && PORT_XTLS_REALITY=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && UUID[11]=$(awk -F '"' '/"uuid"/{print $4}' <<< "$JSON") && TLS_SERVER[11]=$(awk -F '"' '/"server_name"/{print $4}' <<< "$JSON") && REALITY_PRIVATE[11]=$(awk -F '"' '/"private_key"/{print $4}' <<< "$JSON") && REALITY_PUBLIC[11]=$(awk -F '"' '/"public_key"/{print $4}' <<< "$JSON")
+  [ -s $WORK_DIR_SUB/conf/*_${NODE_TAG[0]}_inbounds.json ] && local JSON=$(cat $WORK_DIR_SUB/conf/*_${NODE_TAG[0]}_inbounds.json) && NODE_NAME[11]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[0]}.*/\1/p" <<< "$JSON") && PORT_XTLS_REALITY=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && UUID[11]=$(awk -F '"' '/"uuid"/{print $4}' <<< "$JSON") && TLS_SERVER[11]=$(awk -F '"' '/"server_name"/{print $4}' <<< "$JSON") && REALITY_PRIVATE[11]=$(awk -F '"' '/"private_key"/{print $4}' <<< "$JSON") && REALITY_PUBLIC[11]=$(awk -F '"' '/"public_key"/{print $4}' <<< "$JSON")
 
   # 获取 Hysteria2 key-value
-  [ -s $WORK_DIR/conf/*_${NODE_TAG[1]}_inbounds.json ] && local JSON=$(cat $WORK_DIR/conf/*_${NODE_TAG[1]}_inbounds.json) && NODE_NAME[12]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[1]}.*/\1/p" <<< "$JSON") && PORT_HYSTERIA2=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && UUID[12]=$(awk -F '"' '/"password"/{count++; if (count == 1) {print $4; exit}}' <<< "$JSON")
+  [ -s $WORK_DIR_SUB/conf/*_${NODE_TAG[1]}_inbounds.json ] && local JSON=$(cat $WORK_DIR_SUB/conf/*_${NODE_TAG[1]}_inbounds.json) && NODE_NAME[12]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[1]}.*/\1/p" <<< "$JSON") && PORT_HYSTERIA2=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && UUID[12]=$(awk -F '"' '/"password"/{count++; if (count == 1) {print $4; exit}}' <<< "$JSON")
 
   # 获取 Tuic V5 key-value
-  [ -s $WORK_DIR/conf/*_${NODE_TAG[2]}_inbounds.json ] && local JSON=$(cat $WORK_DIR/conf/*_${NODE_TAG[2]}_inbounds.json) && NODE_NAME[13]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[2]}.*/\1/p" <<< "$JSON") && PORT_TUIC=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && UUID[13]=$(awk -F '"' '/"uuid"/{print $4}' <<< "$JSON") && TUIC_PASSWORD=$(awk -F '"' '/"password"/{print $4}' <<< "$JSON") && TUIC_CONGESTION_CONTROL=$(awk -F '"' '/"congestion_control"/{print $4}' <<< "$JSON")
+  [ -s $WORK_DIR_SUB/conf/*_${NODE_TAG[2]}_inbounds.json ] && local JSON=$(cat $WORK_DIR_SUB/conf/*_${NODE_TAG[2]}_inbounds.json) && NODE_NAME[13]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[2]}.*/\1/p" <<< "$JSON") && PORT_TUIC=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && UUID[13]=$(awk -F '"' '/"uuid"/{print $4}' <<< "$JSON") && TUIC_PASSWORD=$(awk -F '"' '/"password"/{print $4}' <<< "$JSON") && TUIC_CONGESTION_CONTROL=$(awk -F '"' '/"congestion_control"/{print $4}' <<< "$JSON")
 
   # 获取 ShadowTLS key-value
-  [ -s $WORK_DIR/conf/*_${NODE_TAG[3]}_inbounds.json ] && local JSON=$(cat $WORK_DIR/conf/*_${NODE_TAG[3]}_inbounds.json) && NODE_NAME[14]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[3]}.*/\1/p" <<< "$JSON") && PORT_SHADOWTLS=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && UUID[14]=$(awk -F '"' '/"password"/{count++; if (count == 1) {print $4; exit}}' <<< "$JSON") && SHADOWTLS_PASSWORD=$(awk -F '"' '/"password"/{count++; if (count == 2) {print $4; exit}}' <<< "$JSON") && TLS_SERVER[14]=$(awk -F '"' '/"server"/{print $4}' <<< "$JSON") && SHADOWTLS_METHOD=$(awk -F '"' '/"method"/{print $4}' <<< "$JSON")
+  [ -s $WORK_DIR_SUB/conf/*_${NODE_TAG[3]}_inbounds.json ] && local JSON=$(cat $WORK_DIR_SUB/conf/*_${NODE_TAG[3]}_inbounds.json) && NODE_NAME[14]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[3]}.*/\1/p" <<< "$JSON") && PORT_SHADOWTLS=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && UUID[14]=$(awk -F '"' '/"password"/{count++; if (count == 1) {print $4; exit}}' <<< "$JSON") && SHADOWTLS_PASSWORD=$(awk -F '"' '/"password"/{count++; if (count == 2) {print $4; exit}}' <<< "$JSON") && TLS_SERVER[14]=$(awk -F '"' '/"server"/{print $4}' <<< "$JSON") && SHADOWTLS_METHOD=$(awk -F '"' '/"method"/{print $4}' <<< "$JSON")
 
   # 获取 Shadowsocks key-value
-  [ -s $WORK_DIR/conf/*_${NODE_TAG[4]}_inbounds.json ] && local JSON=$(cat $WORK_DIR/conf/*_${NODE_TAG[4]}_inbounds.json) && NODE_NAME[15]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[4]}.*/\1/p" <<< "$JSON") && PORT_SHADOWSOCKS=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && UUID[15]=$(awk -F '"' '/"password"/{print $4}' <<< "$JSON") && SHADOWSOCKS_METHOD=$(awk -F '"' '/"method"/{print $4}' <<< "$JSON")
+  [ -s $WORK_DIR_SUB/conf/*_${NODE_TAG[4]}_inbounds.json ] && local JSON=$(cat $WORK_DIR_SUB/conf/*_${NODE_TAG[4]}_inbounds.json) && NODE_NAME[15]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[4]}.*/\1/p" <<< "$JSON") && PORT_SHADOWSOCKS=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && UUID[15]=$(awk -F '"' '/"password"/{print $4}' <<< "$JSON") && SHADOWSOCKS_METHOD=$(awk -F '"' '/"method"/{print $4}' <<< "$JSON")
 
   # 获取 Trojan key-value
-  [ -s $WORK_DIR/conf/*_${NODE_TAG[5]}_inbounds.json ] && local JSON=$(cat $WORK_DIR/conf/*_${NODE_TAG[5]}_inbounds.json) && NODE_NAME[16]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[5]}.*/\1/p" <<< "$JSON") && PORT_TROJAN=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && TROJAN_PASSWORD=$(awk -F '"' '/"password"/{print $4}' <<< "$JSON")
+  [ -s $WORK_DIR_SUB/conf/*_${NODE_TAG[5]}_inbounds.json ] && local JSON=$(cat $WORK_DIR_SUB/conf/*_${NODE_TAG[5]}_inbounds.json) && NODE_NAME[16]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[5]}.*/\1/p" <<< "$JSON") && PORT_TROJAN=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && TROJAN_PASSWORD=$(awk -F '"' '/"password"/{print $4}' <<< "$JSON")
 
   # 获取 vmess + ws key-value
-  [ -s $WORK_DIR/conf/*_${NODE_TAG[6]}_inbounds.json ] && local JSON=$(cat $WORK_DIR/conf/*_${NODE_TAG[6]}_inbounds.json) && NODE_NAME[17]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[6]}.*/\1/p" <<< "$JSON") && PORT_VMESS_WS=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && UUID[17]=$(awk -F '"' '/"uuid"/{print $4}' <<< "$JSON") && VMESS_WS_PATH=$(sed -n 's#.*"path":"/\(.*\)",#\1#p' <<< "$JSON") && WS_SERVER_IP[17]=$(awk  -F '"' '/"WS_SERVER_IP_SHOW"/{print $4}' <<< "$JSON") && VMESS_HOST_DOMAIN=$(awk  -F '"' '/"VMESS_HOST_DOMAIN"/{print $4}' <<< "$JSON") && CDN[17]=$(awk  -F '"' '/"CDN"/{print $4}' <<< "$JSON")
+  [ -s $WORK_DIR_SUB/conf/*_${NODE_TAG[6]}_inbounds.json ] && local JSON=$(cat $WORK_DIR_SUB/conf/*_${NODE_TAG[6]}_inbounds.json) && NODE_NAME[17]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[6]}.*/\1/p" <<< "$JSON") && PORT_VMESS_WS=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && UUID[17]=$(awk -F '"' '/"uuid"/{print $4}' <<< "$JSON") && VMESS_WS_PATH=$(sed -n 's#.*"path":"/\(.*\)",#\1#p' <<< "$JSON") && WS_SERVER_IP[17]=$(awk  -F '"' '/"WS_SERVER_IP_SHOW"/{print $4}' <<< "$JSON") && VMESS_HOST_DOMAIN=$(awk  -F '"' '/"VMESS_HOST_DOMAIN"/{print $4}' <<< "$JSON") && CDN[17]=$(awk  -F '"' '/"CDN"/{print $4}' <<< "$JSON")
 
   # 获取 vless + ws + tls key-value
-  [ -s $WORK_DIR/conf/*_${NODE_TAG[7]}_inbounds.json ] && local JSON=$(cat $WORK_DIR/conf/*_${NODE_TAG[7]}_inbounds.json) && NODE_NAME[18]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[7]}.*/\1/p" <<< "$JSON") && PORT_VLESS_WS=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && UUID[18]=$(awk -F '"' '/"uuid"/{print $4}' <<< "$JSON") && VLESS_WS_PATH=$(sed -n 's#.*"path":"/\(.*\)",#\1#p' <<< "$JSON") && WS_SERVER_IP[18]=$(awk  -F '"' '/"WS_SERVER_IP_SHOW"/{print $4}' <<< "$JSON") && VLESS_HOST_DOMAIN=$(awk -F '"' '/"server_name"/{print $4}' <<< "$JSON") && CDN[18]=$(awk  -F '"' '/"CDN"/{print $4}' <<< "$JSON")
+  [ -s $WORK_DIR_SUB/conf/*_${NODE_TAG[7]}_inbounds.json ] && local JSON=$(cat $WORK_DIR_SUB/conf/*_${NODE_TAG[7]}_inbounds.json) && NODE_NAME[18]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[7]}.*/\1/p" <<< "$JSON") && PORT_VLESS_WS=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && UUID[18]=$(awk -F '"' '/"uuid"/{print $4}' <<< "$JSON") && VLESS_WS_PATH=$(sed -n 's#.*"path":"/\(.*\)",#\1#p' <<< "$JSON") && WS_SERVER_IP[18]=$(awk  -F '"' '/"WS_SERVER_IP_SHOW"/{print $4}' <<< "$JSON") && VLESS_HOST_DOMAIN=$(awk -F '"' '/"server_name"/{print $4}' <<< "$JSON") && CDN[18]=$(awk  -F '"' '/"CDN"/{print $4}' <<< "$JSON")
 
   # 获取 H2 + Reality key-value
-  [ -s $WORK_DIR/conf/*_${NODE_TAG[8]}_inbounds.json ] && local JSON=$(cat $WORK_DIR/conf/*_${NODE_TAG[8]}_inbounds.json) && NODE_NAME[19]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[8]}.*/\1/p" <<< "$JSON") && PORT_H2_REALITY=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && UUID[19]=$(awk -F '"' '/"uuid"/{print $4}' <<< "$JSON") && TLS_SERVER[19]=$(awk -F '"' '/"server"/{print $4}' <<< "$JSON") && REALITY_PRIVATE[19]=$(awk -F '"' '/"private_key"/{print $4}' <<< "$JSON") && REALITY_PUBLIC[19]=$(awk -F '"' '/"public_key"/{print $4}' <<< "$JSON")
+  [ -s $WORK_DIR_SUB/conf/*_${NODE_TAG[8]}_inbounds.json ] && local JSON=$(cat $WORK_DIR_SUB/conf/*_${NODE_TAG[8]}_inbounds.json) && NODE_NAME[19]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[8]}.*/\1/p" <<< "$JSON") && PORT_H2_REALITY=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && UUID[19]=$(awk -F '"' '/"uuid"/{print $4}' <<< "$JSON") && TLS_SERVER[19]=$(awk -F '"' '/"server"/{print $4}' <<< "$JSON") && REALITY_PRIVATE[19]=$(awk -F '"' '/"private_key"/{print $4}' <<< "$JSON") && REALITY_PUBLIC[19]=$(awk -F '"' '/"public_key"/{print $4}' <<< "$JSON")
 
   # 获取 gRPC + Reality key-value
-  [ -s $WORK_DIR/conf/*_${NODE_TAG[9]}_inbounds.json ] && local JSON=$(cat $WORK_DIR/conf/*_${NODE_TAG[9]}_inbounds.json) && NODE_NAME[20]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[9]}.*/\1/p" <<< "$JSON") && PORT_GRPC_REALITY=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && UUID[20]=$(awk -F '"' '/"uuid"/{print $4}' <<< "$JSON") && TLS_SERVER[20]=$(awk -F '"' '/"server"/{print $4}' <<< "$JSON") && REALITY_PRIVATE[20]=$(awk -F '"' '/"private_key"/{print $4}' <<< "$JSON") && REALITY_PUBLIC[20]=$(awk -F '"' '/"public_key"/{print $4}' <<< "$JSON")
+  [ -s $WORK_DIR_SUB/conf/*_${NODE_TAG[9]}_inbounds.json ] && local JSON=$(cat $WORK_DIR_SUB/conf/*_${NODE_TAG[9]}_inbounds.json) && NODE_NAME[20]=$(sed -n "s/.*\"tag\":\"\(.*\) ${NODE_TAG[9]}.*/\1/p" <<< "$JSON") && PORT_GRPC_REALITY=$(sed -n 's/.*"listen_port":\([0-9]\+\),/\1/gp' <<< "$JSON") && UUID[20]=$(awk -F '"' '/"uuid"/{print $4}' <<< "$JSON") && TLS_SERVER[20]=$(awk -F '"' '/"server"/{print $4}' <<< "$JSON") && REALITY_PRIVATE[20]=$(awk -F '"' '/"private_key"/{print $4}' <<< "$JSON") && REALITY_PUBLIC[20]=$(awk -F '"' '/"public_key"/{print $4}' <<< "$JSON")
 }
 
 install_sing_box() {
   sing_box_variables
   [ ! -d /etc/systemd/system ] && mkdir -p /etc/systemd/system
-  [ ! -d $WORK_DIR/logs ] && mkdir -p $WORK_DIR/logs
+  [ ! -d $WORK_DIR_SUB/logs ] && mkdir -p $WORK_DIR_SUB/logs
   ssl_certificate
   [ "$SYSTEM" = 'CentOS' ] && check_firewall_configuration
   listchoice "\n 下载 Sing-box 中，请稍等 ... " && wait
   sing_box_json
-  echo "${L^^}" > $WORK_DIR/language
-  cp $TEMP_DIR/sing-box $TEMP_DIR/jq $WORK_DIR
+  echo "${L^^}" > $WORK_DIR_SUB/language
+  cp $TEMP_DIR/sing-box $TEMP_DIR/jq $WORK_DIR_SUB
 
   # 生成 sing-box systemd 配置文件
   sing_box_systemd
@@ -1203,11 +1120,11 @@ export_list() {
   local CLASH_SUBSCRIBE+="
   $CLASH_GRPC_REALITY
 "
-  echo -n "${CLASH_SUBSCRIBE}" | sed -E '/^[ ]*#|^--/d' | sed '/^$/d' > $WORK_DIR/subscribe/proxies
+  echo -n "${CLASH_SUBSCRIBE}" | sed -E '/^[ ]*#|^--/d' | sed '/^$/d' > $WORK_DIR_SUB/subscribe/proxies
 
   # 生成 clash 订阅配置文件
   # 模板1: 使用 proxy providers
-  wget --no-check-certificate -qO- --tries=3 --timeout=2 ${SUBSCRIBE_TEMPLATE}/clash | sed "s#NODE_NAME#${NODE_NAME_CONFIRM}#g; s#PROXY_PROVIDERS_URL#http://${SERVER_IP_1}:${PORT_NGINX}/${UUID_CONFIRM}/proxies#" > $WORK_DIR/subscribe/clash
+  wget --no-check-certificate -qO- --tries=3 --timeout=2 ${SUBSCRIBE_TEMPLATE}/clash | sed "s#NODE_NAME#${NODE_NAME_CONFIRM}#g; s#PROXY_PROVIDERS_URL#http://${SERVER_IP_1}:${PORT_NGINX}/${UUID_CONFIRM}/proxies#" > $WORK_DIR_SUB/subscribe/clash
 
   # 模板2: 不使用 proxy providers
   CLASH2_PORT=("$PORT_XTLS_REALITY" "$PORT_HYSTERIA2" "$PORT_TUIC" "$PORT_SHADOWTLS" "$PORT_SHADOWSOCKS" "$PORT_TROJAN" "$PORT_VMESS_WS" "$PORT_VLESS_WS" "$PORT_GRPC_REALITY")
@@ -1218,7 +1135,7 @@ export_list() {
   for x in ${!CLASH2_PORT[@]}; do
     [[ ${CLASH2_PORT[x]} =~ [0-9]+ ]] && CLASH2_YAML=$(sed "/proxy-groups:/i\  ${CLASH2_PROXY_INSERT[x]}" <<< "$CLASH2_YAML" >/dev/null 2>&1) && CLASH2_YAML=$(sed -E "/- name: (♻️ 自动选择|📲 电报消息|💬 OpenAi|📹 油管视频|🎥 奈飞视频|📺 巴哈姆特|📺 哔哩哔哩|🌍 国外媒体|🌏 国内媒体|📢 谷歌FCM|Ⓜ️ 微软Bing|Ⓜ️ 微软云盘|Ⓜ️ 微软服务|🍎 苹果服务|🎮 游戏平台|🎶 网易音乐|🎯 全球直连)|^rules:$/i\      ${CLASH2_PROXY_GROUPS_INSERT[x]}" <<< "$CLASH2_YAML" >/dev/null 2>&1)
   done
-  echo "$CLASH2_YAML" > $WORK_DIR/subscribe/clash2
+  echo "$CLASH2_YAML" > $WORK_DIR_SUB/subscribe/clash2
 
   # 生成 ShadowRocket 订阅配置文件
   [ -n "$PORT_XTLS_REALITY" ] && local SHADOWROCKET_SUBSCRIBE+="
@@ -1258,7 +1175,7 @@ vless://$(echo -n auto:${UUID[19]}@${SERVER_IP_2}:${PORT_H2_REALITY} | base64 -w
   [ -n "$PORT_GRPC_REALITY" ] && local SHADOWROCKET_SUBSCRIBE+="
 vless://$(echo -n "auto:${UUID[20]}@${SERVER_IP_2}:${PORT_GRPC_REALITY}" | base64 -w0)?remarks=${NODE_NAME[20]}%20${NODE_TAG[9]}&path=grpc&obfs=grpc&tls=1&peer=${TLS_SERVER[20]}&pbk=${REALITY_PUBLIC[20]}
 "
-  echo -n "$SHADOWROCKET_SUBSCRIBE" | sed -E '/^[ ]*#|^--/d' | sed '/^$/d' | base64 -w0 > $WORK_DIR/subscribe/shadowrocket
+  echo -n "$SHADOWROCKET_SUBSCRIBE" | sed -E '/^[ ]*#|^--/d' | sed '/^$/d' | base64 -w0 > $WORK_DIR_SUB/subscribe/shadowrocket
 
   # 生成 V2rayN 订阅文件
   [ -n "$PORT_XTLS_REALITY" ] && local V2RAYN_SUBSCRIBE+="
@@ -1359,7 +1276,7 @@ vless://${UUID[19]}@${SERVER_IP_1}:${PORT_H2_REALITY}?encryption=none&security=r
 ----------------------------
 vless://${UUID[20]}@${SERVER_IP_1}:${PORT_GRPC_REALITY}?encryption=none&security=reality&sni=${TLS_SERVER[20]}&fp=chrome&pbk=${REALITY_PUBLIC[20]}&type=grpc&serviceName=grpc&mode=gun#${NODE_NAME[20]// /%20}"
 
-  echo -n "$V2RAYN_SUBSCRIBE" | sed -E '/^[ ]*#|^[ ]+|^--|^\{|^\}/d' | sed '/^$/d' | base64 -w0 > $WORK_DIR/subscribe/V2rayN
+  echo -n "$V2RAYN_SUBSCRIBE" | sed -E '/^[ ]*#|^[ ]+|^--|^\{|^\}/d' | sed '/^$/d' | base64 -w0 > $WORK_DIR_SUB/subscribe/V2rayN
   echo -e "$(echo -n "$V2RAYN_SUBSCRIBE" | sed -E '/^[ ]*#|^[ ]+|^--|^\{|^\}/d' | sed '/^$/d') \n" >> ~/Proxy.txt
 
   # 生成 NekoBox 订阅文件
@@ -1409,7 +1326,7 @@ vless://${UUID[19]}@${SERVER_IP_1}:${PORT_H2_REALITY}?security=reality&sni=${TLS
 ----------------------------
 vless://${UUID[20]}@${SERVER_IP_1}:${PORT_GRPC_REALITY}?security=reality&sni=${TLS_SERVER[20]}&fp=chrome&pbk=${REALITY_PUBLIC[20]}&type=grpc&serviceName=grpc&encryption=none#${NODE_NAME[20]}%20${NODE_TAG[9]}"
 
-  echo -n "$NEKOBOX_SUBSCRIBE" | sed -E '/^[ ]*#|^--/d' | sed '/^$/d' | base64 -w0 > $WORK_DIR/subscribe/neko
+  echo -n "$NEKOBOX_SUBSCRIBE" | sed -E '/^[ ]*#|^--/d' | sed '/^$/d' | base64 -w0 > $WORK_DIR_SUB/subscribe/neko
 
   # 生成 Sing-box 订阅文件
   [ -n "$PORT_XTLS_REALITY" ] &&
@@ -1473,12 +1390,12 @@ vless://${UUID[20]}@${SERVER_IP_1}:${PORT_GRPC_REALITY}?security=reality&sni=${T
 
   # 模板1
   local SING_BOX_JSON1=$(wget --no-check-certificate -qO- --tries=3 --timeout=2 ${SUBSCRIBE_TEMPLATE}/sing-box1)
-  echo $SING_BOX_JSON1 | sed 's#, {[^}]\+"tun-in"[^}]\+}##' | sed "s#\"<INBOUND_REPLACE>\",#$INBOUND_REPLACE#; s#\"<NODE_REPLACE>\"#${NODE_REPLACE%,}#g" | $WORK_DIR/jq > $WORK_DIR/subscribe/sing-box-pc
-  echo $SING_BOX_JSON1 | sed 's# {[^}]\+"mixed"[^}]\+},##; s#, "auto_detect_interface": true##' | sed "s#\"<INBOUND_REPLACE>\",#$INBOUND_REPLACE#; s#\"<NODE_REPLACE>\"#${NODE_REPLACE%,}#g" | $WORK_DIR/jq > $WORK_DIR/subscribe/sing-box-phone
+  echo $SING_BOX_JSON1 | sed 's#, {[^}]\+"tun-in"[^}]\+}##' | sed "s#\"<INBOUND_REPLACE>\",#$INBOUND_REPLACE#; s#\"<NODE_REPLACE>\"#${NODE_REPLACE%,}#g" | $WORK_DIR_SUB/jq > $WORK_DIR_SUB/subscribe/sing-box-pc
+  echo $SING_BOX_JSON1 | sed 's# {[^}]\+"mixed"[^}]\+},##; s#, "auto_detect_interface": true##' | sed "s#\"<INBOUND_REPLACE>\",#$INBOUND_REPLACE#; s#\"<NODE_REPLACE>\"#${NODE_REPLACE%,}#g" | $WORK_DIR_SUB/jq > $WORK_DIR_SUB/subscribe/sing-box-phone
 
   # 模板2
   local SING_BOX_JSON2=$(wget --no-check-certificate -qO- --tries=3 --timeout=2 ${SUBSCRIBE_TEMPLATE}/sing-box2)
-  echo $SING_BOX_JSON2 | sed "s#\"<INBOUND_REPLACE>\",#$INBOUND_REPLACE#; s#\"<NODE_REPLACE>\"#${NODE_REPLACE%,}#g" | $WORK_DIR/jq > $WORK_DIR/subscribe/sing-box2
+  echo $SING_BOX_JSON2 | sed "s#\"<INBOUND_REPLACE>\",#$INBOUND_REPLACE#; s#\"<NODE_REPLACE>\"#${NODE_REPLACE%,}#g" | $WORK_DIR_SUB/jq > $WORK_DIR_SUB/subscribe/sing-box2
 
 
 
@@ -1526,28 +1443,28 @@ $(listchoice "${NEKOBOX_SUBSCRIBE}")
 └────────────────┘
 ----------------------------
 
-$(info "$(echo "{ \"outbounds\":[ ${INBOUND_REPLACE%,} ] }" | $WORK_DIR/jq)
+$(info "$(echo "{ \"outbounds\":[ ${INBOUND_REPLACE%,} ] }" | $WORK_DIR_SUB/jq)
 
 ${PROMPT}
 
-各客户端配置文件路径: $WORK_DIR/subscribe/\n 完整模板可参照:\n https://github.com/chika0801/sing-box-examples/tree/main/Tun")
+各客户端配置文件路径: $WORK_DIR_SUB/subscribe/\n 完整模板可参照:\n https://github.com/chika0801/sing-box-examples/tree/main/Tun")
 "
 
   # 生成并显示节点信息
-  echo "$EXPORT_LIST_FILE" > $WORK_DIR/list
-  cat $WORK_DIR/list
+  echo "$EXPORT_LIST_FILE" > $WORK_DIR_SUB/list
+  cat $WORK_DIR_SUB/list
 
 }
 
 # 更换各协议的监听端口
 change_start_port() {
-  OLD_PORTS=$(awk -F ':|,' '/listen_port/{print $2}' $WORK_DIR/conf/*)
+  OLD_PORTS=$(awk -F ':|,' '/listen_port/{print $2}' $WORK_DIR_SUB/conf/*)
   OLD_START_PORT=$(awk 'NR == 1 { min = $0 } { if ($0 < min) min = $0; count++ } END {print min}' <<< "$OLD_PORTS")
   OLD_CONSECUTIVE_PORTS=$(awk 'END { print NR }' <<< "$OLD_PORTS")
   enter_start_port $OLD_CONSECUTIVE_PORTS
   cmd_systemctl disable sing-box
   for ((a=0; a<$OLD_CONSECUTIVE_PORTS; a++)) do
-    [ -s $WORK_DIR/conf/${CONF_FILES[a]} ] && sed -i "s/\(.*listen_port.*:\)$((OLD_START_PORT+a))/\1$((START_PORT+a))/" $WORK_DIR/conf/*
+    [ -s $WORK_DIR_SUB/conf/${CONF_FILES[a]} ] && sed -i "s/\(.*listen_port.*:\)$((OLD_START_PORT+a))/\1$((START_PORT+a))/" $WORK_DIR_SUB/conf/*
   done
   systemctl enable sing-box
   sleep 2
@@ -1561,7 +1478,7 @@ change_protocols() {
   [ "$STATUS" = "未安装" ] && error "\n Sing-box 未安装 "
 
   # 查找已安装的协议，并遍历其在所有协议列表中的名称，获取协议名后存放在 EXISTED_PROTOCOLS; 没有的协议存放在 NOT_EXISTED_PROTOCOLS
-  INSTALLED_PROTOCOLS_LIST=$(awk -F '"' '/"tag":/{print $4}' $WORK_DIR/conf/*_inbounds.json | grep -v 'shadowtls-in' | awk '{print $NF}')
+  INSTALLED_PROTOCOLS_LIST=$(awk -F '"' '/"tag":/{print $4}' $WORK_DIR_SUB/conf/*_inbounds.json | grep -v 'shadowtls-in' | awk '{print $NF}')
   for f in ${!NODE_TAG[@]}; do [[ $INSTALLED_PROTOCOLS_LIST =~ "${NODE_TAG[f]}" ]] && EXISTED_PROTOCOLS+=("${PROTOCOL_LIST[f]}") || NOT_EXISTED_PROTOCOLS+=("${PROTOCOL_LIST[f]}"); done
 
   # 列出已安装协议
@@ -1647,13 +1564,13 @@ change_protocols() {
 
   # 删除不需要的协议配置文件
   [ "${#REMOVE_FILE[@]}" -gt 0 ] && for t in "${REMOVE_FILE[@]}"; do
-    rm -f $WORK_DIR/conf/*${t}
+    rm -f $WORK_DIR_SUB/conf/*${t}
   done
 
   # 寻找已存在协议中原有的端口号
   for p in "${KEEP_PROTOCOLS[@]}"; do
     for ((u=0; u<${#PROTOCOL_LIST[@]}; u++)); do
-      [ "$p" = "${PROTOCOL_LIST[u]}" ] && KEEP_PORTS+=("$(awk -F '[:,]' '/listen_port/{print $2}' $WORK_DIR/conf/*${NODE_TAG[u]}_inbounds.json)")
+      [ "$p" = "${PROTOCOL_LIST[u]}" ] && KEEP_PORTS+=("$(awk -F '[:,]' '/listen_port/{print $2}' $WORK_DIR_SUB/conf/*${NODE_TAG[u]}_inbounds.json)")
     done
   done
 
@@ -1763,7 +1680,7 @@ change_protocols() {
 uninstall() {
   cmd_systemctl disable sing-box 2>/dev/null
   sleep 1
-  rm -rf $WORK_DIR $TEMP_DIR /etc/systemd/system/sing-box.service
+  rm -rf $WORK_DIR_SUB $TEMP_DIR /etc/systemd/system/sing-box.service
   info "\n Sing-box 已彻底卸载 \n"
 
   # 如果 Alpine 系统，删除开机自启动和python3版systemd
@@ -1778,7 +1695,7 @@ uninstall() {
 version() {
   local VERSION_LATEST=$(wget --no-check-certificate -qO- "https://api.github.com/repos/SagerNet/sing-box/releases" | awk -F '["v-]' '/tag_name/{print $5}' | sort -r | sed -n '1p')
   local ONLINE=$(wget --no-check-certificate -qO- "https://api.github.com/repos/SagerNet/sing-box/releases" | awk -F '["v]' -v var="tag_name.*$VERSION_LATEST" '$0 ~ var {print $5; exit}')
-  local LOCAL=$($WORK_DIR/sing-box version | awk '/version/{print $NF}')
+  local LOCAL=$($WORK_DIR_SUB/sing-box version | awk '/version/{print $NF}')
   info "\n Sing-box 本地版本: $LOCAL\t 最新版本: $ONLINE "
   [[ -n "$ONLINE" && "$ONLINE" != "$LOCAL" ]] && reading "\n 升级请按 [y]，默认不升级: " UPDATE || info " 不需要升级 "
 
@@ -1788,7 +1705,7 @@ version() {
 
     if [ -s $TEMP_DIR/sing-box-$ONLINE-linux-$SING_BOX_ARCH/sing-box ]; then
       cmd_systemctl disable sing-box
-      chmod +x $TEMP_DIR/sing-box-$ONLINE-linux-$SING_BOX_ARCH/sing-box && mv $TEMP_DIR/sing-box-$ONLINE-linux-$SING_BOX_ARCH/sing-box $WORK_DIR/sing-box
+      chmod +x $TEMP_DIR/sing-box-$ONLINE-linux-$SING_BOX_ARCH/sing-box && mv $TEMP_DIR/sing-box-$ONLINE-linux-$SING_BOX_ARCH/sing-box $WORK_DIR_SUB/sing-box
       systemctl enable sing-box && sleep 2 && [ "$(systemctl is-active sing-box)" = 'active' ] && info " Sing-box 开启 成功" || error "Sing-box 开启 失败 "
     else
       local error "\n 下载最新版本 Sing-box 失败，脚本退出 "
@@ -1823,11 +1740,11 @@ menu_setting() {
       MEMORY_USAGE="$(awk '/VmRSS/{printf "%.1f\n", $2/1024}' /proc/$PID/status)"
     fi
 
-    NOW_PORTS=$(awk -F ':|,' '/listen_port/{print $2}' $WORK_DIR/conf/*)
+    NOW_PORTS=$(awk -F ':|,' '/listen_port/{print $2}' $WORK_DIR_SUB/conf/*)
     NOW_START_PORT=$(awk 'NR == 1 { min = $0 } { if ($0 < min) min = $0; count++ } END {print min}' <<< "$NOW_PORTS")
     NOW_CONSECUTIVE_PORTS=$(awk 'END { print NR }' <<< "$NOW_PORTS")
-    [ -s $WORK_DIR/sing-box ] && SING_BOX_VERSION="version: $($WORK_DIR/sing-box version | awk '/version/{print $NF}')"
-    [ -s $WORK_DIR/conf/02_route.json ] && { grep -q 'direct' $WORK_DIR/conf/02_route.json && RETURN_STATUS="关闭" || RETURN_STATUS="开启"; }
+    [ -s $WORK_DIR_SUB/sing-box ] && SING_BOX_VERSION="version: $($WORK_DIR_SUB/sing-box version | awk '/version/{print $NF}')"
+    [ -s $WORK_DIR_SUB/conf/02_route.json ] && { grep -q 'direct' $WORK_DIR_SUB/conf/02_route.json && RETURN_STATUS="关闭" || RETURN_STATUS="开启"; }
     OPTION[1]="1.  查看节点信息"
     [ "$STATUS" = "开启" ] && OPTION[2]="2.  关闭 Sing-box " || OPTION[2]="2.  开启 Sing-box "
     OPTION[3]="3.  更换监听端口"
@@ -1888,8 +1805,11 @@ Sing-Box 管理脚本 $VERSION
 }
 
 # 传参
-[[ "${*^^}" =~ '-C'|'-B' ]] && L=C
-L=C
+if [[ ! $# == 0 && $1 == "install_ss2022" ]];then
+    flagInstallSS2022="Install"
+    install_sing_box; export_list install; 
+    exit 0
+fi
 
 check_root
 check_arch
