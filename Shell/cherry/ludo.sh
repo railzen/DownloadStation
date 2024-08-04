@@ -2652,7 +2652,7 @@ EOF
                 case $sub_choice in
                     1)
                         clear
-                        echo "使用密钥登录会关闭密码登录方式，需要输入公钥进行SSH登录"
+                        echo "使用密钥登录会关闭密码登录方式，需要使用私钥进行SSH登录"
                         add_sshkey
                         ;;
 
@@ -2661,7 +2661,7 @@ EOF
                         ssh-keygen -t rsa -b 4096 -C "email@gmail.com" -f /root/.ssh/new_generated_sshkey -N ""
                         cat ~/.ssh/new_generated_sshkey.pub >> ~/.ssh/authorized_keys
                         chmod 600 ~/.ssh/authorized_keys
-                        echo "使用密钥登录会关闭密码登录方式，需要输入公钥进行SSH登录"
+                        echo "使用密钥登录会关闭密码登录方式，需要使用私钥进行SSH登录"
                         echo -e "私钥信息已生成，${Yellow}该私钥只会显示一次${White}，请务必保存用于以后的SSH登录"
                         echo "--------------------------------"
                         cat ~/.ssh/new_generated_sshkey
