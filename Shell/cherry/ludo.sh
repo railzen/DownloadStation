@@ -4229,19 +4229,6 @@ fi
 
 }
 
-tmux_run() {
-    # Check if the session already exists
-    tmux has-session -t $SESSION_NAME 2>/dev/null
-    # $? is a special variable that holds the exit status of the last executed command
-    if [ $? != 0 ]; then
-      # Session doesn't exist, create a new one
-      tmux new -s $SESSION_NAME
-    else
-      # Session exists, attach to it
-      tmux attach-session -t $SESSION_NAME
-    fi
-}
-
 
 f2b_status() {
      docker restart fail2ban
@@ -4643,6 +4630,7 @@ clear
 [ "$EUID" -ne 0 ] && echo -e "${Yellow}请注意，该功能需要root用户才能运行！${White}" && break_end && back_main
 }
 
+chech_dependance(){ if [ !-f /usr/bin/curl ]; then install curl; fi; }
 # 脚本从此处开始
 
 if [[ ! $# = 0 && $1 = "dir" ]];then
@@ -4666,5 +4654,5 @@ mv -f ./ludo.sh ${work_path}/ludo.sh > /dev/null 2>&1
 cp -f ${work_path}/ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
 cd ${work_path}/work
 #卸载：rm -rf ~/ludo.sh ${work_path}/ /usr/local/bin/ludo
-
+chech_dependance
 main_menu_start
