@@ -2639,24 +2639,58 @@ EOF
 
 
           24)
-              root_use
-              echo "ROOT私钥登录模式"
-              echo "------------------------------------------------"
-              echo "请输入公钥，使用更安全的方式SSH登录"
-              read -p "确定继续吗？(Y/N): " choice
+                root_use
+                echo "ROOT私钥登录模式"
+                echo "------------------------"
+                echo "1. 上传个人SSH密钥"
+                echo "2. 生成新的SSH密钥"
+                echo "3. 恢复密码登录模式"
+                echo "------------------------"
+                echo "0. 退出"
+                echo "------------------------"
+                read -p "请输入你的选择: " sub_choice
+                case $sub_choice in
+                    1)
+                        clear
+                        echo "使用密钥登录会关闭密码登录方式，需要输入公钥进行SSH登录"
+                        add_sshkey
+                        ;;
 
-              case "$choice" in
-                [Yy])
-                  clear
-                  add_sshkey
-                  ;;
-                [Nn])
-                  echo "已取消"
-                  ;;
-                *)
-                  echo "无效的选择，请输入 Y 或 N。"
-                  ;;
-              esac
+                    2)
+                        # ssh-keygen -t rsa -b 4096 -C "xxxx@gmail.com" -f /root/.ssh/sshkey -N ""
+                        ssh-keygen -t rsa -b 4096 -C "email@gmail.com" -f /root/.ssh/new_generated_sshkey -N ""
+                        cat ~/.ssh/new_generated_sshkey.pub >> ~/.ssh/authorized_keys
+                        chmod 600 ~/.ssh/authorized_keys
+                        echo "使用密钥登录会关闭密码登录方式，需要输入公钥进行SSH登录"
+                        echo -e "私钥信息已生成，${Yellow}该私钥只会显示一次${White}，请务必保存用于以后的SSH登录"
+                        echo "--------------------------------"
+                        cat ~/.ssh/new_generated_sshkey
+                        echo "--------------------------------"
+                        # 用完就删掉，不保存在服务器上避免泄露，密钥由用户自己保存
+                        rm -f ~/.ssh/new_generated_sshkey*
+                        sed -i -e 's/^\s*#\?\s*PermitRootLogin .*/PermitRootLogin prohibit-password/' \
+                        -e 's/^\s*#\?\s*PasswordAuthentication .*/PasswordAuthentication no/' \
+                        -e 's/^\s*#\?\s*PubkeyAuthentication .*/PubkeyAuthentication yes/' \
+                        -e 's/^\s*#\?\s*ChallengeResponseAuthentication .*/ChallengeResponseAuthentication no/' /etc/ssh/sshd_config
+                        rm -rf /etc/ssh/sshd_config.d/* /etc/ssh/ssh_config.d/*
+                        restart_ssh
+                        echo -e "${Green}ROOT私钥登录已开启，已关闭ROOT密码登录，重连将会生效${White}"
+                        ;;
+                    3)
+                        sed -i 's/^\s*#\?\s*PermitRootLogin.*/PermitRootLogin yes/g' /etc/ssh/sshd_config;
+                        sed -i 's/^\s*#\?\s*PasswordAuthentication.*/PasswordAuthentication yes/g' /etc/ssh/sshd_config;
+                        rm -rf /etc/ssh/sshd_config.d/* /etc/ssh/ssh_config.d/*
+                        restart_ssh
+                        echo -e "${Green}ROOT登录设置完毕！${White}"
+                        ;;
+                    0)
+                        break
+                        ;;
+                    *)
+                        echo "无效的选择，请重新输入。"
+                        ;;
+                esac
+
 
               ;;
           25)
