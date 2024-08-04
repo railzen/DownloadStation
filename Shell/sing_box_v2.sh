@@ -3,7 +3,7 @@
 # -------------------------------------------------------------
 # 检查系统
 export LANG=en_US.UTF-8
-VERSION='v1.0.004 build240804'
+VERSION='v1.0.005 build240804'
 WORK_DIR='/opts/CherryScript/singbox_mux'
 echoContent() {
     case $1 in
@@ -1913,7 +1913,7 @@ EOF
 # sing-box开机自启
 installSingBoxService() {
     echoContent skyBlue "\n进度  $1/${totalProgress} : 配置sing-box开机自启"
-    execStart='${WORK_DIR}/sing-box/sing-box run -c ${WORK_DIR}/sing-box/conf/config.json'
+    execStart="${WORK_DIR}/sing-box/sing-box run -c ${WORK_DIR}/sing-box/conf/config.json"
 
     if [[ -n $(find /bin /usr/bin -name "systemctl") && "${release}" != "alpine" ]]; then
         rm -rf /etc/systemd/system/sing-box.service
