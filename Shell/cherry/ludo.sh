@@ -2673,6 +2673,7 @@ EOF
                         -e 's/^\s*#\?\s*PubkeyAuthentication .*/PubkeyAuthentication yes/' \
                         -e 's/^\s*#\?\s*ChallengeResponseAuthentication .*/ChallengeResponseAuthentication no/' /etc/ssh/sshd_config
                         rm -rf /etc/ssh/sshd_config.d/* /etc/ssh/ssh_config.d/*
+                        read -p "按任意键重启SSH以生效..." temp
                         restart_ssh
                         echo -e "${Green}ROOT私钥登录已开启，已关闭ROOT密码登录，重连将会生效${White}"
                         ;;
@@ -4635,13 +4636,13 @@ echo -e "您公钥信息为： "
 echo "--------------------------------"
 echo ${sshPublicKey}
 echo "--------------------------------"
-echo -e "请保存好您的私钥！"
 
 sed -i -e 's/^\s*#\?\s*PermitRootLogin .*/PermitRootLogin prohibit-password/' \
        -e 's/^\s*#\?\s*PasswordAuthentication .*/PasswordAuthentication no/' \
        -e 's/^\s*#\?\s*PubkeyAuthentication .*/PubkeyAuthentication yes/' \
        -e 's/^\s*#\?\s*ChallengeResponseAuthentication .*/ChallengeResponseAuthentication no/' /etc/ssh/sshd_config
 rm -rf /etc/ssh/sshd_config.d/* /etc/ssh/ssh_config.d/*
+read -p "按任意键重启SSH以生效..." temp
 restart_ssh
 echo -e "${Green}ROOT私钥登录已开启，已关闭ROOT密码登录，重连将会生效${White}"
 
