@@ -4668,7 +4668,7 @@ clear
 [ "$EUID" -ne 0 ] && echo -e "${Yellow}请注意，该功能需要root用户才能运行！${White}" && break_end && back_main
 }
 
-chech_dependance(){ if [ !-f /usr/bin/curl ]; then install curl; fi; }
+chech_dependance(){ if [ ! -f /usr/bin/curl ]; then install curl; fi; }
 
 # 脚本从此处开始
 if [[ ! $# = 0 && $1 = "dir" ]];then
