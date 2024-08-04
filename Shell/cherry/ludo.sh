@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh ${work_path}/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.9112 Build240804"
+main_version="V1.0.9113 Build240804"
 work_path="/opt/CherryScript"
 
 main_menu_start() {
@@ -1121,7 +1121,7 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
 
   12)
     clear
-    curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/sing_box.sh && chmod +x sing_box.sh && ./sing_box.sh
+    curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/sing_box_v2.sh && chmod +x sing_box_v2.sh && ./sing_box_v2.sh
     ;;
 
   13)
