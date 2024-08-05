@@ -7630,7 +7630,7 @@ menu() {
     echo -e "9.core管理"
     echo -e "10.安装SS2022"
     echo -e "11.卸载SS2022"
-    echo -e "12.切换Sing-Box脚本"
+    echo -e "12.切换SingBoxV1脚本"
     echo -e "20.卸载脚本"
     echo -e "--------------------------------------------------"
     echo -e "0.退出脚本"
