@@ -7615,7 +7615,7 @@ singBoxVersionManageMenu() {
 menu() {
 	cd "$HOME" || exit
 	echo -e "\n=================================================="
-	echo -e "Sing-Box 管理脚本 $VERSION "
+	echo -e "Sing-Box 管理脚本V2 $VERSION "
 	echo -e "=================================================="
     showInstallStatus
     checkWgetShowProgress
