@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # 当前脚本版本号
-VERSION='v1.0.064 build240803'
+VERSION='v1.0.070 build240803'
 
 function rand() {  min=$1 ; max=$(($2-$min+1)) ; num=$(date +%s%n) ; echo $(($num%$max+$min)) ; } #增加一个十位数再求余
 # 各变量默认值
@@ -212,7 +212,7 @@ Sing-Box 管理脚本V1 $VERSION
     echo -e "==================================================\n"
     if [[ "${flagInstallSS2022}" == "Install" ]]; then
       clear
-      CHOOSE_PROTOCOLS="f"
+      CHOOSE_PROTOCOLS="e"
       break;
     else
       reading "\n 请选择: " CHOOSE_PROTOCOLS
@@ -673,7 +673,7 @@ EOF
   CHECK_PROTOCOLS=$(asc "$CHECK_PROTOCOLS" ++)
   if [[ "${INSTALL_PROTOCOLS[@]}" =~ "$CHECK_PROTOCOLS" ]]; then
     [ -z "$PORT_SHADOWSOCKS" ] && PORT_SHADOWSOCKS=$[START_PORT+$(awk -v target=$CHECK_PROTOCOLS '{ for(i=1; i<=NF; i++) if($i == target) { print i-1; break } }' <<< "${INSTALL_PROTOCOLS[*]}")]
-    NODE_NAME[15]=${NODE_NAME[15]:-"$NODE_NAME_CONFIRM"} && UUID[15]=${SHADOWTLS_PASSWORD:-"$($DIR/sing-box generate rand --base64 16)"} && SHADOWSOCKS_METHOD=${SHADOWSOCKS_METHOD:-"2022-blake3-aes-128-gcm"}
+    NODE_NAME[15]=${NODE_NAME[15]:-"$NODE_NAME_CONFIRM"} && UUID[15]=${SHADOWTLS_PASSWORD:-"$($DIR/sing-box generate rand --base64 16)"} && SHADOWSOCKS_METHOD=${SHADOWSOCKS_METHOD:-"aes-128-gcm"}
     open_firewall_port ${PORT_SHADOWSOCKS}
     cat > $WORK_DIR_SUB/conf/15_${NODE_TAG[4]}_inbounds.json << EOF
 {
@@ -1811,7 +1811,7 @@ if [[ ! $# == 0 && $1 == "install_ss2022" ]]; then
     flagInstallSS2022="Install"
     install_sing_box; export_list install; 
     exit 0
-else if [[! $# == 0 && $1 == "uninstall_ss2022" ]]; then
+elif [[ ! $# == 0 && $1 == "uninstall_ss2022" ]]; then
     uninstall
     exit 0
 fi
