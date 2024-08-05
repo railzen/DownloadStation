@@ -532,14 +532,14 @@ allowPort() {
     elif systemctl status ufw 2>/dev/null | grep -q "active (exited)"; then
         if ufw status | grep -q "Status: active"; then
             if ! ufw status | grep -q "$1/${type}"; then
-                sudo ufw allow "$1/${type}"
+                sudo ufw allow "$1"
                 checkUFWAllowPort "$1"
             fi
         fi
     elif rc-update show 2>/dev/null | grep -q ufw; then
         if ufw status | grep -q "Status: active"; then
             if ! ufw status | grep -q "$1/${type}"; then
-                sudo ufw allow "$1/${type}"
+                sudo ufw allow "$1"
                 checkUFWAllowPort "$1"
             fi
         fi
