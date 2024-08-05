@@ -1780,7 +1780,7 @@ menu() {
   clear
   echo "  
 ==================================================
-Sing-Box 管理脚本 $VERSION 
+Sing-Box 管理脚本V1 $VERSION 
 ==================================================
 "
   #只有一个选项，那就直接进吧
@@ -1811,7 +1811,7 @@ if [[ ! $# == 0 && $1 == "install_ss2022" ]]; then
     flagInstallSS2022="Install"
     install_sing_box; export_list install; 
     exit 0
-elif [[! $# == 0 && $1 == "uninstall_ss2022" ]]; then
+else if [[! $# == 0 && $1 == "uninstall_ss2022" ]]; then
     uninstall
     exit 0
 fi
