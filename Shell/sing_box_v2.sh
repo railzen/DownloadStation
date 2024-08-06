@@ -6307,7 +6307,7 @@ EOF
 # sing-box 个性化安装
 customSingBoxInstall() {
     echoContent white "\n========================个性化安装============================"
-    echoContent yellow "0.VLESS+Vision+TCP"
+    echoContent white "0.VLESS+Vision+TCP"
     echoContent white "1.VLESS+TLS+WS[仅CDN推荐]"
     echoContent white "3.VMess+TLS+WS[仅CDN推荐]"
     echoContent white "4.Trojan+TLS[不推荐]"
@@ -6359,8 +6359,8 @@ customSingBoxInstall() {
 # Xray-core个性化安装
 customXrayInstall() {
     echoContent white "\n========================个性化安装============================"
-    echoContent yellow "VLESS前置，默认安装0，无域名安装Reality只选择7即可"
-    echoContent yellow "0.VLESS+TLS_Vision+TCP          [推荐]"
+    echoContent white "VLESS前置，默认安装0，无域名安装Reality只选择7即可"
+    echoContent white "0.VLESS+TLS_Vision+TCP          [推荐]"
     echoContent white "1.VLESS+TLS+WS                  [仅CDN推荐]"
     echoContent white "2.Trojan+TLS+gRPC               [仅CDN推荐]"
     echoContent white "3.VMess+TLS+WS                  [仅CDN推荐]"
