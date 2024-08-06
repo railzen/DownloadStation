@@ -22,7 +22,7 @@ echoContent() {
         ;;
         # 白色
     "white")
-        ${echoType} "\033[33m${printN}$2 \033[0m"
+        ${echoType} "\033[0m${printN}$2 \033[0m"
         ;;
     "magenta")
         ${echoType} "\033[31m${printN}$2 \033[0m"
