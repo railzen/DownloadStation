@@ -3,7 +3,7 @@
 # -------------------------------------------------------------
 # 检查系统
 export LANG=en_US.UTF-8
-VERSION='v1.0.009 build240805'
+VERSION='v1.0.011 build240805'
 WORK_DIR='/opts/CherryScript/singbox_mux'
 echoContent() {
     case $1 in
@@ -7014,7 +7014,7 @@ initRealityKey() {
         fi
     fi
     if [[ -z "${realityPrivateKey}" ]]; then
-        if [[ "${selectCoreType}" == "singbox" || "${coreInstallType}" == "xray" ]]; then
+        if [[ "${selectCoreType}" == "singbox" || "${coreInstallType}" == "singbox" ]]; then
             realityX25519Key=$(${WORK_DIR}/sing-box/sing-box generate reality-keypair)
             realityPrivateKey=$(echo "${realityX25519Key}" | head -1 | awk '{print $2}')
             realityPublicKey=$(echo "${realityX25519Key}" | tail -n 1 | awk '{print $2}')
