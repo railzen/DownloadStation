@@ -3,7 +3,7 @@
 # -------------------------------------------------------------
 # 检查系统
 export LANG=en_US.UTF-8
-VERSION='v1.0.012 build240805'
+VERSION='v1.0.013 build240805'
 WORK_DIR='/opts/CherryScript/singbox_mux'
 echoContent() {
     case $1 in
@@ -7423,32 +7423,41 @@ menu() {
     read -r -p "请选择: " selectInstallType
     case ${selectInstallType} in
     1)
+        clear
         selectCoreType="singbox"
         customSingBoxInstall
         ;;
     2)
-    	selectCoreType="xray"
+        clear
+        selectCoreType="xray"
 		customXrayInstall
         ;;
     3)
+        clear
         manageHysteria
         ;;
     4)
+        clear
         manageReality
         ;;
     5)
+        clear
         manageTuic
         ;;
     6)
+        clear
         manageAccount
         ;;
     7)
+        clear
         routingToolsMenu
         ;;
     8)
+        clear
         switchAlpn
         ;;
     9)
+        clear
         coreVersionManageMenu
         ;;
 
@@ -7463,6 +7472,7 @@ menu() {
         exit 0
         ;;
     20)
+        echo
         unInstall
         ;;
 
