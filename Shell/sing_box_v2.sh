@@ -3,7 +3,7 @@
 # -------------------------------------------------------------
 # 检查系统
 export LANG=en_US.UTF-8
-VERSION='v1.0.005 build240804'
+VERSION='v1.0.006 build240804'
 WORK_DIR='/opts/CherryScript/singbox_mux'
 echoContent() {
     case $1 in
@@ -345,7 +345,7 @@ readInstallType() {
                 # xray-core
                 configPath=${WORK_DIR}/xray/conf/
                 ctlPath=${WORK_DIR}/xray/xray
-                coreInstallType=1
+                coreInstallType=2
                 if [[ -f "${configPath}07_VLESS_vision_reality_inbounds.json" ]]; then
                     realityStatus=1
                 fi
@@ -356,7 +356,7 @@ readInstallType() {
         elif [[ -f "${WORK_DIR}/sing-box/sing-box" && -f "${WORK_DIR}/sing-box/conf/config.json" ]]; then
             # 检测sing-box
             ctlPath=${WORK_DIR}/sing-box/sing-box
-            coreInstallType=2
+            coreInstallType=1
             configPath=${WORK_DIR}/sing-box/conf/config/
             singBoxConfigPath=${WORK_DIR}/sing-box/conf/config/
         fi
