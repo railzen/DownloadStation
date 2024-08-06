@@ -974,23 +974,6 @@ installTools() {
         fi
     fi
 
-    if [[ ! -d "$HOME/.acme.sh" ]] || [[ -d "$HOME/.acme.sh" && -z $(find "$HOME/.acme.sh/acme.sh") ]]; then
-        echoContent green " ---> 安装acme.sh"
-        curl -s https://get.acme.sh | sh >${WORK_DIR}/tls/acme.log 2>&1
-
-        if [[ ! -d "$HOME/.acme.sh" ]] || [[ -z $(find "$HOME/.acme.sh/acme.sh") ]]; then
-            echoContent red "  acme安装失败--->"
-            tail -n 100 ${WORK_DIR}/tls/acme.log
-            echoContent yellow "错误排查:"
-            echoContent red "  1.获取Github文件失败，请等待Github恢复后尝试，恢复进度可查看 [https://www.githubstatus.com/]"
-            echoContent red "  2.acme.sh脚本出现bug，可查看[https://github.com/acmesh-official/acme.sh] issues"
-            echoContent red "  3.如纯IPv6机器，请设置NAT64,可执行下方命令，如果添加下方命令还是不可用，请尝试更换其他NAT64"
-            #                echoContent skyBlue "  echo -e \"nameserver 2001:67c:2b0::4\\\nnameserver 2a00:1098:2c::1\" >> /etc/resolv.conf"
-            echoContent skyBlue "  sed -i \"1i\\\nameserver 2001:67c:2b0::4\\\nnameserver 2a00:1098:2c::1\" /etc/resolv.conf"
-            exit 0
-        fi
-    fi
-
 
 }
 # 开机启动
@@ -7416,7 +7399,7 @@ singBoxVersionManageMenu() {
 
 # 主菜单
 menu() {
-	cd "$HOME" || exit
+	#cd "$HOME" || exit
 	echo -e "\n=================================================="
 	echo -e "Sing-Box 管理脚本V2 $VERSION "
 	echo -e "=================================================="
@@ -7490,5 +7473,5 @@ menu() {
 		;;
     esac
 }
-cronFunction
+#cronFunction
 menu
