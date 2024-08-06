@@ -3,7 +3,7 @@
 # -------------------------------------------------------------
 # 检查系统
 export LANG=en_US.UTF-8
-VERSION='v1.0.011 build240805'
+VERSION='v1.0.012 build240805'
 WORK_DIR='/opts/CherryScript/singbox_mux'
 echoContent() {
     case $1 in
@@ -854,7 +854,7 @@ mkdirTools() {
 
 # 安装工具包
 installTools() {
-    echoContent skyBlue "\n进度  $1/${totalProgress} : 安装工具"
+    echoContent white "\n进度  $1/${totalProgress} : 安装工具"
     # 修复ubuntu个别系统问题
     if [[ "${release}" == "ubuntu" ]]; then
         dpkg --configure -a
@@ -1067,18 +1067,18 @@ checkDNSIP() {
 
 # 检查ip
 checkIP() {
-    echoContent skyBlue "\n ---> 检查域名ip中"
+    echoContent white "\n ---> 检查域名ip中"
     local localIP=$1
 
     if [[ -z ${localIP} ]] || ! echo "${localIP}" | sed '1{s/[^(]*(//;s/).*//;q}' | grep -q '\.' && ! echo "${localIP}" | sed '1{s/[^(]*(//;s/).*//;q}' | grep -q ':'; then
         echoContent red "\n ---> 未检测到当前域名的ip"
-        echoContent skyBlue " ---> 请依次进行下列检查"
+        echoContent white " ---> 请依次进行下列检查"
         echoContent yellow " --->  1.检查域名是否书写正确"
         echoContent yellow " --->  2.检查域名dns解析是否正确"
         echoContent yellow " --->  3.如解析正确，请等待dns生效，预计三分钟内生效"
         echoContent yellow " --->  4.如报Nginx启动问题，请手动启动nginx查看错误，如自己无法处理请提issues"
         echo
-        echoContent skyBlue " ---> 如以上设置都正确，请重新安装纯净系统后再次尝试"
+        echoContent white " ---> 如以上设置都正确，请重新安装纯净系统后再次尝试"
 
         if [[ -n ${localIP} ]]; then
             echoContent yellow " ---> 检测返回值异常，建议手动卸载nginx后重新执行脚本"
@@ -1124,10 +1124,10 @@ customSSLEmail() {
 switchDNSAPI() {
     read -r -p "是否使用DNS API申请证书[支持NAT]？[y/n]:" dnsAPIStatus
     if [[ "${dnsAPIStatus}" == "y" ]]; then
-        echoContent red "\n=============================================================="
-        echoContent yellow "1.cloudflare[默认]"
-        echoContent yellow "2.aliyun"
-        echoContent red "=============================================================="
+        echoContent white "\n=============================================================="
+        echoContent white "1.cloudflare[默认]"
+        echoContent white "2.aliyun"
+        echoContent white "=============================================================="
         read -r -p "请选择[回车]使用默认:" selectDNSAPIType
         case ${selectDNSAPIType} in
         1)
@@ -1185,11 +1185,11 @@ initDNSAPIConfig() {
 # 选择ssl安装类型
 switchSSLType() {
     if [[ -z "${sslType}" ]]; then
-        echoContent red "\n=============================================================="
-        echoContent yellow "1.letsencrypt[默认]"
-        echoContent yellow "2.zerossl"
-        echoContent yellow "3.buypass[不支持DNS申请]"
-        echoContent red "=============================================================="
+        echoContent white "\n=============================================================="
+        echoContent white "1.letsencrypt[默认]"
+        echoContent white "2.zerossl"
+        echoContent white "3.buypass[不支持DNS申请]"
+        echoContent white "=============================================================="
         read -r -p "请选择[回车]使用默认:" selectSSLType
         case ${selectSSLType} in
         1)
@@ -1313,9 +1313,9 @@ initRandomPath() {
 # 自定义/随机路径
 randomPathFunction() {
     if [[ -n $1 ]]; then
-        echoContent skyBlue "\n进度  $1/${totalProgress} : 生成随机路径"
+        echoContent white "\n进度  $1/${totalProgress} : 生成随机路径"
     else
-        echoContent skyBlue "生成随机路径"
+        echoContent white "生成随机路径"
     fi
 
     if [[ -n "${currentPath}" ]]; then
@@ -1344,7 +1344,7 @@ randomPathFunction() {
         fi
     fi
     echoContent yellow "\n path:${currentPath}"
-    echoContent skyBlue "\n----------------------------"
+    echoContent white "\n----------------------------"
 }
 # 随机数
 randomNum() {
@@ -1365,7 +1365,7 @@ installCronUpdateGeo() {
             echoContent red "\n ---> 已添加自动更新定时任务，请不要重复添加"
             exit 0
         fi
-        echoContent skyBlue "\n进度 1/1 : 添加定时更新geo文件"
+        echoContent white "\n进度 1/1 : 添加定时更新geo文件"
         crontab -l >${WORK_DIR}/backup_crontab.cron
         echo "35 1 * * * /bin/bash ${WORK_DIR}/install.sh UpdateGeo >> ${WORK_DIR}/crontab_tls.log 2>&1" >>${WORK_DIR}/backup_crontab.cron
         crontab ${WORK_DIR}/backup_crontab.cron
@@ -1377,7 +1377,7 @@ installCronUpdateGeo() {
 # 安装 sing-box
 installSingBox() {
     readInstallType
-    echoContent skyBlue "\n进度  $1/${totalProgress} : 安装sing-box"
+    echoContent white "\n进度  $1/${totalProgress} : 安装sing-box"
 
     if [[ ! -f "${WORK_DIR}/sing-box/sing-box" ]]; then
 
@@ -1431,7 +1431,7 @@ installXray() {
         prereleaseStatus=true
     fi
 
-    echoContent skyBlue "\n进度  $1/${totalProgress} : 安装Xray"
+    echoContent white "\n进度  $1/${totalProgress} : 安装Xray"
 
     if [[ ! -f "${WORK_DIR}/xray/xray" ]]; then
 
@@ -1454,7 +1454,7 @@ installXray() {
             rm -rf "${WORK_DIR}/xray/${xrayCoreCPUVendor}.zip"
 
             version=$(curl -s https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/releases?per_page=1 | jq -r '.[]|.tag_name')
-            echoContent skyBlue "------------------------Version-------------------------------"
+            echoContent white "------------------------Version-------------------------------"
             echo "version:${version}"
             rm ${WORK_DIR}/xray/geo* >/dev/null 2>&1
 
@@ -1480,7 +1480,7 @@ installXray() {
 
 # xray版本管理
 xrayVersionManageMenu() {
-    echoContent skyBlue "\n进度  $1/${totalProgress} : Xray版本管理"
+    echoContent white "\n进度  $1/${totalProgress} : Xray版本管理"
     if [[ "${coreInstallType}" != "xray" ]]; then
         echoContent red " ---> 没有检测到安装目录，请执行脚本安装内容"
         exit 0
@@ -1505,11 +1505,11 @@ xrayVersionManageMenu() {
         updateXray
     elif [[ "${selectXrayType}" == "3" ]]; then
         echoContent yellow "\n1.只可以回退最近的五个版本"
-        echoContent yellow "2.不保证回退后一定可以正常使用"
-        echoContent yellow "3.如果回退的版本不支持当前的config，则会无法连接，谨慎操作"
-        echoContent skyBlue "------------------------Version-------------------------------"
+        echoContent white "2.不保证回退后一定可以正常使用"
+        echoContent white "3.如果回退的版本不支持当前的config，则会无法连接，谨慎操作"
+        echoContent white "------------------------Version-------------------------------"
         curl -s "https://api.github.com/repos/XTLS/Xray-core/releases?per_page=5" | jq -r ".[]|select (.prerelease==false)|.tag_name" | awk '{print ""NR""":"$0}'
-        echoContent skyBlue "--------------------------------------------------------------"
+        echoContent white "--------------------------------------------------------------"
         read -r -p "请输入要回退的版本:" selectXrayVersionType
         version=$(curl -s "https://api.github.com/repos/XTLS/Xray-core/releases?per_page=5" | jq -r ".[]|select (.prerelease==false)|.tag_name" | awk '{print ""NR""":"$0}' | grep "${selectXrayVersionType}:" | awk -F "[:]" '{print $2}')
         if [[ -n "${version}" ]]; then
@@ -1538,7 +1538,7 @@ updateGeoSite() {
     echoContent yellow "\n来源 https://github.com/Loyalsoldier/v2ray-rules-dat"
 
     version=$(curl -s https://api.github.com/repos/Loyalsoldier/v2ray-rules-dat/releases?per_page=1 | jq -r '.[]|.tag_name')
-    echoContent skyBlue "------------------------Version-------------------------------"
+    echoContent white "------------------------Version-------------------------------"
     echo "version:${version}"
     rm ${configPath}../geo* >/dev/null
 
@@ -1624,7 +1624,7 @@ updateXray() {
 # 验证整个服务是否可用
 checkGFWStatue() {
     readInstallType
-    echoContent skyBlue "\n进度 $1/${totalProgress} : 验证服务启动状态"
+    echoContent white "\n进度 $1/${totalProgress} : 验证服务启动状态"
     if [[ "${coreInstallType}" == "xray" ]] && [[ -n $(pgrep -f "xray/xray") ]]; then
         echoContent green " ---> 服务启动成功"
     elif [[ "${coreInstallType}" == "singbox" ]] && [[ -n $(pgrep -f "sing-box/sing-box") ]]; then
@@ -1637,7 +1637,7 @@ checkGFWStatue() {
 
 # 安装hysteria开机自启
 installHysteriaService() {
-    echoContent skyBlue "\n进度  $1/${totalProgress} : 配置Hysteria开机自启"
+    echoContent white "\n进度  $1/${totalProgress} : 配置Hysteria开机自启"
     if [[ -n $(find /bin /usr/bin -name "systemctl") ]]; then
         rm -rf /etc/systemd/system/hysteria.service
         touch /etc/systemd/system/hysteria.service
@@ -1700,7 +1700,7 @@ EOF
 
 # sing-box开机自启
 installSingBoxService() {
-    echoContent skyBlue "\n进度  $1/${totalProgress} : 配置sing-box开机自启"
+    echoContent white "\n进度  $1/${totalProgress} : 配置sing-box开机自启"
     execStart="${WORK_DIR}/sing-box/sing-box run -c ${WORK_DIR}/sing-box/conf/config.json"
 
     if [[ -n $(find /bin /usr/bin -name "systemctl") && "${release}" != "alpine" ]]; then
@@ -1736,7 +1736,7 @@ EOF
 
 # Xray开机自启
 installXrayService() {
-    echoContent skyBlue "\n进度  $1/${totalProgress} : 配置Xray开机自启"
+    echoContent white "\n进度  $1/${totalProgress} : 配置Xray开机自启"
     execStart="${WORK_DIR}/xray/xray run -confdir ${WORK_DIR}/xray/conf"
     if [[ -n $(find /bin /usr/bin -name "systemctl") ]]; then
         rm -rf /etc/systemd/system/xray.service
@@ -2125,12 +2125,12 @@ initHysteriaPort() {
 
 # 初始化hysteria的协议
 initHysteriaProtocol() {
-    echoContent skyBlue "\n请选择协议类型"
-    echoContent red "=============================================================="
-    echoContent yellow "1.udp(QUIC)(默认)"
-    echoContent yellow "2.faketcp"
-    echoContent yellow "3.wechat-video"
-    echoContent red "=============================================================="
+    echoContent white "\n请选择协议类型"
+    echoContent white "=============================================================="
+    echoContent white "1.udp(QUIC)(默认)"
+    echoContent white "2.faketcp"
+    echoContent white "3.wechat-video"
+    echoContent white "=============================================================="
     read -r -p "请选择:" selectHysteriaProtocol
     case ${selectHysteriaProtocol} in
     1)
@@ -2174,8 +2174,8 @@ hysteriaPortHopping() {
         exit 0
     fi
 
-    echoContent skyBlue "\n进度 1/1 : 端口跳跃"
-    echoContent red "\n=============================================================="
+    echoContent white "\n进度 1/1 : 端口跳跃"
+    echoContent white "\n=============================================================="
     echoContent yellow "# 注意事项\n"
     echoContent yellow "仅支持Hysteria2"
     echoContent yellow "端口跳跃的起始位置为30000"
@@ -2243,11 +2243,11 @@ hysteriaPortHoppingMenu() {
         exit 0
     fi
     readHysteriaPortHopping
-    echoContent skyBlue "\n进度 1/1 : 端口跳跃"
-    echoContent red "\n=============================================================="
-    echoContent yellow "1.添加端口跳跃"
-    echoContent yellow "2.删除端口跳跃"
-    echoContent yellow "3.查看端口跳跃"
+    echoContent white "\n进度 1/1 : 端口跳跃"
+    echoContent white "\n=============================================================="
+    echoContent white "1.添加端口跳跃"
+    echoContent white "2.删除端口跳跃"
+    echoContent white "3.查看端口跳跃"
     read -r -p "范围:" selectPortHoppingStatus
     if [[ "${selectPortHoppingStatus}" == "1" ]]; then
         hysteriaPortHopping
@@ -2268,7 +2268,7 @@ hysteriaPortHoppingMenu() {
 }
 # 初始化Hysteria配置
 initHysteriaConfig() {
-    echoContent skyBlue "\n进度 $1/${totalProgress} : 初始化Hysteria配置"
+    echoContent white "\n进度 $1/${totalProgress} : 初始化Hysteria配置"
 
     initHysteriaPort
     #    initHysteriaProtocol
@@ -2367,12 +2367,12 @@ initTuicPort() {
 
 # 初始化tuic的协议
 initTuicProtocol() {
-    echoContent skyBlue "\n请选择算法类型"
-    echoContent red "=============================================================="
-    echoContent yellow "1.bbr(默认)"
-    echoContent yellow "2.cubic"
-    echoContent yellow "3.new_reno"
-    echoContent red "=============================================================="
+    echoContent white "\n请选择算法类型"
+    echoContent white "=============================================================="
+    echoContent white "1.bbr(默认)"
+    echoContent white "2.cubic"
+    echoContent white "3.new_reno"
+    echoContent white "=============================================================="
     read -r -p "请选择:" selectTuicAlgorithm
     case ${selectTuicAlgorithm} in
     1)
@@ -2393,7 +2393,7 @@ initTuicProtocol() {
 
 # 初始化tuic配置
 #initTuicConfig() {
-#    echoContent skyBlue "\n进度 $1/${totalProgress} : 初始化Tuic配置"
+#    echoContent white "\n进度 $1/${totalProgress} : 初始化Tuic配置"
 #
 #    initTuicPort
 #    initTuicProtocol
@@ -2412,7 +2412,7 @@ initTuicProtocol() {
 
 # 初始化 sing-box Tuic 配置
 initSingBoxTuicConfig() {
-    echoContent skyBlue "\n进度 $1/${totalProgress} : 初始化Tuic配置"
+    echoContent white "\n进度 $1/${totalProgress} : 初始化Tuic配置"
 
     initTuicPort
     initTuicProtocol
@@ -2828,7 +2828,7 @@ EOF
 
 # 初始化 sing-box Hysteria2 配置
 initSingBoxHysteria2Config() {
-    echoContent skyBlue "\n进度 $1/${totalProgress} : 初始化Hysteria2配置"
+    echoContent white "\n进度 $1/${totalProgress} : 初始化Hysteria2配置"
 
     initHysteriaPort
     initHysteria2Network
@@ -2916,15 +2916,15 @@ initXrayFrontingConfig() {
 
     fi
 
-    echoContent skyBlue "\n功能 1/${totalProgress} : 前置切换为${xtlsType}"
-    echoContent red "\n=============================================================="
+    echoContent white "\n功能 1/${totalProgress} : 前置切换为${xtlsType}"
+    echoContent white "\n=============================================================="
     echoContent yellow "# 注意事项\n"
     echoContent yellow "会将前置替换为${xtlsType}"
     echoContent yellow "如果前置是Trojan，查看账号时则会出现两个Trojan协议的节点，有一个不可用xtls"
     echoContent yellow "再次执行可切换至上一次的前置\n"
 
-    echoContent yellow "1.切换至${xtlsType}"
-    echoContent red "=============================================================="
+    echoContent white "1.切换至${xtlsType}"
+    echoContent white "=============================================================="
     read -r -p "请选择:" selectType
     if [[ "${selectType}" == "1" ]]; then
 
@@ -2988,7 +2988,7 @@ initSingBoxPort() {
 
 # 初始化Xray 配置文件
 initXrayConfig() {
-    echoContent skyBlue "\n进度 $2/${totalProgress} : 初始化Xray配置"
+    echoContent white "\n进度 $2/${totalProgress} : 初始化Xray配置"
     echo
     local uuid=
     local addClientsStatus=
@@ -3294,7 +3294,7 @@ EOF
 
     # VLESS_TCP/reality
     if echo "${selectCustomInstallType}" | grep -q ",7," || [[ "$1" == "all" ]]; then
-        echoContent skyBlue "\n===================== 配置VLESS+Reality =====================\n"
+        echoContent white "\n===================== 配置VLESS+Reality =====================\n"
         initXrayRealityPort
         initRealityClientServersName
         initRealityKey
@@ -3383,7 +3383,7 @@ EOF
 
 # 初始化TCP Brutal
 initTCPBrutal() {
-    echoContent skyBlue "\n进度 $2/${totalProgress} : 初始化TCP_Brutal配置"
+    echoContent white "\n进度 $2/${totalProgress} : 初始化TCP_Brutal配置"
     read -r -p "是否使用TCP_Brutal？[y/n]:" tcpBrutalStatus
     if [[ "${tcpBrutalStatus}" == "y" ]]; then
         read -r -p "请输入本地带宽峰值的下行速度（默认：100，单位：Mbps）:" tcpBrutalClientDownloadSpeed
@@ -3399,7 +3399,7 @@ initTCPBrutal() {
 }
 # 初始化sing-box配置文件
 initSingBoxConfig() {
-    echoContent skyBlue "\n进度 $2/${totalProgress} : 初始化sing-box配置"
+    echoContent white "\n进度 $2/${totalProgress} : 初始化sing-box配置"
 
     echo
     local uuid=
@@ -3449,7 +3449,7 @@ initSingBoxConfig() {
     # VLESS Vision
     if echo "${selectCustomInstallType}" | grep -q ",0," || [[ "$1" == "all" ]]; then
         echoContent yellow "\n===================== 配置VLESS+Vision =====================\n"
-        echoContent skyBlue "\n开始配置VLESS+Vision协议端口"
+        echoContent white "\n开始配置VLESS+Vision协议端口"
         echo
         mapfile -t result < <(initSingBoxPort "${singBoxVLESSVisionPort}")
         echoContent green "\n ---> VLESS_Vision端口：${result[-1]}"
@@ -3484,7 +3484,7 @@ EOF
 
     if echo "${selectCustomInstallType}" | grep -q ",1," || [[ "$1" == "all" ]]; then
         echoContent yellow "\n===================== 配置VLESS+WS =====================\n"
-        echoContent skyBlue "\n开始配置VLESS+WS协议端口"
+        echoContent white "\n开始配置VLESS+WS协议端口"
         echo
         mapfile -t result < <(initSingBoxPort "${singBoxVLESSWSPort}")
         echoContent green "\n ---> VLESS_WS端口：${result[-1]}"
@@ -3525,7 +3525,7 @@ EOF
 
     if echo "${selectCustomInstallType}" | grep -q ",3," || [[ "$1" == "all" ]]; then
         echoContent yellow "\n===================== 配置VMess+ws =====================\n"
-        echoContent skyBlue "\n开始配置VMess+ws协议端口"
+        echoContent white "\n开始配置VMess+ws协议端口"
         echo
         mapfile -t result < <(initSingBoxPort "${singBoxVMessWSPort}")
         echoContent green "\n ---> VLESS_Vision端口：${result[-1]}"
@@ -3569,7 +3569,7 @@ EOF
         echoContent yellow "\n================= 配置VLESS+Reality+Vision =================\n"
         initRealityClientServersName
         initRealityKey
-        echoContent skyBlue "\n开始配置VLESS+Reality+Vision协议端口"
+        echoContent white "\n开始配置VLESS+Reality+Vision协议端口"
         echo
         mapfile -t result < <(initSingBoxPort "${singBoxVLESSRealityVisionPort}")
         echoContent green "\n ---> VLESS_Reality_Vision端口：${result[-1]}"
@@ -3610,7 +3610,7 @@ EOF
         echoContent yellow "\n================== 配置VLESS+Reality+gRPC ==================\n"
         initRealityClientServersName
         initRealityKey
-        echoContent skyBlue "\n开始配置VLESS+Reality+gRPC协议端口"
+        echoContent white "\n开始配置VLESS+Reality+gRPC协议端口"
         echo
         mapfile -t result < <(initSingBoxPort "${singBoxVLESSRealityGRPCPort}")
         echoContent green "\n ---> VLESS_Reality_gPRC端口：${result[-1]}"
@@ -3653,7 +3653,7 @@ EOF
 
     if echo "${selectCustomInstallType}" | grep -q ",6," || [[ "$1" == "all" ]]; then
         echoContent yellow "\n================== 配置 Hysteria2 ==================\n"
-        echoContent skyBlue "\n开始配置Hysteria2协议端口"
+        echoContent white "\n开始配置Hysteria2协议端口"
         echo
         mapfile -t result < <(initSingBoxPort "${singBoxHysteria2Port}")
         echoContent green "\n ---> Hysteria2端口：${result[-1]}"
@@ -3687,7 +3687,7 @@ EOF
 
     if echo "${selectCustomInstallType}" | grep -q ",4," || [[ "$1" == "all" ]]; then
         echoContent yellow "\n================== 配置 Trojan ==================\n"
-        echoContent skyBlue "\n开始配置Trojan协议端口"
+        echoContent white "\n开始配置Trojan协议端口"
         echo
         mapfile -t result < <(initSingBoxPort "${singBoxTrojanPort}")
         echoContent green "\n ---> Trojan端口：${result[-1]}"
@@ -3715,7 +3715,7 @@ EOF
 
     if echo "${selectCustomInstallType}" | grep -q ",9," || [[ "$1" == "all" ]]; then
         echoContent yellow "\n==================== 配置 Tuic =====================\n"
-        echoContent skyBlue "\n开始配置Tuic协议端口"
+        echoContent white "\n开始配置Tuic协议端口"
         echo
         mapfile -t result < <(initSingBoxPort "${singBoxTuicPort}")
         echoContent green "\n ---> Tuic端口：${result[-1]}"
@@ -3749,7 +3749,7 @@ EOF
 
     if echo "${selectCustomInstallType}" | grep -q ",10," || [[ "$1" == "all" ]]; then
         echoContent yellow "\n==================== 配置 Naive =====================\n"
-        echoContent skyBlue "\n开始配置Naive协议端口"
+        echoContent white "\n开始配置Naive协议端口"
         echo
         mapfile -t result < <(initSingBoxPort "${singBoxNaivePort}")
         echoContent green "\n ---> Naive端口：${result[-1]}"
@@ -3777,7 +3777,7 @@ EOF
     fi
     if echo "${selectCustomInstallType}" | grep -q ",11," || [[ "$1" == "all" ]]; then
         echoContent yellow "\n===================== 配置VMess+HTTPUpgrade =====================\n"
-        echoContent skyBlue "\n开始配置VMess+HTTPUpgrade协议端口"
+        echoContent white "\n开始配置VMess+HTTPUpgrade协议端口"
         echo
         mapfile -t result < <(initSingBoxPort "${singBoxVMessHTTPUpgradePort}")
         echoContent green "\n ---> VMess_HTTPUpgrade端口：${result[-1]}"
@@ -4242,18 +4242,18 @@ showAccounts() {
     readHysteriaPortHopping
 
     echo
-    echoContent skyBlue "\n进度 $1/${totalProgress} : 账号"
+    echoContent white "\n进度 $1/${totalProgress} : 账号"
 
     initSubscribeLocalConfig
     # VLESS TCP
     if echo ${currentInstallProtocolType} | grep -q ",0,"; then
 
-        echoContent skyBlue "============================= VLESS TCP TLS_Vision [推荐] ==============================\n"
+        echoContent white "============================= VLESS TCP TLS_Vision [推荐] ==============================\n"
         jq .inbounds[0].settings.clients//.inbounds[0].users ${configPath}02_VLESS_TCP_inbounds.json | jq -c '.[]' | while read -r user; do
             local email=
             email=$(echo "${user}" | jq -r .email//.name)
 
-            echoContent skyBlue "\n ---> 账号:${email}"
+            echoContent white "\n ---> 账号:${email}"
             echo
             defaultBase64Code vlesstcp "${currentDefaultPort}${singBoxVLESSVisionPort}" "${email}" "$(echo "${user}" | jq -r .id//.uuid)"
         done
@@ -4261,7 +4261,7 @@ showAccounts() {
 
     # VLESS WS
     if echo ${currentInstallProtocolType} | grep -q ",1,"; then
-        echoContent skyBlue "\n================================ VLESS WS TLS [仅CDN推荐] ================================\n"
+        echoContent white "\n================================ VLESS WS TLS [仅CDN推荐] ================================\n"
 
         jq .inbounds[0].settings.clients//.inbounds[0].users ${configPath}03_VLESS_WS_inbounds.json | jq -c '.[]' | while read -r user; do
             local email=
@@ -4282,7 +4282,7 @@ showAccounts() {
 
             local count=
             while read -r line; do
-                echoContent skyBlue "\n ---> 账号:${email}${count}"
+                echoContent white "\n ---> 账号:${email}${count}"
                 if [[ -n "${line}" ]]; then
                     defaultBase64Code vlessws "${vlessWSPort}" "${email}${count}" "$(echo "${user}" | jq -r .id//.uuid)" "${line}" "${path}"
                     count=$((count + 1))
@@ -4294,7 +4294,7 @@ showAccounts() {
 
     # VLESS grpc
     if echo ${currentInstallProtocolType} | grep -q ",5,"; then
-        echoContent skyBlue "\n=============================== VLESS gRPC TLS [仅CDN推荐]  ===============================\n"
+        echoContent white "\n=============================== VLESS gRPC TLS [仅CDN推荐]  ===============================\n"
         jq .inbounds[0].settings.clients ${configPath}06_VLESS_gRPC_inbounds.json | jq -c '.[]' | while read -r user; do
 
             local email=
@@ -4302,7 +4302,7 @@ showAccounts() {
 
             local count=
             while read -r line; do
-                echoContent skyBlue "\n ---> 账号:${email}${count}"
+                echoContent white "\n ---> 账号:${email}${count}"
                 echo
                 if [[ -n "${line}" ]]; then
                     defaultBase64Code vlessgrpc "${currentDefaultPort}" "${email}${count}" "$(echo "${user}" | jq -r .id)" "${line}"
@@ -4315,7 +4315,7 @@ showAccounts() {
 
     # VMess WS
     if echo ${currentInstallProtocolType} | grep -q ",3,"; then
-        echoContent skyBlue "\n================================ VMess WS TLS [仅CDN推荐]  ================================\n"
+        echoContent white "\n================================ VMess WS TLS [仅CDN推荐]  ================================\n"
         local path="${currentPath}vws"
         if [[ ${coreInstallType} == "xray" ]]; then
             path="/${currentPath}vws"
@@ -4333,7 +4333,7 @@ showAccounts() {
 
             local count=
             while read -r line; do
-                echoContent skyBlue "\n ---> 账号:${email}${count}"
+                echoContent white "\n ---> 账号:${email}${count}"
                 echo
                 if [[ -n "${line}" ]]; then
                     defaultBase64Code vmessws "${vmessPort}" "${email}${count}" "$(echo "${user}" | jq -r .id//.uuid)" "${line}" "${path}"
@@ -4345,11 +4345,11 @@ showAccounts() {
 
     # trojan tcp
     if echo ${currentInstallProtocolType} | grep -q ",4,"; then
-        echoContent skyBlue "\n==================================  Trojan TLS [不推荐] ==================================\n"
+        echoContent white "\n==================================  Trojan TLS [不推荐] ==================================\n"
         jq .inbounds[0].settings.clients//.inbounds[0].users ${configPath}04_trojan_TCP_inbounds.json | jq -c '.[]' | while read -r user; do
             local email=
             email=$(echo "${user}" | jq -r .email//.name)
-            echoContent skyBlue "\n ---> 账号:${email}"
+            echoContent white "\n ---> 账号:${email}"
 
             defaultBase64Code trojan "${currentDefaultPort}${singBoxTrojanPort}" "${email}" "$(echo "${user}" | jq -r .password)"
         done
@@ -4357,13 +4357,13 @@ showAccounts() {
 
     # trojan grpc
     if echo ${currentInstallProtocolType} | grep -q ",2,"; then
-        echoContent skyBlue "\n================================  Trojan gRPC TLS [仅CDN推荐]  ================================\n"
+        echoContent white "\n================================  Trojan gRPC TLS [仅CDN推荐]  ================================\n"
         jq .inbounds[0].settings.clients ${configPath}04_trojan_gRPC_inbounds.json | jq -c '.[]' | while read -r user; do
             local email=
             email=$(echo "${user}" | jq -r .email)
             local count=
             while read -r line; do
-                echoContent skyBlue "\n ---> 账号:${email}${count}"
+                echoContent white "\n ---> 账号:${email}${count}"
                 echo
                 if [[ -n "${line}" ]]; then
                     defaultBase64Code trojangrpc "${currentDefaultPort}" "${email}${count}" "$(echo "${user}" | jq -r .password)" "${line}"
@@ -4375,7 +4375,7 @@ showAccounts() {
     fi
     # hysteria2
     if echo ${currentInstallProtocolType} | grep -q ",6," || [[ -n "${hysteriaPort}" ]]; then
-        echoContent skyBlue "\n================================  Hysteria2 TLS [推荐] ================================\n"
+        echoContent white "\n================================  Hysteria2 TLS [推荐] ================================\n"
         local path="${configPath}"
         if [[ "${coreInstallType}" == "xray" ]]; then
             path="${singBoxConfigPath}"
@@ -4388,7 +4388,7 @@ showAccounts() {
         fi
 
         jq -r -c '.inbounds[]|.users[]' "${path}06_hysteria2_inbounds.json" | while read -r user; do
-            echoContent skyBlue "\n ---> 账号:$(echo "${user}" | jq -r .name)"
+            echoContent white "\n ---> 账号:$(echo "${user}" | jq -r .name)"
             echo
             defaultBase64Code hysteria "${hysteria2DefaultPort}" "$(echo "${user}" | jq -r .name)" "$(echo "${user}" | jq -r .password)"
         done
@@ -4397,37 +4397,37 @@ showAccounts() {
 
     # VLESS reality vision
     if echo ${currentInstallProtocolType} | grep -q ",7,"; then
-        echoContent skyBlue "============================= VLESS reality_vision [推荐]  ==============================\n"
+        echoContent white "============================= VLESS reality_vision [推荐]  ==============================\n"
         jq .inbounds[0].settings.clients//.inbounds[0].users ${configPath}07_VLESS_vision_reality_inbounds.json | jq -c '.[]' | while read -r user; do
             local email=
             email=$(echo "${user}" | jq -r .email//.name)
 
-            echoContent skyBlue "\n ---> 账号:${email}"
+            echoContent white "\n ---> 账号:${email}"
             echo
             defaultBase64Code vlessReality "${xrayVLESSRealityVisionPort}${singBoxVLESSRealityVisionPort}" "${email}" "$(echo "${user}" | jq -r .id//.uuid)"
         done
     fi
     # VLESS reality gRPC
     if echo ${currentInstallProtocolType} | grep -q ",8,"; then
-        echoContent skyBlue "============================== VLESS reality_gRPC [推荐] ===============================\n"
+        echoContent white "============================== VLESS reality_gRPC [推荐] ===============================\n"
         jq .inbounds[0].settings.clients//.inbounds[0].users ${configPath}08_VLESS_vision_gRPC_inbounds.json | jq -c '.[]' | while read -r user; do
             local email=
             email=$(echo "${user}" | jq -r .email//.name)
 
-            echoContent skyBlue "\n ---> 账号:${email}"
+            echoContent white "\n ---> 账号:${email}"
             echo
             defaultBase64Code vlessRealityGRPC "${xrayVLESSRealityVisionPort}${singBoxVLESSRealityGRPCPort}" "${email}" "$(echo "${user}" | jq -r .id//.uuid)"
         done
     fi
     # tuic
     if echo ${currentInstallProtocolType} | grep -q ",9," || [[ -n "${tuicPort}" ]]; then
-        echoContent skyBlue "\n================================  Tuic TLS [推荐]  ================================\n"
+        echoContent white "\n================================  Tuic TLS [推荐]  ================================\n"
         local path="${configPath}"
         if [[ "${coreInstallType}" == "xray" ]]; then
             path="${singBoxConfigPath}"
         fi
         jq -r -c '.inbounds[].users[]' "${path}09_tuic_inbounds.json" | while read -r user; do
-            echoContent skyBlue "\n ---> 账号:$(echo "${user}" | jq -r .name)"
+            echoContent white "\n ---> 账号:$(echo "${user}" | jq -r .name)"
             echo
             defaultBase64Code tuic "${singBoxTuicPort}" "$(echo "${user}" | jq -r .name)" "$(echo "${user}" | jq -r .uuid)_$(echo "${user}" | jq -r .password)"
         done
@@ -4435,10 +4435,10 @@ showAccounts() {
     fi
     # naive
     if echo ${currentInstallProtocolType} | grep -q ",10," || [[ -n "${singBoxNaivePort}" ]]; then
-        echoContent skyBlue "\n================================  naive TLS [推荐，不支持ClashMeta]  ================================\n"
+        echoContent white "\n================================  naive TLS [推荐，不支持ClashMeta]  ================================\n"
 
         jq -r -c '.inbounds[]|.users[]' "${configPath}10_naive_inbounds.json" | while read -r user; do
-            echoContent skyBlue "\n ---> 账号:$(echo "${user}" | jq -r .username)"
+            echoContent white "\n ---> 账号:$(echo "${user}" | jq -r .username)"
             echo
             defaultBase64Code naive "${singBoxNaivePort}" "$(echo "${user}" | jq -r .username)" "$(echo "${user}" | jq -r .password)"
         done
@@ -4446,7 +4446,7 @@ showAccounts() {
     fi
     # VMess HTTPUpgrade
     if echo ${currentInstallProtocolType} | grep -q ",11,"; then
-        echoContent skyBlue "\n================================ VMess HTTPUpgrade TLS [仅CDN推荐]  ================================\n"
+        echoContent white "\n================================ VMess HTTPUpgrade TLS [仅CDN推荐]  ================================\n"
         local path="${currentPath}vws"
         if [[ ${coreInstallType} == "xray" ]]; then
             path="/${currentPath}vws"
@@ -4464,7 +4464,7 @@ showAccounts() {
 
             local count=
             while read -r line; do
-                echoContent skyBlue "\n ---> 账号:${email}${count}"
+                echoContent white "\n ---> 账号:${email}${count}"
                 echo
                 if [[ -n "${line}" ]]; then
                     defaultBase64Code vmessHTTPUpgrade "${vmessHTTPUpgradePort}" "${email}${count}" "$(echo "${user}" | jq -r .id//.uuid)" "${line}" "${path}"
@@ -4859,22 +4859,22 @@ checkLog() {
         logStatus=true
     fi
 
-    echoContent skyBlue "\n功能 $1/${totalProgress} : 查看日志"
-    echoContent red "\n=============================================================="
+    echoContent white "\n功能 $1/${totalProgress} : 查看日志"
+    echoContent white "\n=============================================================="
     echoContent yellow "# 建议仅调试时打开access日志\n"
 
     if [[ "${logStatus}" == "false" ]]; then
-        echoContent yellow "1.打开access日志"
+        echoContent white "1.打开access日志"
     else
-        echoContent yellow "1.关闭access日志"
+        echoContent white "1.关闭access日志"
     fi
 
-    echoContent yellow "2.监听access日志"
-    echoContent yellow "3.监听error日志"
-    echoContent yellow "4.查看证书定时任务日志"
-    echoContent yellow "5.查看证书安装日志"
-    echoContent yellow "6.清空日志"
-    echoContent red "=============================================================="
+    echoContent white "2.监听access日志"
+    echoContent white "3.监听error日志"
+    echoContent white "4.查看证书定时任务日志"
+    echoContent white "5.查看证书安装日志"
+    echoContent white "6.清空日志"
+    echoContent white "=============================================================="
 
     read -r -p "请选择:" selectAccessLogType
     local configPathLog=${configPath//conf\//}
@@ -4954,19 +4954,19 @@ ipv6Routing() {
     fi
 
     checkIPv6
-    echoContent skyBlue "\n功能 1/${totalProgress} : IPv6分流"
-    echoContent red "\n=============================================================="
-    echoContent yellow "1.查看已分流域名"
-    echoContent yellow "2.添加域名"
-    echoContent yellow "3.设置IPv6全局"
-    echoContent yellow "4.卸载IPv6分流"
-    echoContent red "=============================================================="
+    echoContent white "\n功能 1/${totalProgress} : IPv6分流"
+    echoContent white "\n=============================================================="
+    echoContent white "1.查看已分流域名"
+    echoContent white "2.添加域名"
+    echoContent white "3.设置IPv6全局"
+    echoContent white "4.卸载IPv6分流"
+    echoContent white "=============================================================="
     read -r -p "请选择:" ipv6Status
     if [[ "${ipv6Status}" == "1" ]]; then
         showIPv6Routing
         exit 0
     elif [[ "${ipv6Status}" == "2" ]]; then
-        echoContent red "=============================================================="
+        echoContent white "=============================================================="
         echoContent yellow "# 注意事项\n"
         echoContent yellow "# 注意事项\n"
 
@@ -4987,10 +4987,10 @@ ipv6Routing() {
 
     elif [[ "${ipv6Status}" == "3" ]]; then
 
-        echoContent red "=============================================================="
+        echoContent white "=============================================================="
         echoContent yellow "# 注意事项\n"
-        echoContent yellow "1.会删除所有设置的分流规则"
-        echoContent yellow "2.会删除IPv6之外的所有出站规则\n"
+        echoContent white "1.会删除所有设置的分流规则"
+        echoContent white "2.会删除IPv6之外的所有出站规则\n"
         read -r -p "是否确认设置？[y/n]:" IPv6OutStatus
 
         if [[ "${IPv6OutStatus}" == "y" ]]; then
@@ -5322,14 +5322,14 @@ removeWireGuardRoute() {
 # warp分流-第三方IPv4
 warpRoutingReg() {
     local type=$2
-    echoContent skyBlue "\n进度  $1/${totalProgress} : WARP分流[第三方]"
-    echoContent red "=============================================================="
+    echoContent white "\n进度  $1/${totalProgress} : WARP分流[第三方]"
+    echoContent white "=============================================================="
 
-    echoContent yellow "1.查看已分流域名"
-    echoContent yellow "2.添加域名"
-    echoContent yellow "3.设置WARP全局"
-    echoContent yellow "4.卸载WARP分流"
-    echoContent red "=============================================================="
+    echoContent white "1.查看已分流域名"
+    echoContent white "2.添加域名"
+    echoContent white "3.设置WARP全局"
+    echoContent white "4.卸载WARP分流"
+    echoContent white "=============================================================="
     read -r -p "请选择:" warpStatus
     installWarpReg
     readConfigWarpReg
@@ -5355,10 +5355,10 @@ warpRoutingReg() {
 
     elif [[ "${warpStatus}" == "3" ]]; then
 
-        echoContent red "=============================================================="
+        echoContent white "=============================================================="
         echoContent yellow "# 注意事项\n"
-        echoContent yellow "1.会删除所有设置的分流规则"
-        echoContent yellow "2.会删除除WARP[第三方]之外的所有出站规则\n"
+        echoContent white "1.会删除所有设置的分流规则"
+        echoContent white "2.会删除除WARP[第三方]之外的所有出站规则\n"
         read -r -p "是否确认设置？[y/n]:" warpOutStatus
 
         if [[ "${warpOutStatus}" == "y" ]]; then
@@ -5438,18 +5438,18 @@ warpRoutingReg() {
 
 # 分流工具
 routingToolsMenu() {
-    echoContent skyBlue "\n功能 1/${totalProgress} : 分流工具"
-    echoContent red "\n=============================================================="
+    echoContent white "\n功能 1/${totalProgress} : 分流工具"
+    echoContent white "\n=============================================================="
     echoContent yellow "# 注意事项"
     echoContent yellow "# 用于服务端的流量分流，可用于解锁ChatGPT、流媒体等相关内容\n"
 
-    echoContent yellow "1.WARP分流【第三方 IPv4】"
-    echoContent yellow "2.WARP分流【第三方 IPv6】"
-    echoContent yellow "3.IPv6分流"
-    echoContent yellow "4.Socks5分流【替换任意门分流】"
-    echoContent yellow "5.DNS分流"
-    #    echoContent yellow "6.VMess+WS+TLS分流"
-    echoContent yellow "7.SNI反向代理分流"
+    echoContent white "1.WARP分流【第三方 IPv4】"
+    echoContent white "2.WARP分流【第三方 IPv6】"
+    echoContent white "3.IPv6分流"
+    echoContent white "4.Socks5分流【替换任意门分流】"
+    echoContent white "5.DNS分流"
+    #    echoContent white "6.VMess+WS+TLS分流"
+    echoContent white "7.SNI反向代理分流"
 
     read -r -p "请选择:" selectType
 
@@ -5487,12 +5487,12 @@ routingToolsMenu() {
 
 # VMess+WS+TLS 分流
 vmessWSRouting() {
-    echoContent skyBlue "\n功能 1/${totalProgress} : VMess+WS+TLS 分流"
-    echoContent red "\n=============================================================="
+    echoContent white "\n功能 1/${totalProgress} : VMess+WS+TLS 分流"
+    echoContent white "\n=============================================================="
     echoContent yellow "# 注意事项\n"
 
-    echoContent yellow "1.添加出站"
-    echoContent yellow "2.卸载"
+    echoContent white "1.添加出站"
+    echoContent white "2.卸载"
     read -r -p "请选择:" selectType
 
     case ${selectType} in
@@ -5510,16 +5510,16 @@ socks5Routing() {
         echoContent red " ---> 未安装任意协议，请使用 1.安装 或者 2.任意组合安装 进行安装后使用"
         exit 0
     fi
-    echoContent skyBlue "\n功能 1/${totalProgress} : Socks5分流"
-    echoContent red "\n=============================================================="
+    echoContent white "\n功能 1/${totalProgress} : Socks5分流"
+    echoContent white "\n=============================================================="
     echoContent red "# 注意事项"
     echoContent yellow "# 流量明文访问"
 
     echoContent yellow "# 只能用于不会被阻断访问的网络环境下的不同机器之间的流量转发，请不要用于代理访问\n"
 
-    echoContent yellow "1.Socks5出站"
-    echoContent yellow "2.Socks5入站"
-    echoContent yellow "3.卸载"
+    echoContent white "1.Socks5出站"
+    echoContent white "2.Socks5入站"
+    echoContent white "3.卸载"
     read -r -p "请选择:" selectType
 
     case ${selectType} in
@@ -5537,13 +5537,13 @@ socks5Routing() {
 # Socks5入站菜单
 socks5InboundRoutingMenu() {
     readInstallType
-    echoContent skyBlue "\n功能 1/1 : Socks5入站"
-    echoContent red "\n=============================================================="
+    echoContent white "\n功能 1/1 : Socks5入站"
+    echoContent white "\n=============================================================="
 
-    echoContent yellow "1.安装Socks5入站"
-    echoContent yellow "2.查看分流规则"
-    echoContent yellow "3.添加分流规则"
-    echoContent yellow "4.查看入站配置"
+    echoContent white "1.安装Socks5入站"
+    echoContent white "2.查看分流规则"
+    echoContent white "3.添加分流规则"
+    echoContent white "4.查看入站配置"
     read -r -p "请选择:" selectType
     case ${selectType} in
     1)
@@ -5581,13 +5581,13 @@ socks5InboundRoutingMenu() {
 
 # Socks5出站菜单
 socks5OutboundRoutingMenu() {
-    echoContent skyBlue "\n功能 1/1 : Socks5出站"
-    echoContent red "\n=============================================================="
+    echoContent white "\n功能 1/1 : Socks5出站"
+    echoContent white "\n=============================================================="
 
-    echoContent yellow "1.安装Socks5出站"
-    echoContent yellow "2.设置Socks5全局转发"
-    echoContent yellow "3.查看分流规则"
-    echoContent yellow "4.添加分流规则"
+    echoContent white "1.安装Socks5出站"
+    echoContent white "2.设置Socks5全局转发"
+    echoContent white "3.查看分流规则"
+    echoContent white "4.添加分流规则"
     read -r -p "请选择:" selectType
     case ${selectType} in
     1)
@@ -5619,10 +5619,10 @@ socks5OutboundRoutingMenu() {
 # socks5全局
 setSocks5OutboundRoutingAll() {
 
-    echoContent red "=============================================================="
+    echoContent white "=============================================================="
     echoContent yellow "# 注意事项\n"
-    echoContent yellow "1.会删除所有已经设置的分流规则，包括其他分流（warp、IPv6等）"
-    echoContent yellow "2.会删除Socks5之外的所有出站规则\n"
+    echoContent white "1.会删除所有已经设置的分流规则，包括其他分流（warp、IPv6等）"
+    echoContent white "2.会删除Socks5之外的所有出站规则\n"
     read -r -p "是否确认设置？[y/n]:" socksOutStatus
 
     if [[ "${socksOutStatus}" == "y" ]]; then
@@ -5662,11 +5662,11 @@ showSingBoxRoutingRules() {
         elif [[ "$1" == "socks5_outbound_route" && -f "${singBoxConfigPath}socks5_outbound.json" ]]; then
             echoContent yellow "已安装 sing-box socks5全局出站分流"
             echoContent yellow "\n出站分流配置："
-            echoContent skyBlue "$(jq .outbounds[0] ${singBoxConfigPath}socks5_outbound.json)"
+            echoContent white "$(jq .outbounds[0] ${singBoxConfigPath}socks5_outbound.json)"
         elif [[ "$1" == "socks5_inbound_route" && -f "${singBoxConfigPath}20_socks5_inbounds.json" ]]; then
             echoContent yellow "已安装 sing-box socks5全局入站分流"
             echoContent yellow "\n出站分流配置："
-            echoContent skyBlue "$(jq .outbounds[0] ${singBoxConfigPath}socks5_outbound.json)"
+            echoContent white "$(jq .outbounds[0] ${singBoxConfigPath}socks5_outbound.json)"
         fi
     fi
 }
@@ -5679,24 +5679,24 @@ showXrayRoutingRules() {
 
             echoContent yellow "\n已安装 xray-core socks5全局出站分流"
             echoContent yellow "\n出站分流配置："
-            echoContent skyBlue "$(jq .outbounds[0].settings.servers[0] ${configPath}socks5_outbound.json)"
+            echoContent white "$(jq .outbounds[0].settings.servers[0] ${configPath}socks5_outbound.json)"
 
         elif [[ "$1" == "socks5_outbound" && -f "${configPath}socks5_outbound.json" ]]; then
             echoContent yellow "\n已安装 xray-core socks5全局出站分流"
             echoContent yellow "\n出站分流配置："
-            echoContent skyBlue "$(jq .outbounds[0].settings.servers[0] ${configPath}socks5_outbound.json)"
+            echoContent white "$(jq .outbounds[0].settings.servers[0] ${configPath}socks5_outbound.json)"
         fi
     fi
 }
 
 # 卸载Socks5分流
 removeSocks5Routing() {
-    echoContent skyBlue "\n功能 1/1 : 卸载Socks5分流"
-    echoContent red "\n=============================================================="
+    echoContent white "\n功能 1/1 : 卸载Socks5分流"
+    echoContent white "\n=============================================================="
 
-    echoContent yellow "1.卸载Socks5出站"
-    echoContent yellow "2.卸载Socks5入站"
-    echoContent yellow "3.卸载全部"
+    echoContent white "1.卸载Socks5出站"
+    echoContent white "2.卸载Socks5入站"
+    echoContent white "3.卸载全部"
     read -r -p "请选择:" unInstallSocks5RoutingStatus
     if [[ "${unInstallSocks5RoutingStatus}" == "1" ]]; then
         if [[ "${coreInstallType}" == "xray" ]]; then
@@ -5744,7 +5744,7 @@ removeSocks5Routing() {
 setSocks5Inbound() {
 
     echoContent yellow "\n==================== 配置 Socks5 入站(解锁机、落地机) =====================\n"
-    echoContent skyBlue "\n开始配置Socks5协议入站端口"
+    echoContent white "\n开始配置Socks5协议入站端口"
     echo
     mapfile -t result < <(initSingBoxPort "${singBoxSocks5Port}")
     echoContent green "\n ---> 入站Socks5端口：${result[-1]}"
@@ -5765,8 +5765,8 @@ setSocks5Inbound() {
 
     echoContent yellow "\n请选择分流域名DNS解析类型"
     echoContent yellow "# 注意事项：需要保证vps支持相应的DNS解析"
-    echoContent yellow "1.IPv4[回车默认]"
-    echoContent yellow "2.IPv6"
+    echoContent white "1.IPv4[回车默认]"
+    echoContent white "2.IPv6"
 
     read -r -p 'IP类型:' socks5InboundDomainStrategyStatus
     local domainStrategy=
@@ -5831,8 +5831,8 @@ setSocks5InboundRouting() {
     if [[ "$1" == "addRules" ]]; then
         socks5InboundRoutingIPs=$(jq .route.rules[0].source_ip_cidr "${singBoxConfigPath}socks5_inbound_route.json")
     else
-        echoContent red "=============================================================="
-        echoContent skyBlue "请输入允许访问的IP地址，多个IP英文逗号隔开。例如:1.1.1.1,2.2.2.2\n"
+        echoContent white "=============================================================="
+        echoContent white "请输入允许访问的IP地址，多个IP英文逗号隔开。例如:1.1.1.1,2.2.2.2\n"
         read -r -p "IP:" socks5InboundRoutingIPs
 
         if [[ -z "${socks5InboundRoutingIPs}" ]]; then
@@ -5842,8 +5842,8 @@ setSocks5InboundRouting() {
         socks5InboundRoutingIPs=$(echo "\"${socks5InboundRoutingIPs}"\" | jq -c '.|split(",")')
     fi
 
-    echoContent red "=============================================================="
-    echoContent skyBlue "请输入要分流的域名\n"
+    echoContent white "=============================================================="
+    echoContent white "请输入要分流的域名\n"
     echoContent yellow "支持Xray-core geosite匹配，支持sing-box1.8+ rule_set匹配\n"
     echoContent yellow "非增量添加，会替换原有规则\n"
     echoContent yellow "当输入的规则匹配到geosite或者rule_set后会使用相应的规则\n"
@@ -5936,8 +5936,8 @@ setSocks5OutboundRouting() {
         exit 0
     fi
 
-    echoContent red "=============================================================="
-    echoContent skyBlue "请输入要分流的域名\n"
+    echoContent white "=============================================================="
+    echoContent white "请输入要分流的域名\n"
     echoContent yellow "支持Xray-core geosite匹配，支持sing-box1.8+ rule_set匹配\n"
     echoContent yellow "非增量添加，会替换原有规则\n"
     echoContent yellow "当输入的规则匹配到geosite或者rule_set后会使用相应的规则\n"
@@ -5985,7 +5985,7 @@ EOF
 # 设置VMess+WS+TLS【仅出站】
 setVMessWSRoutingOutbounds() {
     read -r -p "请输入VMess+WS+TLS的地址:" setVMessWSTLSAddress
-    echoContent red "=============================================================="
+    echoContent white "=============================================================="
     echoContent yellow "录入示例:netflix,openai\n"
     read -r -p "请按照上面示例录入域名:" domainList
 
@@ -6059,12 +6059,12 @@ dnsRouting() {
         menu
         exit 0
     fi
-    echoContent skyBlue "\n功能 1/${totalProgress} : DNS分流"
-    echoContent red "\n=============================================================="
+    echoContent white "\n功能 1/${totalProgress} : DNS分流"
+    echoContent white "\n=============================================================="
     echoContent yellow "# 注意事项\n"
 
-    echoContent yellow "1.添加"
-    echoContent yellow "2.卸载"
+    echoContent white "1.添加"
+    echoContent white "2.卸载"
     read -r -p "请选择:" selectType
 
     case ${selectType} in
@@ -6085,12 +6085,12 @@ sniRouting() {
         menu
         exit 0
     fi
-    echoContent skyBlue "\n功能 1/${totalProgress} : SNI反向代理分流"
-    echoContent red "\n=============================================================="
+    echoContent white "\n功能 1/${totalProgress} : SNI反向代理分流"
+    echoContent white "\n=============================================================="
     echoContent yellow "# 注意事项\n"
 
-    echoContent yellow "1.添加"
-    echoContent yellow "2.卸载"
+    echoContent white "1.添加"
+    echoContent white "2.卸载"
     read -r -p "请选择:" selectType
 
     case ${selectType} in
@@ -6106,7 +6106,7 @@ sniRouting() {
 setUnlockSNI() {
     read -r -p "请输入分流的SNI IP:" setSNIP
     if [[ -n ${setSNIP} ]]; then
-        echoContent red "=============================================================="
+        echoContent white "=============================================================="
         echoContent yellow "录入示例:netflix,disney,hulu"
         read -r -p "请按照上面示例录入域名:" domainList
 
@@ -6227,7 +6227,7 @@ EOF
 setUnlockDNS() {
     read -r -p "请输入分流的DNS:" setDNS
     if [[ -n ${setDNS} ]]; then
-        echoContent red "=============================================================="
+        echoContent white "=============================================================="
         echoContent yellow "录入示例:netflix,disney,hulu"
         read -r -p "请按照上面示例录入域名:" domainList
 
@@ -6306,20 +6306,20 @@ EOF
 
 # sing-box 个性化安装
 customSingBoxInstall() {
-    echoContent skyBlue "\n========================个性化安装============================"
+    echoContent white "\n========================个性化安装============================"
     echoContent yellow "0.VLESS+Vision+TCP"
-    echoContent yellow "1.VLESS+TLS+WS[仅CDN推荐]"
-    echoContent yellow "3.VMess+TLS+WS[仅CDN推荐]"
-    echoContent yellow "4.Trojan+TLS[不推荐]"
-    echoContent yellow "6.Hysteria2"
-    echoContent yellow "7.VLESS+Reality+Vision"
-    echoContent yellow "8.VLESS+Reality+gRPC"
-    echoContent yellow "9.Tuic"
-    echoContent yellow "10.Naive"
-    echoContent yellow "11.VMess+TLS+HTTPUpgrade"
+    echoContent white "1.VLESS+TLS+WS[仅CDN推荐]"
+    echoContent white "3.VMess+TLS+WS[仅CDN推荐]"
+    echoContent white "4.Trojan+TLS[不推荐]"
+    echoContent white "6.Hysteria2"
+    echoContent white "7.VLESS+Reality+Vision"
+    echoContent white "8.VLESS+Reality+gRPC"
+    echoContent white "9.Tuic"
+    echoContent white "10.Naive"
+    echoContent white "11.VMess+TLS+HTTPUpgrade"
 
     read -r -p "请选择[多选]，[例如:1,2,3]:" selectCustomInstallType
-    echoContent skyBlue "--------------------------------------------------------------"
+    echoContent white "--------------------------------------------------------------"
     if echo "${selectCustomInstallType}" | grep -q "，"; then
         echoContent red " ---> 请使用英文逗号分隔"
         exit 0
@@ -6358,18 +6358,18 @@ customSingBoxInstall() {
 
 # Xray-core个性化安装
 customXrayInstall() {
-    echoContent skyBlue "\n========================个性化安装============================"
+    echoContent white "\n========================个性化安装============================"
     echoContent yellow "VLESS前置，默认安装0，无域名安装Reality只选择7即可"
     echoContent yellow "0.VLESS+TLS_Vision+TCP          [推荐]"
-    echoContent yellow "1.VLESS+TLS+WS                  [仅CDN推荐]"
-    echoContent yellow "2.Trojan+TLS+gRPC               [仅CDN推荐]"
-    echoContent yellow "3.VMess+TLS+WS                  [仅CDN推荐]"
-    echoContent yellow "4.Trojan+TLS                    [不推荐]"
-    echoContent yellow "5.VLESS+TLS+gRPC                [仅CDN推荐]"
-    echoContent yellow "7.VLESS+Reality+uTLS+Vision     [推荐]\n"
-    # echoContent yellow "8.VLESS+Reality+gRPC"
+    echoContent white "1.VLESS+TLS+WS                  [仅CDN推荐]"
+    echoContent white "2.Trojan+TLS+gRPC               [仅CDN推荐]"
+    echoContent white "3.VMess+TLS+WS                  [仅CDN推荐]"
+    echoContent white "4.Trojan+TLS                    [不推荐]"
+    echoContent white "5.VLESS+TLS+gRPC                [仅CDN推荐]"
+    echoContent white "7.VLESS+Reality+uTLS+Vision     [推荐]\n"
+    # echoContent white "8.VLESS+Reality+gRPC"
     read -r -p "请选择[多选]，[例如:1,2,3]:" selectCustomInstallType
-    echoContent skyBlue "--------------------------------------------------------------"
+    echoContent white "--------------------------------------------------------------"
     if echo "${selectCustomInstallType}" | grep -q "，"; then
         echoContent red " ---> 请使用英文逗号分隔"
         exit 0
@@ -6406,7 +6406,7 @@ customXrayInstall() {
 			handleXray stop
 			installTLS 3
 		else
-			echoContent skyBlue "\n进度  2/${totalProgress} : 检测到仅安装Reality，跳过TLS证书步骤"
+			echoContent white "\n进度  2/${totalProgress} : 检测到仅安装Reality，跳过TLS证书步骤"
 		fi
 
         # 随机path
@@ -6478,8 +6478,8 @@ unInstallXrayCoreReality() {
         echoContent red "\n ---> 未安装"
         exit 0
     fi
-    echoContent skyBlue "\n功能 1/1 : reality卸载"
-    echoContent red "\n=============================================================="
+    echoContent white "\n功能 1/1 : reality卸载"
+    echoContent white "\n=============================================================="
     echoContent yellow "# 仅删除VLESS Reality相关配置，不会删除其他内容。"
     echoContent yellow "# 如果需要卸载其他内容，请卸载脚本功能"
     handleXray stop
@@ -6519,21 +6519,21 @@ cronFunction() {
 }
 # 账号管理
 manageAccount() {
-    echoContent skyBlue "\n功能 1/${totalProgress} : 账号管理"
+    echoContent white "\n功能 1/${totalProgress} : 账号管理"
     if [[ -z "${configPath}" ]]; then
         echoContent red " ---> 未安装"
         exit 0
     fi
 
-    echoContent red "\n=============================================================="
+    echoContent white "\n=============================================================="
     echoContent yellow "# 添加单个用户时可自定义email和uuid"
     echoContent yellow "# 如安装了Hysteria或者Tuic，账号会同时添加到相应的类型下面\n"
-    echoContent yellow "1.查看账号"
-    echoContent yellow "2.查看订阅"
-    echoContent yellow "3.管理其他订阅"
-    echoContent yellow "4.添加用户"
-    echoContent yellow "5.删除用户"
-    echoContent red "=============================================================="
+    echoContent white "1.查看账号"
+    echoContent white "2.查看订阅"
+    echoContent white "3.管理其他订阅"
+    echoContent white "4.添加用户"
+    echoContent white "5.删除用户"
+    echoContent white "=============================================================="
     read -r -p "请输入:" manageAccountStatus
     if [[ "${manageAccountStatus}" == "1" ]]; then
         showAccounts 1
@@ -6943,7 +6943,7 @@ initRandomSalt() {
 
 # 切换alpn
 switchAlpn() {
-    echoContent skyBlue "\n功能 1/${totalProgress} : 切换alpn"
+    echoContent white "\n功能 1/${totalProgress} : 切换alpn"
     if [[ -z ${currentAlpn} ]]; then
         echoContent red " ---> 无法读取alpn，请检查是否安装"
         exit 0
@@ -6986,7 +6986,7 @@ switchAlpn() {
 
 # 初始化realityKey
 initRealityKey() {
-    echoContent skyBlue "\n生成Reality key\n"
+    echoContent white "\n生成Reality key\n"
     if [[ -n "${currentRealityPublicKey}" ]]; then
         read -r -p "读取到上次安装记录，是否使用上次安装时的PublicKey/PrivateKey ？[y/n]:" historyKeyStatus
         if [[ "${historyKeyStatus}" == "y" ]]; then
@@ -7031,7 +7031,7 @@ initRealityDest() {
         local realityDestDomainList=
         realityDestDomainList="gateway.icloud.com,itunes.apple.com,swdist.apple.com,swcdn.apple.com,updates.cdn-apple.com,mensura.cdn-apple.com,osxapps.itunes.apple.com,aod.itunes.apple.com,download-installer.cdn.mozilla.net,addons.mozilla.org,s0.awsstatic.com,d1.awsstatic.com,images-na.ssl-images-amazon.com,m.media-amazon.com,player.live-video.net,one-piece.com,lol.secure.dyn.riotcdn.net,www.lovelive-anime.jp,www.swift.com,academy.nvidia.com,www.cisco.com,www.samsung.com,www.amd.com,cdn-dynmedia-1.microsoft.com,software.download.prss.microsoft.com,dl.google.com,www.google-analytics.com"
 
-        echoContent skyBlue "\n===== 生成配置回落的域名 例如:[addons.mozilla.org:443] ======\n"
+        echoContent white "\n===== 生成配置回落的域名 例如:[addons.mozilla.org:443] ======\n"
         read -r -p "请输入[回车]使用随机:" realityDestDomain
         if [[ -z "${realityDestDomain}" ]]; then
             local randomNum=
@@ -7078,7 +7078,7 @@ initRealityClientServersName() {
     if [[ -z "${realityServerName}" ]]; then
         local realityDestDomainList="gateway.icloud.com,itunes.apple.com,swdist.apple.com,swcdn.apple.com,updates.cdn-apple.com,mensura.cdn-apple.com,osxapps.itunes.apple.com,aod.itunes.apple.com,download-installer.cdn.mozilla.net,addons.mozilla.org,s0.awsstatic.com,d1.awsstatic.com,images-na.ssl-images-amazon.com,m.media-amazon.com,player.live-video.net,one-piece.com,lol.secure.dyn.riotcdn.net,www.lovelive-anime.jp,www.swift.com,academy.nvidia.com,www.cisco.com,www.samsung.com,www.amd.com,cdn-dynmedia-1.microsoft.com,software.download.prss.microsoft.com,dl.google.com,www.google-analytics.com"
         realityDomainPort=443
-        echoContent skyBlue "\n================ 配置客户端可用的serverNames ===============\n"
+        echoContent white "\n================ 配置客户端可用的serverNames ===============\n"
         echoContent yellow "#注意事项"
         echoContent yellow "录入示例:addons.mozilla.org:443\n"
         read -r -p "请输入目标域名，[回车]随机域名，默认端口443:" realityServerName
@@ -7134,7 +7134,7 @@ initXrayRealityPort() {
 }
 # 初始化 reality 配置
 initXrayRealityConfig() {
-    echoContent skyBlue "\n进度  $1/${totalProgress} : 初始化 Xray-core reality配置"
+    echoContent white "\n进度  $1/${totalProgress} : 初始化 Xray-core reality配置"
     initXrayRealityPort
     initRealityKey
     initRealityClientServersName
@@ -7317,7 +7317,7 @@ EOF
 }
 # hysteria版本管理
 hysteriaVersionManageMenu() {
-    echoContent skyBlue "\n进度  $1/${totalProgress} : Hysteria版本管理"
+    echoContent white "\n进度  $1/${totalProgress} : Hysteria版本管理"
     if [[ ! -d "${WORK_DIR}/hysteria/" ]]; then
         echoContent red " ---> 没有检测到安装目录，请执行脚本安装内容"
         menu
@@ -7346,7 +7346,7 @@ hysteriaVersionManageMenu() {
 
 # sing-box 版本管理
 singBoxVersionManageMenu() {
-    echoContent skyBlue "\n进度  $1/${totalProgress} : sing-box 版本管理"
+    echoContent white "\n进度  $1/${totalProgress} : sing-box 版本管理"
     if [[ -z "${singBoxConfigPath}" ]]; then
         echoContent red " ---> 没有检测到安装程序，请执行脚本安装内容"
         menu
