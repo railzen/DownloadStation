@@ -101,14 +101,12 @@ checkCPUVendor() {
             case "$(uname -m)" in
             'amd64' | 'x86_64')
                 xrayCoreCPUVendor="Xray-linux-64"
-                v2rayCoreCPUVendor="v2ray-linux-64"
                 warpRegCoreCPUVendor="main-linux-amd64"
                 singBoxCoreCPUVendor="-linux-amd64"
                 ;;
             'armv8' | 'aarch64')
                 cpuVendor="arm"
                 xrayCoreCPUVendor="Xray-linux-arm64-v8a"
-                v2rayCoreCPUVendor="v2ray-linux-arm64-v8a"
                 warpRegCoreCPUVendor="main-linux-arm64"
                 singBoxCoreCPUVendor="-linux-arm64"
                 ;;
@@ -121,7 +119,6 @@ checkCPUVendor() {
     else
         echoContent red "  无法识别此CPU架构，默认amd64、x86_64--->"
         xrayCoreCPUVendor="Xray-linux-64"
-        v2rayCoreCPUVendor="v2ray-linux-64"
     fi
 }
 
@@ -134,7 +131,6 @@ initVar() {
 
     # 核心支持的cpu版本
     xrayCoreCPUVendor=""
-    v2rayCoreCPUVendor=""
     #    hysteriaCoreCPUVendor=""
     warpRegCoreCPUVendor=""
     cpuVendor=""
@@ -227,9 +223,6 @@ initVar() {
     # 安装时选择的core类型
     selectCoreType=
 
-    # 默认core版本
-    v2rayCoreVersion=
-
     # 随机路径
     customPath=
 
@@ -321,7 +314,7 @@ initVar() {
 
 # 读取默认自定义端口
 readCustomPort() {
-    if [[ -n "${configPath}" && -z "${realityStatus}" && "${coreInstallType}" == "1" ]]; then
+    if [[ -n "${configPath}" && -z "${realityStatus}" && "${coreInstallType}" == "xray" ]]; then
         local port=
         port=$(jq -r .inbounds[0].port "${configPath}${frontingType}.json")
         if [[ "${port}" != "443" ]]; then
@@ -345,7 +338,7 @@ readInstallType() {
                 # xray-core
                 configPath=${WORK_DIR}/xray/conf/
                 ctlPath=${WORK_DIR}/xray/xray
-                coreInstallType=2
+                coreInstallType="xray"
                 if [[ -f "${configPath}07_VLESS_vision_reality_inbounds.json" ]]; then
                     realityStatus=1
                 fi
@@ -356,7 +349,7 @@ readInstallType() {
         elif [[ -f "${WORK_DIR}/sing-box/sing-box" && -f "${WORK_DIR}/sing-box/conf/config.json" ]]; then
             # 检测sing-box
             ctlPath=${WORK_DIR}/sing-box/sing-box
-            coreInstallType=1
+            coreInstallType="singbox"
             configPath=${WORK_DIR}/sing-box/conf/config/
             singBoxConfigPath=${WORK_DIR}/sing-box/conf/config/
         fi
@@ -392,13 +385,13 @@ readInstallProtocolType() {
         if echo "${row}" | grep -q VLESS_TCP_inbounds; then
             currentInstallProtocolType="${currentInstallProtocolType}0,"
             frontingType=02_VLESS_TCP_inbounds
-            if [[ "${coreInstallType}" == "2" ]]; then
+            if [[ "${coreInstallType}" == "singbox" ]]; then
                 singBoxVLESSVisionPort=$(jq .inbounds[0].listen_port "${row}.json")
             fi
         fi
         if echo "${row}" | grep -q VLESS_WS_inbounds; then
             currentInstallProtocolType="${currentInstallProtocolType}1,"
-            if [[ "${coreInstallType}" == "2" ]]; then
+            if [[ "${coreInstallType}" == "singbox" ]]; then
                 frontingType=03_VLESS_WS_inbounds
                 singBoxVLESSWSPort=$(jq .inbounds[0].listen_port "${row}.json")
             fi
@@ -408,14 +401,14 @@ readInstallProtocolType() {
         fi
         if echo "${row}" | grep -q VMess_WS_inbounds; then
             currentInstallProtocolType="${currentInstallProtocolType}3,"
-            if [[ "${coreInstallType}" == "2" ]]; then
+            if [[ "${coreInstallType}" == "singbox" ]]; then
                 frontingType=05_VMess_WS_inbounds
                 singBoxVMessWSPort=$(jq .inbounds[0].listen_port "${row}.json")
             fi
         fi
         if echo "${row}" | grep -q trojan_TCP_inbounds; then
             currentInstallProtocolType="${currentInstallProtocolType}4,"
-            if [[ "${coreInstallType}" == "2" ]]; then
+            if [[ "${coreInstallType}" == "singbox" ]]; then
                 frontingType=04_trojan_TCP_inbounds
                 singBoxTrojanPort=$(jq .inbounds[0].listen_port "${row}.json")
             fi
@@ -425,14 +418,14 @@ readInstallProtocolType() {
         fi
         if echo "${row}" | grep -q hysteria2_inbounds; then
             currentInstallProtocolType="${currentInstallProtocolType}6,"
-            if [[ "${coreInstallType}" == "2" ]]; then
+            if [[ "${coreInstallType}" == "singbox" ]]; then
                 frontingType=06_hysteria2_inbounds
                 singBoxHysteria2Port=$(jq .inbounds[0].listen_port "${row}.json")
             fi
         fi
         if echo "${row}" | grep -q VLESS_vision_reality_inbounds; then
             currentInstallProtocolType="${currentInstallProtocolType}7,"
-            if [[ "${coreInstallType}" == "1" ]]; then
+            if [[ "${coreInstallType}" == "xray" ]]; then
                 xrayVLESSRealityServerName=$(jq -r .inbounds[0].streamSettings.realitySettings.serverNames[0] "${row}.json")
                 xrayVLESSRealityPort=$(jq -r .inbounds[0].port "${row}.json")
                 #                xrayVLESSRealityPrivateKey=$(jq -r .inbounds[0].streamSettings.realitySettings.privateKey "${row}.json")
@@ -440,7 +433,7 @@ readInstallProtocolType() {
                 currentRealityPublicKey=$(jq -r .inbounds[0].streamSettings.realitySettings.publicKey "${row}.json")
                 currentRealityPrivateKey=$(jq -r .inbounds[0].streamSettings.realitySettings.privateKey "${row}.json")
 
-            elif [[ "${coreInstallType}" == "2" ]]; then
+            elif [[ "${coreInstallType}" == "singbox" ]]; then
                 frontingTypeReality=07_VLESS_vision_reality_inbounds
                 singBoxVLESSRealityVisionPort=$(jq -r .inbounds[0].listen_port "${row}.json")
                 singBoxVLESSRealityVisionServerName=$(jq -r .inbounds[0].tls.server_name "${row}.json")
@@ -454,7 +447,7 @@ readInstallProtocolType() {
         fi
         if echo "${row}" | grep -q VLESS_vision_gRPC_inbounds; then
             currentInstallProtocolType="${currentInstallProtocolType}8,"
-            if [[ "${coreInstallType}" == "2" ]]; then
+            if [[ "${coreInstallType}" == "singbox" ]]; then
                 frontingTypeReality=08_VLESS_vision_gRPC_inbounds
                 singBoxVLESSRealityGRPCPort=$(jq -r .inbounds[0].listen_port "${row}.json")
                 singBoxVLESSRealityGRPCServerName=$(jq -r .inbounds[0].tls.server_name "${row}.json")
@@ -465,14 +458,14 @@ readInstallProtocolType() {
         fi
         if echo "${row}" | grep -q tuic_inbounds; then
             currentInstallProtocolType="${currentInstallProtocolType}9,"
-            if [[ "${coreInstallType}" == "2" ]]; then
+            if [[ "${coreInstallType}" == "singbox" ]]; then
                 frontingType=09_tuic_inbounds
                 singBoxTuicPort=$(jq .inbounds[0].listen_port "${row}.json")
             fi
         fi
         if echo "${row}" | grep -q naive_inbounds; then
             currentInstallProtocolType="${currentInstallProtocolType}10,"
-            if [[ "${coreInstallType}" == "2" ]]; then
+            if [[ "${coreInstallType}" == "singbox" ]]; then
                 frontingType=10_naive_inbounds
                 singBoxNaivePort=$(jq .inbounds[0].listen_port "${row}.json")
             fi
@@ -485,7 +478,7 @@ readInstallProtocolType() {
 
     done < <(find ${configPath} -name "*inbounds.json" | sort | awk -F "[.]" '{print $1}')
 
-    if [[ "${coreInstallType}" == "1" && -n "${singBoxConfigPath}" ]]; then
+    if [[ "${coreInstallType}" == "xray" && -n "${singBoxConfigPath}" ]]; then
         if [[ -f "${singBoxConfigPath}06_hysteria2_inbounds.json" ]]; then
             currentInstallProtocolType="${currentInstallProtocolType}6,"
             singBoxHysteria2Port=$(jq .inbounds[0].listen_port "${singBoxConfigPath}06_hysteria2_inbounds.json")
@@ -662,7 +655,7 @@ readConfigHostPathUUID() {
     singBoxVLESSWSPath=
     singBoxVMessHTTPUpgradePath=
 
-    if [[ "${coreInstallType}" == "1" ]]; then
+    if [[ "${coreInstallType}" == "xray" ]]; then
 
         # 安装
         if [[ -n "${frontingType}" ]]; then
@@ -692,7 +685,7 @@ readConfigHostPathUUID() {
                 xrayVLESSRealityVisionPort="${currentDefaultPort}"
             fi
         fi
-    elif [[ "${coreInstallType}" == "2" ]]; then
+    elif [[ "${coreInstallType}" == "singbox" ]]; then
         if [[ -n "${frontingType}" ]]; then
             currentHost=$(jq -r .inbounds[0].tls.server_name ${configPath}${frontingType}.json)
             currentUUID=$(jq -r .inbounds[0].users[0].uuid ${configPath}${frontingType}.json)
@@ -705,7 +698,7 @@ readConfigHostPathUUID() {
 
     # 读取path
     if [[ -n "${configPath}" && -n "${frontingType}" ]]; then
-        if [[ "${coreInstallType}" == "1" ]]; then
+        if [[ "${coreInstallType}" == "xray" ]]; then
             local fallback
             fallback=$(jq -r -c '.inbounds[0].settings.fallbacks[]|select(.path)' ${configPath}${frontingType}.json | head -1)
 
@@ -722,16 +715,16 @@ readConfigHostPathUUID() {
             if [[ -z "${currentPath}" ]]; then
                 dest=$(jq -r -c '.inbounds[0].settings.fallbacks[]|select(.alpn)|.dest' ${configPath}${frontingType}.json | head -1)
             fi
-        elif [[ "${coreInstallType}" == "2" && -f "${singBoxConfigPath}05_VMess_WS_inbounds.json" ]]; then
+        elif [[ "${coreInstallType}" == "singbox" && -f "${singBoxConfigPath}05_VMess_WS_inbounds.json" ]]; then
             singBoxVMessWSPath=$(jq -r .inbounds[0].transport.path "${singBoxConfigPath}05_VMess_WS_inbounds.json")
             currentPath=$(jq -r .inbounds[0].transport.path "${singBoxConfigPath}05_VMess_WS_inbounds.json" | awk -F "[/]" '{print $2}')
         fi
-        if [[ "${coreInstallType}" == "2" && -f "${singBoxConfigPath}03_VLESS_WS_inbounds.json" ]]; then
+        if [[ "${coreInstallType}" == "singbox" && -f "${singBoxConfigPath}03_VLESS_WS_inbounds.json" ]]; then
             singBoxVLESSWSPath=$(jq -r .inbounds[0].transport.path "${singBoxConfigPath}03_VLESS_WS_inbounds.json")
             currentPath=$(jq -r .inbounds[0].transport.path "${singBoxConfigPath}03_VLESS_WS_inbounds.json" | awk -F "[/]" '{print $2}')
             currentPath=${currentPath::-2}
         fi
-        if [[ "${coreInstallType}" == "2" && -f "${singBoxConfigPath}11_VMess_HTTPUpgrade_inbounds.json" ]]; then
+        if [[ "${coreInstallType}" == "singbox" && -f "${singBoxConfigPath}11_VMess_HTTPUpgrade_inbounds.json" ]]; then
             singBoxVMessHTTPUpgradePath=$(jq -r .inbounds[0].transport.path "${singBoxConfigPath}11_VMess_HTTPUpgrade_inbounds.json")
             currentPath=$(jq -r .inbounds[0].transport.path "${singBoxConfigPath}11_VMess_HTTPUpgrade_inbounds.json" | awk -F "[/]" '{print $2}')
             # currentPath=${currentPath::-2}
@@ -747,14 +740,14 @@ readConfigHostPathUUID() {
 # 状态展示
 showInstallStatus() {
     if [[ -n "${coreInstallType}" ]]; then
-        if [[ "${coreInstallType}" == 1 ]]; then
+        if [[ "${coreInstallType}" == "xray" ]]; then
             if [[ -n $(pgrep -f "xray/xray") ]]; then
                 echoContent green "核心: Xray-core[运行中]"
             else
                 echoContent red "核心: Xray-core[未运行]"
             fi
 
-        elif [[ "${coreInstallType}" == 2 ]]; then
+        elif [[ "${coreInstallType}" == "singbox" ]]; then
             if [[ -n $(pgrep -f "sing-box/sing-box") ]]; then
                 echoContent green "核心: sing-box[运行中]"
             else
@@ -1384,7 +1377,7 @@ randomNum() {
 
 # 定时任务更新geo文件
 installCronUpdateGeo() {
-    if [[ "${coreInstallType}" == "1" ]]; then
+    if [[ "${coreInstallType}" == "xray" ]]; then
         if crontab -l | grep -q "UpdateGeo"; then
             echoContent red "\n ---> 已添加自动更新定时任务，请不要重复添加"
             exit 0
@@ -1397,45 +1390,6 @@ installCronUpdateGeo() {
     fi
 }
 
-# 安装V2Ray、指定版本
-installV2Ray() {
-    readInstallType
-    echoContent skyBlue "\n进度  $1/${totalProgress} : 安装V2Ray"
-
-    if [[ "${coreInstallType}" != "2" && "${coreInstallType}" != "3" ]]; then
-        if [[ "${selectCoreType}" == "2" ]]; then
-
-            version=$(curl -s https://api.github.com/repos/v2fly/v2ray-core/releases?per_page=10 | jq -r '.[]|select (.prerelease==false)|.tag_name' | grep -v 'v5' | head -1)
-        else
-            version=${v2rayCoreVersion}
-        fi
-
-        echoContent green " ---> v2ray-core版本:${version}"
-        if [[ "${release}" == "alpine" ]]; then
-            wget -c -q -P ${WORK_DIR}/v2ray/ "https://github.com/v2fly/v2ray-core/releases/download/${version}/${v2rayCoreCPUVendor}.zip"
-        else
-            wget -c -q "${wgetShowProgressStatus}" -P ${WORK_DIR}/v2ray/ "https://github.com/v2fly/v2ray-core/releases/download/${version}/${v2rayCoreCPUVendor}.zip"
-        fi
-
-        unzip -o "${WORK_DIR}/v2ray/${v2rayCoreCPUVendor}.zip" -d ${WORK_DIR}/v2ray >/dev/null
-        rm -rf "${WORK_DIR}/v2ray/${v2rayCoreCPUVendor}.zip"
-    else
-        if [[ "${selectCoreType}" == "3" ]]; then
-            echoContent green " ---> 锁定v2ray-core版本为v4.32.1"
-            rm -f ${WORK_DIR}/v2ray/v2ray
-            rm -f ${WORK_DIR}/v2ray/v2ctl
-            installV2Ray "$1"
-        else
-            echoContent green " ---> v2ray-core版本:$(${WORK_DIR}/v2ray/v2ray --version | awk '{print $2}' | head -1)"
-            read -r -p "是否更新、升级？[y/n]:" reInstallV2RayStatus
-            if [[ "${reInstallV2RayStatus}" == "y" ]]; then
-                rm -f ${WORK_DIR}/v2ray/v2ray
-                rm -f ${WORK_DIR}/v2ray/v2ctl
-                installV2Ray "$1"
-            fi
-        fi
-    fi
-}
 
 # 安装 sing-box
 installSingBox() {
@@ -1541,55 +1495,6 @@ installXray() {
     fi
 }
 
-# v2ray版本管理
-v2rayVersionManageMenu() {
-    echoContent skyBlue "\n进度  $1/${totalProgress} : V2Ray版本管理"
-    if [[ ! -d "${WORK_DIR}/v2ray/" ]]; then
-        echoContent red " ---> 没有检测到安装目录，请执行脚本安装内容"
-        menu
-        exit 0
-    fi
-    echoContent red "\n=============================================================="
-    echoContent yellow "1.升级v2ray-core"
-    echoContent yellow "2.回退v2ray-core"
-    echoContent yellow "3.关闭v2ray-core"
-    echoContent yellow "4.打开v2ray-core"
-    echoContent yellow "5.重启v2ray-core"
-    echoContent yellow "6.更新geosite、geoip"
-    echoContent yellow "7.设置自动更新geo文件[每天凌晨更新]"
-    echoContent red "=============================================================="
-    read -r -p "请选择:" selectV2RayType
-    if [[ "${selectV2RayType}" == "1" ]]; then
-        updateV2Ray
-    elif [[ "${selectV2RayType}" == "2" ]]; then
-        echoContent yellow "\n1.只可以回退最近的五个版本"
-        echoContent yellow "2.不保证回退后一定可以正常使用"
-        echoContent yellow "3.如果回退的版本不支持当前的config，则会无法连接，谨慎操作"
-        echoContent skyBlue "------------------------Version-------------------------------"
-        curl -s https://api.github.com/repos/v2fly/v2ray-core/releases | jq -r '.[]|select (.prerelease==false)|.tag_name' | grep -v 'v5' | head -5 | awk '{print ""NR""":"$0}'
-
-        echoContent skyBlue "--------------------------------------------------------------"
-        read -r -p "请输入要回退的版本:" selectV2rayVersionType
-        version=$(curl -s https://api.github.com/repos/v2fly/v2ray-core/releases | jq -r '.[]|select (.prerelease==false)|.tag_name' | grep -v 'v5' | head -5 | awk '{print ""NR""":"$0}' | grep "${selectV2rayVersionType}:" | awk -F "[:]" '{print $2}')
-        if [[ -n "${version}" ]]; then
-            updateV2Ray "${version}"
-        else
-            echoContent red "\n ---> 输入有误，请重新输入"
-            v2rayVersionManageMenu 1
-        fi
-    elif [[ "${selectV2RayType}" == "3" ]]; then
-        handleV2Ray stop
-    elif [[ "${selectV2RayType}" == "4" ]]; then
-        handleV2Ray start
-    elif [[ "${selectV2RayType}" == "5" ]]; then
-        reloadCore
-    elif [[ "${selectXrayType}" == "6" ]]; then
-        updateGeoSite
-    elif [[ "${selectXrayType}" == "7" ]]; then
-        installCronUpdateGeo
-    fi
-}
-
 # xray版本管理
 xrayVersionManageMenu() {
     echoContent skyBlue "\n进度  $1/${totalProgress} : Xray版本管理"
@@ -1666,82 +1571,6 @@ updateGeoSite() {
     echoContent green " ---> 更新完毕"
 
 }
-# 更新V2Ray
-updateV2Ray() {
-    readInstallType
-    if [[ -z "${coreInstallType}" ]]; then
-
-        if [[ -n "$1" ]]; then
-            version=$1
-        else
-            version=$(curl -s https://api.github.com/repos/v2fly/v2ray-core/releases | jq -r '.[]|select (.prerelease==false)|.tag_name' | grep -v 'v5' | head -1)
-        fi
-        # 使用锁定的版本
-        if [[ -n "${v2rayCoreVersion}" ]]; then
-            version=${v2rayCoreVersion}
-        fi
-        echoContent green " ---> v2ray-core版本:${version}"
-        if [[ "${release}" == "alpine" ]]; then
-            wget -c -q -P ${WORK_DIR}/v2ray/ "https://github.com/v2fly/v2ray-core/releases/download/${version}/${v2rayCoreCPUVendor}.zip"
-        else
-            wget -c -q "${wgetShowProgressStatus}" -P ${WORK_DIR}/v2ray/ "https://github.com/v2fly/v2ray-core/releases/download/${version}/${v2rayCoreCPUVendor}.zip"
-        fi
-
-        unzip -o "${WORK_DIR}/v2ray/${v2rayCoreCPUVendor}.zip" -d ${WORK_DIR}/v2ray >/dev/null
-        rm -rf "${WORK_DIR}/v2ray/${v2rayCoreCPUVendor}.zip"
-        handleV2Ray stop
-        handleV2Ray start
-    else
-        echoContent green " ---> 当前v2ray-core版本:$(${WORK_DIR}/v2ray/v2ray --version | awk '{print $2}' | head -1)"
-
-        if [[ -n "$1" ]]; then
-            version=$1
-        else
-            version=$(curl -s https://api.github.com/repos/v2fly/v2ray-core/releases | jq -r '.[]|select (.prerelease==false)|.tag_name' | grep -v 'v5' | head -1)
-        fi
-
-        if [[ -n "${v2rayCoreVersion}" ]]; then
-            version=${v2rayCoreVersion}
-        fi
-        if [[ -n "$1" ]]; then
-            read -r -p "回退版本为${version}，是否继续？[y/n]:" rollbackV2RayStatus
-            if [[ "${rollbackV2RayStatus}" == "y" ]]; then
-                if [[ "${coreInstallType}" == "2" ]]; then
-                    echoContent green " ---> 当前v2ray-core版本:$(${WORK_DIR}/v2ray/v2ray --version | awk '{print $2}' | head -1)"
-                elif [[ "${coreInstallType}" == "1" ]]; then
-                    echoContent green " ---> 当前Xray-core版本:$(${WORK_DIR}/xray/xray --version | awk '{print $2}' | head -1)"
-                fi
-
-                handleV2Ray stop
-                rm -f ${WORK_DIR}/v2ray/v2ray
-                rm -f ${WORK_DIR}/v2ray/v2ctl
-                updateV2Ray "${version}"
-            else
-                echoContent green " ---> 放弃回退版本"
-            fi
-        elif [[ "${version}" == "v$(${WORK_DIR}/v2ray/v2ray --version | awk '{print $2}' | head -1)" ]]; then
-            read -r -p "当前版本与最新版相同，是否重新安装？[y/n]:" reInstallV2RayStatus
-            if [[ "${reInstallV2RayStatus}" == "y" ]]; then
-                handleV2Ray stop
-                rm -f ${WORK_DIR}/v2ray/v2ray
-                rm -f ${WORK_DIR}/v2ray/v2ctl
-                updateV2Ray
-            else
-                echoContent green " ---> 放弃重新安装"
-            fi
-        else
-            read -r -p "最新版本为:${version}，是否更新？[y/n]:" installV2RayStatus
-            if [[ "${installV2RayStatus}" == "y" ]]; then
-                rm -f ${WORK_DIR}/v2ray/v2ray
-                rm -f ${WORK_DIR}/v2ray/v2ctl
-                updateV2Ray
-            else
-                echoContent green " ---> 放弃更新"
-            fi
-
-        fi
-    fi
-}
 
 # 更新Xray
 updateXray() {
@@ -1813,9 +1642,9 @@ updateXray() {
 checkGFWStatue() {
     readInstallType
     echoContent skyBlue "\n进度 $1/${totalProgress} : 验证服务启动状态"
-    if [[ "${coreInstallType}" == "1" ]] && [[ -n $(pgrep -f "xray/xray") ]]; then
+    if [[ "${coreInstallType}" == "xray" ]] && [[ -n $(pgrep -f "xray/xray") ]]; then
         echoContent green " ---> 服务启动成功"
-    elif [[ "${coreInstallType}" == "2" ]] && [[ -n $(pgrep -f "sing-box/sing-box") ]]; then
+    elif [[ "${coreInstallType}" == "singbox" ]] && [[ -n $(pgrep -f "sing-box/sing-box") ]]; then
         echoContent green " ---> 服务启动成功"
     else
         echoContent red " ---> 服务启动失败，请检查终端是否有日志打印"
@@ -4253,7 +4082,7 @@ EOF
     elif [[ "${type}" == "vlessReality" ]]; then
         local realityServerName=${xrayVLESSRealityServerName}
         local publicKey=${currentRealityPublicKey}
-        if [[ "${coreInstallType}" == "2" ]]; then
+        if [[ "${coreInstallType}" == "singbox" ]]; then
             realityServerName=${singBoxVLESSRealityVisionServerName}
             publicKey=${singBoxVLESSRealityPublicKey}
         fi
@@ -4292,7 +4121,7 @@ EOF
     elif [[ "${type}" == "vlessRealityGRPC" ]]; then
         local realityServerName=${xrayVLESSRealityServerName}
         local publicKey=${currentRealityPublicKey}
-        if [[ "${coreInstallType}" == "2" ]]; then
+        if [[ "${coreInstallType}" == "singbox" ]]; then
             realityServerName=${singBoxVLESSRealityGRPCServerName}
             publicKey=${singBoxVLESSRealityPublicKey}
         fi
@@ -4456,15 +4285,15 @@ showAccounts() {
             email=$(echo "${user}" | jq -r .email//.name)
 
             local vlessWSPort=${currentDefaultPort}
-            if [[ "${coreInstallType}" == "2" ]]; then
+            if [[ "${coreInstallType}" == "singbox" ]]; then
                 vlessWSPort="${singBoxVLESSWSPort}"
             fi
             echo
             local path="${currentPath}ws"
 
-            if [[ ${coreInstallType} == "1" ]]; then
+            if [[ ${coreInstallType} == "xray" ]]; then
                 path="/${currentPath}ws"
-            elif [[ "${coreInstallType}" == "2" ]]; then
+            elif [[ "${coreInstallType}" == "singbox" ]]; then
                 path="${singBoxVLESSWSPath}"
             fi
 
@@ -4505,9 +4334,9 @@ showAccounts() {
     if echo ${currentInstallProtocolType} | grep -q ",3,"; then
         echoContent skyBlue "\n================================ VMess WS TLS [仅CDN推荐]  ================================\n"
         local path="${currentPath}vws"
-        if [[ ${coreInstallType} == "1" ]]; then
+        if [[ ${coreInstallType} == "xray" ]]; then
             path="/${currentPath}vws"
-        elif [[ "${coreInstallType}" == "2" ]]; then
+        elif [[ "${coreInstallType}" == "singbox" ]]; then
             path="${singBoxVMessWSPath}"
         fi
         jq .inbounds[0].settings.clients//.inbounds[0].users ${configPath}05_VMess_WS_inbounds.json | jq -c '.[]' | while read -r user; do
@@ -4515,7 +4344,7 @@ showAccounts() {
             email=$(echo "${user}" | jq -r .email//.name)
 
             local vmessPort=${currentDefaultPort}
-            if [[ "${coreInstallType}" == "2" ]]; then
+            if [[ "${coreInstallType}" == "singbox" ]]; then
                 vmessPort="${singBoxVMessWSPort}"
             fi
 
@@ -4565,7 +4394,7 @@ showAccounts() {
     if echo ${currentInstallProtocolType} | grep -q ",6," || [[ -n "${hysteriaPort}" ]]; then
         echoContent skyBlue "\n================================  Hysteria2 TLS [推荐] ================================\n"
         local path="${configPath}"
-        if [[ "${coreInstallType}" == "1" ]]; then
+        if [[ "${coreInstallType}" == "xray" ]]; then
             path="${singBoxConfigPath}"
         fi
         local hysteria2DefaultPort=
@@ -4611,7 +4440,7 @@ showAccounts() {
     if echo ${currentInstallProtocolType} | grep -q ",9," || [[ -n "${tuicPort}" ]]; then
         echoContent skyBlue "\n================================  Tuic TLS [推荐]  ================================\n"
         local path="${configPath}"
-        if [[ "${coreInstallType}" == "1" ]]; then
+        if [[ "${coreInstallType}" == "xray" ]]; then
             path="${singBoxConfigPath}"
         fi
         jq -r -c '.inbounds[].users[]' "${path}09_tuic_inbounds.json" | while read -r user; do
@@ -4636,9 +4465,9 @@ showAccounts() {
     if echo ${currentInstallProtocolType} | grep -q ",11,"; then
         echoContent skyBlue "\n================================ VMess HTTPUpgrade TLS [仅CDN推荐]  ================================\n"
         local path="${currentPath}vws"
-        if [[ ${coreInstallType} == "1" ]]; then
+        if [[ ${coreInstallType} == "xray" ]]; then
             path="/${currentPath}vws"
-        elif [[ "${coreInstallType}" == "2" ]]; then
+        elif [[ "${coreInstallType}" == "singbox" ]]; then
             path="${singBoxVMessHTTPUpgradePath}"
         fi
         jq .inbounds[0].settings.clients//.inbounds[0].users ${configPath}11_VMess_HTTPUpgrade_inbounds.json | jq -c '.[]' | while read -r user; do
@@ -4646,7 +4475,7 @@ showAccounts() {
             email=$(echo "${user}" | jq -r .email//.name)
 
             local vmessHTTPUpgradePort=${currentDefaultPort}
-            if [[ "${coreInstallType}" == "2" ]]; then
+            if [[ "${coreInstallType}" == "singbox" ]]; then
                 vmessHTTPUpgradePort="${singBoxVMessHTTPUpgradePort}"
             fi
 
@@ -4675,25 +4504,25 @@ unInstall() {
     fi
 
     if [[ "${release}" == "alpine" ]]; then
-        if [[ "${coreInstallType}" == "1" ]]; then
+        if [[ "${coreInstallType}" == "xray" ]]; then
             handleXray stop
             rc-update del xray default
             rm -rf /etc/init.d/xray
             echoContent green " ---> 删除Xray开机自启完成"
         fi
-        if [[ "${coreInstallType}" == "2" || -n "${singBoxConfigPath}" ]]; then
+        if [[ "${coreInstallType}" == "singbox" || -n "${singBoxConfigPath}" ]]; then
             handleSingBox stop
             rc-update del sing-box default
             rm -rf /etc/init.d/sing-box
             echoContent green " ---> 删除sing-box开机自启完成"
         fi
     else
-        if [[ "${coreInstallType}" == "1" ]]; then
+        if [[ "${coreInstallType}" == "xray" ]]; then
             handleXray stop
             rm -rf /etc/systemd/system/xray.service
             echoContent green " ---> 删除Xray开机自启完成"
         fi
-        if [[ "${coreInstallType}" == "2" || -n "${singBoxConfigPath}" ]]; then
+        if [[ "${coreInstallType}" == "singbox" || -n "${singBoxConfigPath}" ]]; then
             handleSingBox stop
             rm -rf /etc/systemd/system/sing-box.service
             echoContent green " ---> 删除sing-box开机自启完成"
@@ -4721,9 +4550,9 @@ customUUID() {
 
     else
         local checkUUID=
-        if [[ "${coreInstallType}" == "1" ]]; then
+        if [[ "${coreInstallType}" == "xray" ]]; then
             checkUUID=$(jq -r --arg currentUUID "$currentCustomUUID" ".inbounds[0].settings.clients[] | select(.uuid | index(\$currentUUID) != null) | .name" ${configPath}${frontingType}.json)
-        elif [[ "${coreInstallType}" == "2" ]]; then
+        elif [[ "${coreInstallType}" == "singbox" ]]; then
             checkUUID=$(jq -r --arg currentUUID "$currentCustomUUID" ".inbounds[0].users[] | select(.uuid | index(\$currentUUID) != null) | .name//.username" ${configPath}${frontingType}.json)
         fi
 
@@ -4743,9 +4572,9 @@ customUserEmail() {
         echoContent yellow "email: ${currentCustomEmail}\n"
     else
         local checkEmail=
-        if [[ "${coreInstallType}" == "1" ]]; then
+        if [[ "${coreInstallType}" == "xray" ]]; then
             checkEmail=$(jq -r --arg currentEmail "$currentCustomEmail" ".inbounds[0].settings.clients[] | select(.name | index(\$currentEmail) != null) | .name" ${configPath}${frontingType}.json)
-        elif [[ "${coreInstallType}" == "2" ]]; then
+        elif [[ "${coreInstallType}" == "singbox" ]]; then
             checkEmail=$(jq -r --arg currentEmail "$currentCustomEmail" ".inbounds[0].users[] | select(.name | index(\$currentEmail) != null) | .name" ${configPath}${frontingType}.json)
         fi
 
@@ -4765,9 +4594,9 @@ addUser() {
         exit 0
     fi
     local userConfig=
-    if [[ "${coreInstallType}" == "1" ]]; then
+    if [[ "${coreInstallType}" == "xray" ]]; then
         userConfig=".inbounds[0].settings.clients"
-    elif [[ "${coreInstallType}" == "2" ]]; then
+    elif [[ "${coreInstallType}" == "singbox" ]]; then
         userConfig=".inbounds[0].users"
     fi
 
@@ -4785,9 +4614,9 @@ addUser() {
         # VLESS TCP
         if echo "${currentInstallProtocolType}" | grep -q ",0,"; then
             local clients=
-            if [[ "${coreInstallType}" == "1" ]]; then
+            if [[ "${coreInstallType}" == "xray" ]]; then
                 clients=$(initXrayClients 0 "${uuid}" "${email}")
-            elif [[ "${coreInstallType}" == "2" ]]; then
+            elif [[ "${coreInstallType}" == "singbox" ]]; then
                 clients=$(initSingBoxClients 0 "${uuid}" "${email}")
             fi
             clients=$(jq -r "${userConfig} = ${clients}" ${configPath}02_VLESS_TCP_inbounds.json)
@@ -4797,9 +4626,9 @@ addUser() {
         # VLESS WS
         if echo "${currentInstallProtocolType}" | grep -q ",1,"; then
             local clients=
-            if [[ "${coreInstallType}" == "1" ]]; then
+            if [[ "${coreInstallType}" == "xray" ]]; then
                 clients=$(initXrayClients 1 "${uuid}" "${email}")
-            elif [[ "${coreInstallType}" == "2" ]]; then
+            elif [[ "${coreInstallType}" == "singbox" ]]; then
                 clients=$(initSingBoxClients 1 "${uuid}" "${email}")
             fi
 
@@ -4810,9 +4639,9 @@ addUser() {
         # trojan grpc
         if echo "${currentInstallProtocolType}" | grep -q ",2,"; then
             local clients=
-            if [[ "${coreInstallType}" == "1" ]]; then
+            if [[ "${coreInstallType}" == "xray" ]]; then
                 clients=$(initXrayClients 2 "${uuid}" "${email}")
-            elif [[ "${coreInstallType}" == "2" ]]; then
+            elif [[ "${coreInstallType}" == "singbox" ]]; then
                 clients=$(initSingBoxClients 2 "${uuid}" "${email}")
             fi
 
@@ -4822,9 +4651,9 @@ addUser() {
         # VMess WS
         if echo "${currentInstallProtocolType}" | grep -q ",3,"; then
             local clients=
-            if [[ "${coreInstallType}" == "1" ]]; then
+            if [[ "${coreInstallType}" == "xray" ]]; then
                 clients=$(initXrayClients 3 "${uuid}" "${email}")
-            elif [[ "${coreInstallType}" == "2" ]]; then
+            elif [[ "${coreInstallType}" == "singbox" ]]; then
                 clients=$(initSingBoxClients 3 "${uuid}" "${email}")
             fi
 
@@ -4835,9 +4664,9 @@ addUser() {
         # trojan tcp
         if echo "${currentInstallProtocolType}" | grep -q ",4,"; then
             local clients=
-            if [[ "${coreInstallType}" == "1" ]]; then
+            if [[ "${coreInstallType}" == "xray" ]]; then
                 clients=$(initXrayClients 4 "${uuid}" "${email}")
-            elif [[ "${coreInstallType}" == "2" ]]; then
+            elif [[ "${coreInstallType}" == "singbox" ]]; then
                 clients=$(initSingBoxClients 4 "${uuid}" "${email}")
             fi
             clients=$(jq -r "${userConfig} = ${clients}" ${configPath}04_trojan_TCP_inbounds.json)
@@ -4847,9 +4676,9 @@ addUser() {
         # vless grpc
         if echo "${currentInstallProtocolType}" | grep -q ",5,"; then
             local clients=
-            if [[ "${coreInstallType}" == "1" ]]; then
+            if [[ "${coreInstallType}" == "xray" ]]; then
                 clients=$(initXrayClients 5 "${uuid}" "${email}")
-            elif [[ "${coreInstallType}" == "2" ]]; then
+            elif [[ "${coreInstallType}" == "singbox" ]]; then
                 clients=$(initSingBoxClients 5 "${uuid}" "${email}")
             fi
             clients=$(jq -r "${userConfig} = ${clients}" ${configPath}06_VLESS_gRPC_inbounds.json)
@@ -4859,9 +4688,9 @@ addUser() {
         # vless reality vision
         if echo "${currentInstallProtocolType}" | grep -q ",7,"; then
             local clients=
-            if [[ "${coreInstallType}" == "1" ]]; then
+            if [[ "${coreInstallType}" == "xray" ]]; then
                 clients=$(initXrayClients 7 "${uuid}" "${email}")
-            elif [[ "${coreInstallType}" == "2" ]]; then
+            elif [[ "${coreInstallType}" == "singbox" ]]; then
                 clients=$(initSingBoxClients 7 "${uuid}" "${email}")
             fi
             clients=$(jq -r "${userConfig} = ${clients}" ${configPath}07_VLESS_vision_reality_inbounds.json)
@@ -4871,9 +4700,9 @@ addUser() {
         # vless reality grpc
         if echo "${currentInstallProtocolType}" | grep -q ",8,"; then
             local clients=
-            if [[ "${coreInstallType}" == "1" ]]; then
+            if [[ "${coreInstallType}" == "xray" ]]; then
                 clients=$(initXrayClients 8 "${uuid}" "${email}")
-            elif [[ "${coreInstallType}" == "2" ]]; then
+            elif [[ "${coreInstallType}" == "singbox" ]]; then
                 clients=$(initSingBoxClients 8 "${uuid}" "${email}")
             fi
             clients=$(jq -r "${userConfig} = ${clients}" ${configPath}08_VLESS_vision_gRPC_inbounds.json)
@@ -4884,7 +4713,7 @@ addUser() {
         if echo ${currentInstallProtocolType} | grep -q ",6,"; then
             local clients=
 
-            if [[ "${coreInstallType}" == "1" ]]; then
+            if [[ "${coreInstallType}" == "xray" ]]; then
                 clients=$(initXrayClients 6 "${uuid}" "${email}")
             elif [[ -n "${singBoxConfigPath}" ]]; then
                 clients=$(initSingBoxClients 6 "${uuid}" "${email}")
@@ -4897,9 +4726,9 @@ addUser() {
         # tuic
         if echo ${currentInstallProtocolType} | grep -q ",9,"; then
             local clients=
-            if [[ "${coreInstallType}" == "1" ]]; then
+            if [[ "${coreInstallType}" == "xray" ]]; then
                 clients=$(initXrayClients 9 "${uuid}" "${email}")
-            elif [[ "${coreInstallType}" == "2" ]]; then
+            elif [[ "${coreInstallType}" == "singbox" ]]; then
                 clients=$(initSingBoxClients 9 "${uuid}" "${email}")
             fi
 
@@ -4918,9 +4747,9 @@ addUser() {
         # VMess WS
         if echo "${currentInstallProtocolType}" | grep -q ",11,"; then
             local clients=
-            if [[ "${coreInstallType}" == "1" ]]; then
+            if [[ "${coreInstallType}" == "xray" ]]; then
                 clients=$(initXrayClients 11 "${uuid}" "${email}")
-            elif [[ "${coreInstallType}" == "2" ]]; then
+            elif [[ "${coreInstallType}" == "singbox" ]]; then
                 clients=$(initSingBoxClients 11 "${uuid}" "${email}")
             fi
 
@@ -4943,9 +4772,9 @@ removeUser() {
 
     local uuid=
     if [[ -n "${userConfigType}" ]]; then
-        if [[ "${coreInstallType}" == "1" ]]; then
+        if [[ "${coreInstallType}" == "xray" ]]; then
             jq -r -c .inbounds[0].settings.clients[].email ${configPath}${userConfigType}.json | awk '{print NR""":"$0}'
-        elif [[ "${coreInstallType}" == "2" ]]; then
+        elif [[ "${coreInstallType}" == "singbox" ]]; then
             jq -r -c .inbounds[0].users[].name//.inbounds[0].users[].username ${configPath}${userConfigType}.json | awk '{print NR""":"$0}'
         fi
 
@@ -5035,7 +4864,7 @@ removeUser() {
 
 # 查看、检查日志
 checkLog() {
-    if [[ "${coreInstallType}" == "2" ]]; then
+    if [[ "${coreInstallType}" == "singbox" ]]; then
         echoContent red "\n ---> 此功能仅支持Xray-core内核"
         exit 0
     fi
@@ -5161,7 +4990,7 @@ ipv6Routing() {
         echoContent yellow "# 注意事项\n"
 
         read -r -p "请按照上面示例录入域名:" domainList
-        if [[ "${coreInstallType}" == "1" ]]; then
+        if [[ "${coreInstallType}" == "xray" ]]; then
             addInstallRouting IPv6_out outboundTag "${domainList}"
             addXrayOutbound IPv6_out
         fi
@@ -5184,7 +5013,7 @@ ipv6Routing() {
         read -r -p "是否确认设置？[y/n]:" IPv6OutStatus
 
         if [[ "${IPv6OutStatus}" == "y" ]]; then
-            if [[ "${coreInstallType}" == "1" ]]; then
+            if [[ "${coreInstallType}" == "xray" ]]; then
                 addXrayOutbound IPv6_out
                 removeXrayOutbound IPv4_out
                 removeXrayOutbound z_direct_outbound
@@ -5221,7 +5050,7 @@ ipv6Routing() {
         fi
 
     elif [[ "${ipv6Status}" == "4" ]]; then
-        if [[ "${coreInstallType}" == "1" ]]; then
+        if [[ "${coreInstallType}" == "xray" ]]; then
             unInstallRouting IPv6_out outboundTag
 
             removeXrayOutbound IPv6_out
@@ -5245,7 +5074,7 @@ ipv6Routing() {
 
 # ipv6分流规则展示
 showIPv6Routing() {
-    if [[ "${coreInstallType}" == "1" ]]; then
+    if [[ "${coreInstallType}" == "xray" ]]; then
         if [[ -f "${configPath}09_routing.json" ]]; then
             echoContent yellow "Xray-core："
             jq -r -c '.routing.rules[]|select (.outboundTag=="IPv6_out")|.domain' ${configPath}09_routing.json | jq -r
@@ -5365,7 +5194,7 @@ unInstallSniffing() {
 # 安装嗅探
 installSniffing() {
     readInstallType
-    if [[ "${coreInstallType}" == "1" ]]; then
+    if [[ "${coreInstallType}" == "xray" ]]; then
         if [[ -f "${configPath}02_VLESS_TCP_inbounds.json" ]]; then
             if ! grep -q "destOverride" <"${configPath}02_VLESS_TCP_inbounds.json"; then
                 sniffing=$(jq -r '.inbounds[0].sniffing = {"enabled":true,"destOverride":["http","tls","quic"]}' "${configPath}02_VLESS_TCP_inbounds.json")
@@ -5416,7 +5245,7 @@ installWarpReg() {
 showWireGuardDomain() {
     local type=$1
     # xray
-    if [[ "${coreInstallType}" == "1" ]]; then
+    if [[ "${coreInstallType}" == "xray" ]]; then
         if [[ -f "${configPath}09_routing.json" ]]; then
             echoContent yellow "Xray-core"
             jq -r -c '.routing.rules[]|select (.outboundTag=="wireguard_out_'"${type}"'")|.domain' ${configPath}09_routing.json | jq -r
@@ -5449,7 +5278,7 @@ addWireGuardRoute() {
     local tag=$2
     local domainList=$3
     # xray
-    if [[ "${coreInstallType}" == "1" ]]; then
+    if [[ "${coreInstallType}" == "xray" ]]; then
 
         addInstallRouting "wireguard_out_${type}" "${tag}" "${domainList}"
         addXrayOutbound "wireguard_out_${type}"
@@ -5469,7 +5298,7 @@ addWireGuardRoute() {
 # 卸载wireGuard
 unInstallWireGuard() {
     local type=$1
-    if [[ "${coreInstallType}" == "1" ]]; then
+    if [[ "${coreInstallType}" == "xray" ]]; then
 
         if [[ "${type}" == "IPv4" ]]; then
             if [[ ! -f "${configPath}wireguard_out_IPv6.json" ]]; then
@@ -5492,7 +5321,7 @@ unInstallWireGuard() {
 # 移除WireGuard分流
 removeWireGuardRoute() {
     local type=$1
-    if [[ "${coreInstallType}" == "1" ]]; then
+    if [[ "${coreInstallType}" == "xray" ]]; then
 
         unInstallRouting wireguard_out_"${type}" outboundTag
 
@@ -5553,7 +5382,7 @@ warpRoutingReg() {
 
         if [[ "${warpOutStatus}" == "y" ]]; then
             readConfigWarpReg
-            if [[ "${coreInstallType}" == "1" ]]; then
+            if [[ "${coreInstallType}" == "xray" ]]; then
                 addXrayOutbound "wireguard_out_${type}"
                 if [[ "${type}" == "IPv4" ]]; then
                     removeXrayOutbound "wireguard_out_IPv6"
@@ -5602,7 +5431,7 @@ warpRoutingReg() {
         fi
 
     elif [[ "${warpStatus}" == "4" ]]; then
-        if [[ "${coreInstallType}" == "1" ]]; then
+        if [[ "${coreInstallType}" == "xray" ]]; then
             unInstallRouting "wireguard_out_${type}" outboundTag
 
             removeXrayOutbound "wireguard_out_${type}"
@@ -5816,7 +5645,7 @@ setSocks5OutboundRoutingAll() {
     read -r -p "是否确认设置？[y/n]:" socksOutStatus
 
     if [[ "${socksOutStatus}" == "y" ]]; then
-        if [[ "${coreInstallType}" == "1" ]]; then
+        if [[ "${coreInstallType}" == "xray" ]]; then
             removeXrayOutbound IPv4_out
             removeXrayOutbound IPv6_out
             removeXrayOutbound z_direct_outbound
@@ -5863,7 +5692,7 @@ showSingBoxRoutingRules() {
 
 # xray内核分流规则
 showXrayRoutingRules() {
-    if [[ "${coreInstallType}" == "1" ]]; then
+    if [[ "${coreInstallType}" == "xray" ]]; then
         if [[ -f "${configPath}09_routing.json" ]]; then
             jq ".routing.rules[]|select(.outboundTag==\"$1\")" "${configPath}09_routing.json"
 
@@ -5889,7 +5718,7 @@ removeSocks5Routing() {
     echoContent yellow "3.卸载全部"
     read -r -p "请选择:" unInstallSocks5RoutingStatus
     if [[ "${unInstallSocks5RoutingStatus}" == "1" ]]; then
-        if [[ "${coreInstallType}" == "1" ]]; then
+        if [[ "${coreInstallType}" == "xray" ]]; then
             removeXrayOutbound socks5_outbound
             unInstallRouting socks5_outbound outboundTag
             addXrayOutbound z_direct_outbound
@@ -5908,7 +5737,7 @@ removeSocks5Routing() {
 
         handleSingBox stop
     elif [[ "${unInstallSocks5RoutingStatus}" == "3" ]]; then
-        if [[ "${coreInstallType}" == "1" ]]; then
+        if [[ "${coreInstallType}" == "xray" ]]; then
             removeXrayOutbound socks5_outbound
             unInstallRouting socks5_outbound outboundTag
             addXrayOutbound z_direct_outbound
@@ -5943,7 +5772,7 @@ setSocks5Inbound() {
     echoContent yellow "\n请输入自定义UUID[需合法]，[回车]随机UUID"
     read -r -p 'UUID:' socks5RoutingUUID
     if [[ -z "${socks5RoutingUUID}" ]]; then
-        if [[ "${coreInstallType}" == "1" ]]; then
+        if [[ "${coreInstallType}" == "xray" ]]; then
             socks5RoutingUUID=$(${WORK_DIR}/xray/xray uuid)
         elif [[ -n "${singBoxConfigPath}" ]]; then
             socks5RoutingUUID=$(${WORK_DIR}/sing-box/sing-box generate uuid)
@@ -6113,7 +5942,7 @@ setSocks5Outbound() {
 }
 EOF
     fi
-    if [[ "${coreInstallType}" == "1" ]]; then
+    if [[ "${coreInstallType}" == "xray" ]]; then
         addXrayOutbound socks5_outbound
     fi
 }
@@ -6140,7 +5969,7 @@ setSocks5OutboundRouting() {
     addSingBoxRouteRule "socks5_outbound" "${socks5RoutingOutboundDomain}" "socks5_outbound_route"
     addSingBoxOutbound "01_direct_outbound"
 
-    if [[ "${coreInstallType}" == "1" ]]; then
+    if [[ "${coreInstallType}" == "xray" ]]; then
 
         unInstallRouting "socks5_outbound" "outboundTag"
         local domainRules=[]
@@ -6231,11 +6060,11 @@ removeVMessWSRouting() {
 reloadCore() {
     readInstallType
 
-    if [[ "${coreInstallType}" == "1" ]]; then
+    if [[ "${coreInstallType}" == "xray" ]]; then
         handleXray stop
         handleXray start
     fi
-    if echo "${currentInstallProtocolType}" | grep -q ",20," || [[ "${coreInstallType}" == "2" || -n "${singBoxConfigPath}" ]]; then
+    if echo "${currentInstallProtocolType}" | grep -q ",20," || [[ "${coreInstallType}" == "singbox" || -n "${singBoxConfigPath}" ]]; then
         handleSingBox stop
         handleSingBox start
     fi
@@ -6345,7 +6174,7 @@ addXrayDNSConfig() {
         fi
     done < <(echo "${domainList}" | tr ',' '\n')
 
-    if [[ "${coreInstallType}" == "1" ]]; then
+    if [[ "${coreInstallType}" == "xray" ]]; then
 
         cat <<EOF >${configPath}11_dns.json
 {
@@ -6421,7 +6250,7 @@ setUnlockDNS() {
         echoContent yellow "录入示例:netflix,disney,hulu"
         read -r -p "请按照上面示例录入域名:" domainList
 
-        if [[ "${coreInstallType}" == "1" ]]; then
+        if [[ "${coreInstallType}" == "xray" ]]; then
             addXrayDNSConfig "${setDNS}" "${domainList}"
         fi
 
@@ -6443,7 +6272,7 @@ setUnlockDNS() {
 
 # 移除 DNS分流
 removeUnlockDNS() {
-    if [[ "${coreInstallType}" == "1" && -f "${configPath}11_dns.json" ]]; then
+    if [[ "${coreInstallType}" == "xray" && -f "${configPath}11_dns.json" ]]; then
         cat <<EOF >${configPath}11_dns.json
 {
 	"dns": {
@@ -6455,7 +6284,7 @@ removeUnlockDNS() {
 EOF
     fi
 
-    if [[ "${coreInstallType}" == "2" && -f "${singBoxConfigPath}dns.json" ]]; then
+    if [[ "${coreInstallType}" == "singbox" && -f "${singBoxConfigPath}dns.json" ]]; then
         cat <<EOF >${singBoxConfigPath}dns.json
 {
     "dns": {
@@ -7190,7 +7019,7 @@ initRealityKey() {
         fi
     fi
     if [[ -z "${realityPrivateKey}" ]]; then
-        if [[ "${selectCoreType}" == "1" || "${coreInstallType}" == "1" ]]; then
+        if [[ "${selectCoreType}" == "singbox" || "${coreInstallType}" == "xray" ]]; then
             realityX25519Key=$(${WORK_DIR}/sing-box/sing-box generate reality-keypair)
             realityPrivateKey=$(echo "${realityX25519Key}" | head -1 | awk '{print $2}')
             realityPublicKey=$(echo "${realityX25519Key}" | tail -n 1 | awk '{print $2}')
@@ -7251,7 +7080,7 @@ initRealityClientServersName() {
         read -r -p "是否使用 ${domain} 此域名作为Reality目标域名 ？[y/n]:" realityServerNameCurrentDomainStatus
         if [[ "${realityServerNameCurrentDomainStatus}" == "y" ]]; then
             realityServerName="${domain}"
-            if [[ "${selectCoreType}" == "1" ]]; then
+            if [[ "${selectCoreType}" == "singbox" ]]; then
                 #                if [[ -n "${port}" ]]; then
                 #                    realityDomainPort="${port}"
                 if [[ -z "${subscribePort}" ]]; then
@@ -7262,7 +7091,7 @@ initRealityClientServersName() {
                 fi
             fi
 
-            if [[ "${selectCoreType}" == "2" && -z "${subscribePort}" ]]; then
+            if [[ "${selectCoreType}" == "xray" && -z "${subscribePort}" ]]; then
                 echo
                 installSubscribe
                 readNginxSubscribe
@@ -7381,10 +7210,10 @@ manageReality() {
         exit 0
     fi
 
-    if [[ "${coreInstallType}" == "1" ]]; then
+    if [[ "${coreInstallType}" == "xray" ]]; then
         selectCustomInstallType=",7,"
         initXrayConfig custom 1 true
-    elif [[ "${coreInstallType}" == "2" ]]; then
+    elif [[ "${coreInstallType}" == "singbox" ]]; then
         if echo "${currentInstallProtocolType}" | grep -q ",7,"; then
             selectCustomInstallType=",7,"
         fi
@@ -7618,33 +7447,33 @@ menu() {
     read -r -p "请选择: " selectInstallType
     case ${selectInstallType} in
     1)
-        selectCoreType=1
+        selectCoreType="singbox"
         customSingBoxInstall
         ;;
     2)
-    	selectCoreType=2
+    	selectCoreType="xray"
 		customXrayInstall
         ;;
     3)
         manageHysteria
         ;;
     4)
-        manageReality 1
+        manageReality
         ;;
     5)
         manageTuic
         ;;
     6)
-        manageAccount 1
+        manageAccount
         ;;
     7)
-        routingToolsMenu 1
+        routingToolsMenu
         ;;
     8)
-        switchAlpn 1
+        switchAlpn
         ;;
     9)
-        coreVersionManageMenu 1
+        coreVersionManageMenu
         ;;
 
     10)
@@ -7658,7 +7487,7 @@ menu() {
         exit 0
         ;;
     20)
-        unInstall 1
+        unInstall
         ;;
 
     0)
