@@ -3,7 +3,7 @@
 # -------------------------------------------------------------
 # 检查系统
 export LANG=en_US.UTF-8
-VERSION='v1.0.006 build240804'
+VERSION='v1.0.007 build240805'
 WORK_DIR='/opts/CherryScript/singbox_mux'
 echoContent() {
     case $1 in
