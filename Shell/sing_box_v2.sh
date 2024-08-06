@@ -1481,21 +1481,21 @@ installXray() {
 # xray版本管理
 xrayVersionManageMenu() {
     echoContent skyBlue "\n进度  $1/${totalProgress} : Xray版本管理"
-    if [[ "${coreInstallType}" != "1" ]]; then
+    if [[ "${coreInstallType}" != "xray" ]]; then
         echoContent red " ---> 没有检测到安装目录，请执行脚本安装内容"
         exit 0
     fi
-    echoContent red "\n=============================================================="
-    echoContent yellow "1.升级Xray-core"
-    echoContent yellow "2.升级Xray-core 预览版"
-    echoContent yellow "3.回退Xray-core"
-    echoContent yellow "4.关闭Xray-core"
-    echoContent yellow "5.打开Xray-core"
-    echoContent yellow "6.重启Xray-core"
-    echoContent yellow "7.更新geosite、geoip"
-    echoContent yellow "8.设置自动更新geo文件[每天凌晨更新]"
-    echoContent yellow "9.查看日志"
-    echoContent red "=============================================================="
+    echoContent white "\n====================================================="
+    echoContent white "1.升级Xray-core"
+    echoContent white "2.升级Xray-core 预览版"
+    echoContent white "3.回退Xray-core"
+    echoContent white "4.关闭Xray-core"
+    echoContent white "5.打开Xray-core"
+    echoContent white "6.重启Xray-core"
+    echoContent white "7.更新geosite、geoip"
+    echoContent white "8.设置自动更新geo文件[每天凌晨更新]"
+    echoContent white "9.查看日志"
+    echoContent white "====================================================="
     read -r -p "请选择:" selectXrayType
     if [[ "${selectXrayType}" == "1" ]]; then
         prereleaseStatus=false
@@ -4514,8 +4514,6 @@ unInstall() {
 
     rm -rf ${WORK_DIR}
 
-    rm -rf /usr/bin/vasma
-    rm -rf /usr/sbin/vasma
     echoContent green " ---> 卸载快捷方式完成"
     echoContent green " ---> 卸载脚本完成"
 }
@@ -6493,16 +6491,16 @@ unInstallXrayCoreReality() {
 # 核心管理
 coreVersionManageMenu() {
 
-    if [[ -z "${coreInstallType}" ]]; then
+    if [[ -z ${coreInstallType} ]]; then
         echoContent red "\n ---> 没有检测到安装目录，请执行脚本安装内容"
         menu
         exit 0
     fi
-    echoContent skyBlue "\n功能 1/1 : 请选择核心"
-    echoContent red "\n=============================================================="
-    echoContent yellow "1.Xray-core"
-    echoContent yellow "2.sing-box"
-    echoContent red "=============================================================="
+    echoContent white "\n请选择核心"
+    echoContent white "\n=============================================================="
+    echoContent white "1.Xray-core"
+    echoContent white "2.sing-box"
+    echoContent white "=============================================================="
     read -r -p "请输入:" selectCore
 
     if [[ "${selectCore}" == "1" ]]; then
