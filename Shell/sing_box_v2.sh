@@ -3,7 +3,7 @@
 # -------------------------------------------------------------
 # 检查系统
 export LANG=en_US.UTF-8
-VERSION='v1.0.008 build240805'
+VERSION='v1.0.009 build240805'
 WORK_DIR='/opts/CherryScript/singbox_mux'
 echoContent() {
     case $1 in
@@ -6379,13 +6379,13 @@ customSingBoxInstall() {
 customXrayInstall() {
     echoContent skyBlue "\n========================个性化安装============================"
     echoContent yellow "VLESS前置，默认安装0，无域名安装Reality只选择7即可"
-    echoContent yellow "0.VLESS+TLS_Vision+TCP		[推荐]"
-    echoContent yellow "1.VLESS+TLS+WS				[仅CDN推荐]"
-    echoContent yellow "2.Trojan+TLS+gRPC			[仅CDN推荐]"
-    echoContent yellow "3.VMess+TLS+WS				[仅CDN推荐]"
-    echoContent yellow "4.Trojan+TLS				[不推荐]"
-    echoContent yellow "5.VLESS+TLS+gRPC			[仅CDN推荐]"
-    echoContent yellow "7.VLESS+Reality+uTLS+Vision	[推荐]"
+    echoContent yellow "0.VLESS+TLS_Vision+TCP          [推荐]"
+    echoContent yellow "1.VLESS+TLS+WS                  [仅CDN推荐]"
+    echoContent yellow "2.Trojan+TLS+gRPC               [仅CDN推荐]"
+    echoContent yellow "3.VMess+TLS+WS                  [仅CDN推荐]"
+    echoContent yellow "4.Trojan+TLS                    [不推荐]"
+    echoContent yellow "5.VLESS+TLS+gRPC                [仅CDN推荐]"
+    echoContent yellow "7.VLESS+Reality+uTLS+Vision     [推荐]\n"
     # echoContent yellow "8.VLESS+Reality+gRPC"
     read -r -p "请选择[多选]，[例如:1,2,3]:" selectCustomInstallType
     echoContent skyBlue "--------------------------------------------------------------"
@@ -6431,10 +6431,6 @@ customXrayInstall() {
         # 随机path
         if echo "${selectCustomInstallType}" | grep -qE ",1,|,2,|,3,|,5,"; then
             randomPathFunction 4
-        fi
-
-        if [[ "${selectCustomInstallType}" != ",7," ]]; then
-            updateRedirectNginxConf
         fi
 
         # 安装Xray
