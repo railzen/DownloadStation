@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh ${work_path}/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.9114 Build240804"
+main_version="V1.0.9115 Build240818"
 work_path="/opt/CherryScript"
 
 main_menu_start() {
@@ -183,6 +183,7 @@ case $choice in
       echo "14. fzf 全局搜索工具"
       echo "15. frps 内网穿透工具"
       echo "16. gost 转发隧道工具"
+      echo "17. ping 网络监测工具"
       echo "------------------------"
       echo "21. cmatrix 黑客帝国屏保"
       echo "22. sl 跑火车屏保"
@@ -370,6 +371,12 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
               else
                 echo && echo "操作取消" && echo
               fi
+              ;;
+            17)
+              clear
+              install iputils-ping
+              clear
+              ping -V
               ;;
 
             21)
