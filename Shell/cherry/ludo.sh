@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh ${work_path}/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.9115 Build240818"
+main_version="V1.0.9116 Build240823"
 work_path="/opt/CherryScript"
 
 main_menu_start() {
@@ -1162,6 +1162,7 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
       echo "23. 限流自动关机"
       echo "24. ROOT私钥登录模式"
       echo "25. 添加开机启动服务"
+      echo "26. 进行TCP窗口调优"
       echo "------------------------"
       echo "99. 重启服务器"
       echo "------------------------"
@@ -2745,6 +2746,10 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
               esac
 
               ;;
+          26)
+            clear
+            curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/tcptools.sh && chmod +x tcptools.sh && ./tcptools.sh
+            ;;
 
           99)
               clear
