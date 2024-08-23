@@ -196,7 +196,7 @@ virt_check() {
       fi
     fi
   else
-    virtual="Dedicated母鸡"
+    virtual="KVM"
   fi
 }
 get_system_info() {
@@ -235,7 +235,8 @@ ${Green_font_prefix}1.${Font_color_suffix} 升级脚本
 ${Green_font_prefix}2.${Font_color_suffix} TCP窗口调优
 ${Green_font_prefix}3.${Font_color_suffix} 开启内核转发
 ${Green_font_prefix}4.${Font_color_suffix} 系统资源限制调优
-${Green_font_prefix}5.${Font_color_suffix} 屏蔽ICMP ${Green_font_prefix}6.${Font_color_suffix} 开放ICMP
+${Green_font_prefix}5.${Font_color_suffix} 屏蔽ICMP 
+${Green_font_prefix}6.${Font_color_suffix} 开放ICMP
 ------------------------------------------------------------
 ${Green_font_prefix}0.${Font_color_suffix} 退出脚本
 ============================================================
