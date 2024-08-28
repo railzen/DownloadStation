@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh ${work_path}/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.9116 Build240823"
+main_version="V1.0.9117 Build240828"
 work_path="/opt/CherryScript"
 
 main_menu_start() {
@@ -1272,7 +1272,7 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
               iptables_open
               remove iptables-persistent ufw firewalld iptables-services > /dev/null 2>&1
               echo "端口已全部开放"
-
+              break
               ;;
           6)
               root_use
