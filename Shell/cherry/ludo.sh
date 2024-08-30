@@ -1,7 +1,7 @@
 #!/bin/bash
 #cp -f ./ludo.sh ${work_path}/ludo.sh > /dev/null 2>&1
 
-main_version="V1.0.9117 Build240828"
+main_version="V1.0.9118 Build240830"
 work_path="/opt/CherryScript"
 
 main_menu_start() {
@@ -1118,17 +1118,17 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
         #choice=y
         #if [ "$choice" == "y" ]; then
     clear
-    bash -c "$(curl -sL https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/snell/Snell_v2.sh)"
+    bash -c "$(curl -sL https://raw.githubusercontent.com/railzen/CherryScript/main/snell/Snell_v2.sh)"
     ;;
 
   11)
     clear
-    curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/setup_hysteria.sh && chmod +x setup_hysteria.sh && ./setup_hysteria.sh
+    curl -sS -O https://raw.githubusercontent.com/railzen/CherryScript/main/proxy/setup_hysteria.sh && chmod +x setup_hysteria.sh && ./setup_hysteria.sh
     ;;
 
   12)
     clear
-    curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/sing_box_v2.sh && chmod +x sing_box_v2.sh && ./sing_box_v2.sh
+    curl -sS -O https://raw.githubusercontent.com/railzen/CherryScript/main/proxy/sing_box_v2.sh && chmod +x sing_box_v2.sh && ./sing_box_v2.sh
     ;;
 
   13)
@@ -1894,13 +1894,13 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
                         update-grub
 
                         wget -qO - https://dl.xanmod.org/archive.key | gpg --dearmor -o /usr/share/keyrings/xanmod-archive-keyring.gpg --yes
-                        #wget -qO - https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/config/archive.key | gpg --dearmor -o /usr/share/keyrings/xanmod-archive-keyring.gpg --yes
+                        #wget -qO - https://raw.githubusercontent.com/railzen/CherryScript/main/tools/cherry/config/archive.key | gpg --dearmor -o /usr/share/keyrings/xanmod-archive-keyring.gpg --yes
 
                         # 步骤3：添加存储库
                         echo 'deb [signed-by=/usr/share/keyrings/xanmod-archive-keyring.gpg] http://deb.xanmod.org releases main' | tee /etc/apt/sources.list.d/xanmod-release.list
 
                         version=$(wget -q https://dl.xanmod.org/check_x86-64_psabi.sh && chmod +x check_x86-64_psabi.sh && ./check_x86-64_psabi.sh | grep -oP 'x86-64-v\K\d+|x86-64-v\d+')
-                        # version=$(wget -q https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/check_x86-64_psabi.sh && chmod +x check_x86-64_psabi.sh && ./check_x86-64_psabi.sh | grep -oP 'x86-64-v\K\d+|x86-64-v\d+')
+                        # version=$(wget -q https://raw.githubusercontent.com/railzen/CherryScript/main/tools/check_x86-64_psabi.sh && chmod +x check_x86-64_psabi.sh && ./check_x86-64_psabi.sh | grep -oP 'x86-64-v\K\d+|x86-64-v\d+')
 
                         apt update -y
                         apt install -y linux-xanmod-x64v$version
@@ -1964,13 +1964,13 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
             install wget gnupg
 
             wget -qO - https://dl.xanmod.org/archive.key | gpg --dearmor -o /usr/share/keyrings/xanmod-archive-keyring.gpg --yes
-            # wget -qO - https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/config/archive.key | gpg --dearmor -o /usr/share/keyrings/xanmod-archive-keyring.gpg --yes
+            # wget -qO - https://raw.githubusercontent.com/railzen/CherryScript/main/tools/config/archive.key | gpg --dearmor -o /usr/share/keyrings/xanmod-archive-keyring.gpg --yes
 
             # 步骤3：添加存储库
             echo 'deb [signed-by=/usr/share/keyrings/xanmod-archive-keyring.gpg] http://deb.xanmod.org releases main' | tee /etc/apt/sources.list.d/xanmod-release.list
 
             version=$(wget -q https://dl.xanmod.org/check_x86-64_psabi.sh && chmod +x check_x86-64_psabi.sh && ./check_x86-64_psabi.sh | grep -oP 'x86-64-v\K\d+|x86-64-v\d+')
-            # version=$(wget -q https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/check_x86-64_psabi.sh && chmod +x check_x86-64_psabi.sh && ./check_x86-64_psabi.sh | grep -oP 'x86-64-v\K\d+|x86-64-v\d+')
+            # version=$(wget -q https://raw.githubusercontent.com/railzen/CherryScript/main/tools/check_x86-64_psabi.sh && chmod +x check_x86-64_psabi.sh && ./check_x86-64_psabi.sh | grep -oP 'x86-64-v\K\d+|x86-64-v\d+')
 
             apt update -y
             apt install -y linux-xanmod-x64v$version
@@ -2619,7 +2619,7 @@ EOF
                 echo "如果实际服务器就100G流量，可设置阈值为95G，提前关机，以免出现流量误差或溢出."
                 read -p "请输入流量阈值（单位为GB）: " threshold_gb
                 cd ~
-                curl -Ss -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/Limiting_Shut_down.sh
+                curl -Ss -O https://raw.githubusercontent.com/railzen/CherryScript/main/tools/Limiting_Shut_down.sh
                 chmod +x ~/Limiting_Shut_down.sh
                 sed -i "s/110/$threshold_gb/g" ~/Limiting_Shut_down.sh
                 crontab -l | grep -v '~/Limiting_Shut_down.sh' | crontab -
@@ -2748,7 +2748,7 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
               ;;
           26)
             clear
-            curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/tcptools.sh && chmod +x tcptools.sh && ./tcptools.sh
+            curl -sS -O https://raw.githubusercontent.com/railzen/CherryScript/main/tools/tcptools.sh && chmod +x tcptools.sh && ./tcptools.sh
             ;;
 
           99)
@@ -3259,7 +3259,7 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
                             docker rmi -f p3terx/aria2-pro
 
                             cd /home/ && mkdir -p docker/cloud && cd docker/cloud && mkdir temp_data && mkdir -vp cloudreve/{uploads,avatar} && touch cloudreve/conf.ini && touch cloudreve/cloudreve.db && mkdir -p aria2/config && mkdir -p data/aria2 && chmod -R 777 data/aria2
-                            curl -o /home/docker/cloud/docker-compose.yml https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/config/cloudreve-docker-compose.yml
+                            curl -o /home/docker/cloud/docker-compose.yml https://raw.githubusercontent.com/railzen/CherryScript/main/tools/config/cloudreve-docker-compose.yml
                             cd /home/docker/cloud/ && docker-compose up -d
 
 
@@ -3303,7 +3303,7 @@ WantedBy=multi-user.target' > /etc/systemd/system/Cherry-startup.service
                     clear
                     install_docker
                     cd /home/ && mkdir -p docker/cloud && cd docker/cloud && mkdir temp_data && mkdir -vp cloudreve/{uploads,avatar} && touch cloudreve/conf.ini && touch cloudreve/cloudreve.db && mkdir -p aria2/config && mkdir -p data/aria2 && chmod -R 777 data/aria2
-                    curl -o /home/docker/cloud/docker-compose.yml https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/config/cloudreve-docker-compose.yml
+                    curl -o /home/docker/cloud/docker-compose.yml https://raw.githubusercontent.com/railzen/CherryScript/main/tools/config/cloudreve-docker-compose.yml
                     cd /home/docker/cloud/ && docker-compose up -d
 
 
@@ -3894,14 +3894,14 @@ disable_ipv6() {
 # 结束IPV6优先级的函数部分[/TAG279]
 Update_Shell(){
 	echo -e "当前版本为 ${main_version} ，开始检测最新版本..."
-	sh_new_ver=$(curl -s "https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/ludo.sh"|grep 'main_version="'|awk -F "=" '{print $NF}'|sed 's/\"//g'|head -1)
+	sh_new_ver=$(curl -s "https://raw.githubusercontent.com/railzen/CherryScript/main/ludo.sh"|grep 'main_version="'|awk -F "=" '{print $NF}'|sed 's/\"//g'|head -1)
 	[[ -z ${sh_new_ver} ]] && echo -e "${Error} 检测最新版本失败 !" && break_end
 	if [[ ${sh_new_ver} != ${main_version} ]]; then
 		read -p "发现新版本 ${sh_new_ver} ，是否更新？[Y/n] " yn
 		[[ -z "${yn}" ]] && yn="y"
 		if [[ ${yn} == [Yy] ]]; then
             cd ${work_path}/
-            curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/ludo.sh && chmod +x ludo.sh
+            curl -sS -O https://raw.githubusercontent.com/railzen/CherryScript/main/ludo.sh && chmod +x ludo.sh
             rm -f /usr/local/bin/ludo
             cp -f ${work_path}/ludo.sh /usr/local/bin/ludo > /dev/null 2>&1
             echo ""
@@ -4155,7 +4155,7 @@ install_certbot() {
     cd ~ || exit
 
     # 下载并使脚本可执行
-    curl -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/auto_cert_renewal.sh
+    curl -O https://raw.githubusercontent.com/railzen/CherryScript/main/tools/auto_cert_renewal.sh
     chmod +x auto_cert_renewal.sh
 
     # 设置定时任务字符串
@@ -4311,19 +4311,19 @@ f2b_install_sshd() {
     if grep -q 'Alpine' /etc/issue; then
         cd /path/to/fail2ban/config/fail2ban/filter.d
         
-        curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/config/fail2ban/alpine-sshd.conf
-        curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/config/fail2ban/alpine-sshd-ddos.conf
+        curl -sS -O https://raw.githubusercontent.com/railzen/CherryScript/main/tools/config/fail2ban/alpine-sshd.conf
+        curl -sS -O https://raw.githubusercontent.com/railzen/CherryScript/main/tools/config/fail2ban/alpine-sshd-ddos.conf
         cd /path/to/fail2ban/config/fail2ban/jail.d/
-        curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/config/fail2ban/alpine-ssh.conf
+        curl -sS -O https://raw.githubusercontent.com/railzen/CherryScript/main/tools/config/fail2ban/alpine-ssh.conf
     elif grep -qi 'CentOS' /etc/redhat-release; then
         cd /path/to/fail2ban/config/fail2ban/jail.d/
-        curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/config/fail2ban/centos-ssh.conf
+        curl -sS -O https://raw.githubusercontent.com/railzen/CherryScript/main/tools/config/fail2ban/centos-ssh.conf
     else
         install rsyslog
         systemctl start rsyslog
         systemctl enable rsyslog
         cd /path/to/fail2ban/config/fail2ban/jail.d/
-        curl -sS -O https://raw.githubusercontent.com/railzen/DownloadStation/main/Shell/cherry/config/fail2ban/linux-ssh.conf
+        curl -sS -O https://raw.githubusercontent.com/railzen/CherryScript/main/tools/config/fail2ban/linux-ssh.conf
     fi
 }
 
